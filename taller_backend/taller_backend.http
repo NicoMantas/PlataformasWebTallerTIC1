@@ -1,0 +1,6 @@
+@taller_backend_HostAddress = http://localhost:5180
+
+GET {{taller_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
