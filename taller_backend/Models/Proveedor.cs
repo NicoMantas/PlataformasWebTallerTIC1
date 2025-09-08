@@ -19,7 +19,7 @@ namespace taller_backend.Models
         public string? Contacto { get; set; }
 
         // navegación (colección)
-        public ICollection<Repuesto> Repuestos { get; set; } = new List<Repuesto>();
+        public ICollection<Repuesto> Repuestos { get; set; } = new List<Repuesto>(); //inicializamos la colección para evitar errores de referencia nula
 
     }
 }
