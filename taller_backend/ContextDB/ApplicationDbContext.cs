@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using taller_backend.Models;
 
 namespace taller_backend.ContextDB
 {
@@ -8,7 +9,8 @@ namespace taller_backend.ContextDB
         {
         }
 
-        // No agregamos DbSets todavía hasta que tengamos los modelos
+        // acá se agregan los bdset de las tablas
+        public DbSet<Proveedor> Proveedores => Set<Proveedor>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
