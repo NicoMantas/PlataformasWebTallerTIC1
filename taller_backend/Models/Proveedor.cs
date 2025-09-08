@@ -18,5 +18,8 @@ namespace taller_backend.Models
         [Column("contacto")]
         public string? Contacto { get; set; }
 
+        // navegación (colección)
+        public ICollection<Repuesto> Repuestos { get; set; } = new List<Repuesto>();
+
     }
 }

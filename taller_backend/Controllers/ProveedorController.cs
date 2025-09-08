@@ -50,7 +50,7 @@ namespace taller_backend.Controllers
             await _ctx.SaveChangesAsync();
             return NoContent();
         }
-
+        
         [HttpDelete("{id:long}")] // Acción para eliminar un proveedor por su ID
         public async Task<IActionResult> Delete(long id)
         {
