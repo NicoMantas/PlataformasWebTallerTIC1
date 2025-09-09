@@ -4,19 +4,17 @@ using System.ComponentModel.DataAnnotations.Schema; //para mapear la clase con l
 
 namespace taller_backend.Models
 {
-    public class DetalleTipoPersona
+    public class TipoPersona
     {
         [Key]
         [Column("id")]
         public long Id { get; set; }
+
         [Column("descripcion")]
+        [MaxLength(50)]
         public string? Descripcion { get; set; }
-        //propiedade de navegacion
-        [ForeignKey("IdTipoPersona")]
-        public TipoPersona? TipoPersona { get; set; }
 
-        // Colección de navegación hacia Persona
-        public ICollection<Persona> Personas { get; set; } = new List<Persona>();
-
+        // Colección de navegación
+        public ICollection<DetalleTipoPersona> DetallesTipoPersona { get; set; } = new List<DetalleTipoPersona>();
     }
 }
