@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema; //para mapear la clase con l
 
 namespace taller_backend.Models
 {
+    [Table("Persona")]
     public class Persona
     {
         [Key]
@@ -15,6 +16,9 @@ namespace taller_backend.Models
 
         [Column("telefono")]
         public long? Telefono { get; set; }
+
+        [Column("Email")]
+        public string? Email { get; set; }
 
         [Column("idDetalleTipoPersona")]
         public long? idDetalleTipoPersona { get; set; }
@@ -29,7 +33,10 @@ namespace taller_backend.Models
         public DetalleTipoPersona? DetalleTipoPersona { get; set; }
 
         //coleccion de navegacion
-        public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
-
+        public Usuario? Usuario { get; set; }
+        public ClienteNatural? ClienteNatural { get; set; }
+        public ClienteJuridico? ClienteJuridico { get; set; }
     }
+
 }
+

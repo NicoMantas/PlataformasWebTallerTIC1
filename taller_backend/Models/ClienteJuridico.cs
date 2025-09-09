@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema; //para mapear la clase con l
 
 namespace taller_backend.Models
 {
+    [Table("ClienteJuridico")]
     public class ClienteJuridico
     {
         [Key]

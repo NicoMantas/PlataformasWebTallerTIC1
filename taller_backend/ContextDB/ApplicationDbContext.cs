@@ -17,6 +17,14 @@ namespace taller_backend.ContextDB
         public DbSet<taller_backend.Models.Servicio> Servicios => Set<taller_backend.Models.Servicio>();
         public DbSet<taller_backend.Models.Reparacion> Reparaciones => Set<taller_backend.Models.Reparacion>();
         public DbSet<taller_backend.Models.Revision> Revisiones => Set<taller_backend.Models.Revision>();
+        public DbSet<Persona> Personas => Set<Persona>();
+        public DbSet<Usuario> Usuarios => Set<Usuario>();
+        public DbSet<ClienteNatural> ClientesNaturales => Set<ClienteNatural>();
+        public DbSet<ClienteJuridico> ClientesJuridicos => Set<ClienteJuridico>();
+        public DbSet<TipoPersona> TiposPersona => Set<TipoPersona>();
+        public DbSet<DetalleTipoPersona> DetallesTipoPersona => Set<DetalleTipoPersona>();
+        public DbSet<Empleado> Empleados => Set<Empleado>();
+        public DbSet<Mecanico> Mecanicos => Set<Mecanico>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -116,6 +124,130 @@ namespace taller_backend.ContextDB
                 e.HasKey(x => x.IdServicio);
                 e.Property(x => x.IdServicio).HasColumnName("idServicio");
                 e.Property(x => x.Diagnostico).HasColumnName("diagnostico");
+            });
+
+            // Persona
+            modelBuilder.Entity<Persona>(e =>
+            {
+                e.ToTable("Persona");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).HasColumnName("id").UseIdentityByDefaultColumn();
+                e.Property(x => x.Nombre).HasColumnName("nombre");
+                e.Property(x => x.Email).HasColumnName("email");
+                e.HasIndex(x => x.Email).IsUnique(); // según script
+                e.Property(x => x.Telefono).HasColumnName("telefono");
+                e.Property(x => x.IdTDetalleTipoPersona).HasColumnName("idTDetalleTipoPersona");
+                e.Property(x => x.FechaCreacion).HasColumnName("fechaCreacion");
+            });
+
+            // Usuarios
+            modelBuilder.Entity<Usuario>(e =>
+            {
+                e.ToTable("Usuarios");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).HasColumnName("id").UseIdentityByDefaultColumn();
+                e.Property(x => x.IdPersona).HasColumnName("idPersona");
+                e.Property(x => x.Username).HasColumnName("username");
+                e.HasIndex(x => x.Username).IsUnique();
+                e.Property(x => x.PasswordHash).HasColumnName("passwordHash");
+                e.Property(x => x.Activo).HasColumnName("activo");
+                e.Property(x => x.FechaCreacion).HasColumnName("fechaCreacion");
+                e.Property(x => x.UltimoLogin).HasColumnName("ultimoLogin");
+
+                e.HasOne(x => x.Persona)
+                 .WithOne(x => x.Usuario)
+                 .HasForeignKey<Usuario>(x => x.IdPersona)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ClientesNaturales
+            modelBuilder.Entity<ClientesNaturales>(e =>
+            {
+                e.ToTable("clientesNaturales");
+                e.HasKey(x => x.IdPersona); // PK = FK
+                e.Property(x => x.IdPersona).HasColumnName("idPersona");
+                e.Property(x => x.Cedula).HasColumnName("cedula");
+                e.HasIndex(x => x.Cedula).IsUnique();
+                e.Property(x => x.Apellido).HasColumnName("apellido");
+
+                e.HasOne(x => x.Persona)
+                 .WithOne(x => x.ClienteNatural)
+                 .HasForeignKey<ClienteNatural>(x => x.IdPersona)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ClientesJuridicos
+            modelBuilder.Entity<ClienteJuridico>(e =>
+            {
+                e.ToTable("clientesJuridicos");
+                e.HasKey(x => x.IdPersona); // PK = FK
+                e.Property(x => x.IdPersona).HasColumnName("idPersona");
+                e.Property(x => x.Nit).HasColumnName("nit");
+                e.HasIndex(x => x.Nit).IsUnique();
+                e.Property(x => x.RepresentanteLegal).HasColumnName("representanteLegal");
+
+                e.HasOne(x => x.Persona)
+                 .WithOne(x => x.ClienteJuridico)
+                 .HasForeignKey<ClienteJuridico>(x => x.IdPersona)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // TipoPersona
+            modelBuilder.Entity<TipoPersona>(e =>
+            {
+                e.ToTable("TipoPersona");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).HasColumnName("id").UseIdentityByDefaultColumn();
+                e.Property(x => x.Descripcion).HasColumnName("descripcion");
+            });
+
+            // DetalleTipoPersona
+            modelBuilder.Entity<DetalleTipoPersona>(e =>
+            {
+                e.ToTable("DetalleTipoPersona");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).HasColumnName("id").UseIdentityByDefaultColumn();
+                e.Property(x => x.Descripcion).HasColumnName("descripcion");
+                e.Property(x => x.IdTipoPersona).HasColumnName("idTipoPersona");
+
+                e.HasOne<TipoPersona>()
+                 .WithMany()
+                 .HasForeignKey(x => x.IdTipoPersona)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Empleados
+            modelBuilder.Entity<Empleado>(e =>
+            {
+                e.ToTable("Empleados");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).HasColumnName("id").UseIdentityByDefaultColumn();
+                e.Property(x => x.Nombre).HasColumnName("nombre");
+                e.Property(x => x.Apellido).HasColumnName("apellido");
+                e.Property(x => x.Cedula).HasColumnName("cedula");
+                e.HasIndex(x => x.Cedula).IsUnique();
+                e.Property(x => x.Salario).HasColumnName("salario");
+                e.Property(x => x.FechaContratacion).HasColumnName("fechaContratacion");
+                e.Property(x => x.IdDetalleTipoPersona).HasColumnName("idDetalleTipoPersona");
+
+                e.HasOne<DetalleTipoPersona>()
+                 .WithMany()
+                 .HasForeignKey(x => x.IdDetalleTipoPersona)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.Mecanico)
+                 .WithOne(x => x.Empleado)
+                 .HasForeignKey<Mecanico>(x => x.IdEmpleado);
+            });
+
+            // Mecanico
+            modelBuilder.Entity<Mecanico>(e =>
+            {
+                e.ToTable("Mecanico");
+                e.HasKey(x => x.IdEmpleado); // PK = FK
+                e.Property(x => x.IdEmpleado).HasColumnName("idEmpleado");
+                e.Property(x => x.Especialidad).HasColumnName("especialidad");
+                e.Property(x => x.TareasTrabajadas).HasColumnName("tareasTrabajadas");
             });
 
         }

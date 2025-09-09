@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace taller_backend.Models
 {
+    [Table("ClienteNatural")]
     public class ClienteNatural
     {
         [Key]

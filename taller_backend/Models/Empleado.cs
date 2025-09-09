@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace taller_backend.Models
 {
+    [Table("Empleado")]
     public class Empleado
     {
         [Key]
@@ -31,5 +32,6 @@ namespace taller_backend.Models
         // Propiedades de navegación
         [ForeignKey("IdDetalleTipoPersona")]
         public DetalleTipoPersona? DetalleTipoPersona { get; set; }
+        public Mecanico? Mecanico { get; set; }
     }
 }
