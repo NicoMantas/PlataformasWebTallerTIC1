@@ -13,9 +13,9 @@ namespace taller_backend.Controllers
         public EstadoController(ApplicationDbContext ctx) { _ctx = ctx; }
 
         //api para obtener todos los estados
-        [HttpGet]
+    /*    [HttpGet]
         public async Task<ActionResult<IEnumerable<Estado>>> GetAll()
-            => Ok(await _ctx.Estados.ToListAsync());
+            => Ok(await _ctx.Estados.ToListAsync());*/
 
         //api para obtener un estado por id
         [HttpGet("{id:long}")]
