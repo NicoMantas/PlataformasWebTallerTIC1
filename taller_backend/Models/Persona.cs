@@ -10,10 +10,11 @@ namespace taller_backend.Models
         [Column("id")]
         public long Id { get; set; }
         [Column("nombre")]
+        [MaxLength(100)]
         public string? Nombre { get; set; }
 
         [Column("telefono")]
-        public string? Telefono { get; set; }
+        public long? Telefono { get; set; }
 
         [Column("idDetalleTipoPersona")]
         public long? idDetalleTipoPersona { get; set; }
@@ -23,5 +24,9 @@ namespace taller_backend.Models
         public DateTime? fechaCreacion { get; set; }
 
 
+        //propiedades de navegacion.
+        [ForeignKey("IdTDetalleTipoPersona")]
+        public DetalleTipoPersona? DetalleTipoPersona { get; set; }
+        
     }
 }

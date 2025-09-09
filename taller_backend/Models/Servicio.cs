@@ -25,11 +25,10 @@ namespace taller_backend.Models
         [Column("idTipoServicio")]
         public long? IdTipoServicio { get; set; }
 
-        public Estado? Estado { get; set; }
-        public TipoServicio? TipoServicio { get; set; }
-
-        public Reparacion? Reparacion { get; set; }
-        public Revision? Revision { get; set; }
+        public Estado? Estado { get; set; } 
+        public TipoServicio? TipoServicio { get; set; } //navegación muchos a uno
+        public Reparacion? Reparacion { get; set; } //navegación uno a uno
+        public Revision? Revision { get; set; } //navegación uno a uno
     }
 }
 }
