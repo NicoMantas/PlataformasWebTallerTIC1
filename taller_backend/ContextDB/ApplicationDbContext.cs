@@ -20,33 +20,34 @@ namespace taller_backend.ContextDB
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
-            // Las configuraciones de modelos se agregarán aquí
-            modelBuilder.Entity<Proveedor>(e =>
-            {
-                e.ToTable("Proveedor");
-                e.HasKey(x => x.Id);
-                e.Property(x => x.Nombre);
-                e.Property(x => x.Contacto);
-            });
-
             // Configuración para la entidad Proveedor
             modelBuilder.Entity<Proveedor>(e =>
             {
                 e.ToTable("Proveedor");
                 e.HasKey(x => x.Id);
+                e.Property(x => x.Id).HasColumnName("id").UseIdentityByDefaultColumn();
+                e.Property(x => x.Nombre).HasColumnName("nombre");
+                e.Property(x => x.Contacto).HasColumnName("contacto");
 
                 e.HasMany(x => x.Repuestos)
                  .WithOne(x => x.Proveedor)
                  .HasForeignKey(x => x.IdProveedor)
-                 .OnDelete(DeleteBehavior.SetNull); // ajusta a tu DDL: SetNull/Restrict/Cascade
+                 .OnDelete(DeleteBehavior.SetNull);
             });
-
+            
             // Configuración para la entidad Repuesto
             modelBuilder.Entity<Repuesto>(e =>
             {
                 e.ToTable("Repuesto");
                 e.HasKey(x => x.Id);
+                e.Property(x => x.Id).HasColumnName("id").UseIdentityByDefaultColumn();
+                e.Property(x => x.Nombre).HasColumnName("nombre");
+                e.Property(x => x.NumeroParte).HasColumnName("numeroParte");
+                e.Property(x => x.Descripcion).HasColumnName("descripcion");
+                e.Property(x => x.CostoCompra).HasColumnName("costoCompra");
+                e.Property(x => x.PrecioVenta).HasColumnName("precioVenta");
+                e.Property(x => x.CantidadStock).HasColumnName("cantidadStock");
+                e.Property(x => x.IdProveedor).HasColumnName("idProveedor");
             });
 
             // Configuración para la entidad Estado
