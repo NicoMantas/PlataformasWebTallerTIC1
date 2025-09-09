@@ -65,7 +65,6 @@ namespace taller_backend.Controllers
 
             var entity = new Repuesto
             {
-                Id = dto.Id,
                 Nombre = dto.Nombre,
                 NumeroParte = dto.NumeroParte,
                 Descripcion = dto.Descripcion,
