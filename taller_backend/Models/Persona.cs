@@ -27,6 +27,9 @@ namespace taller_backend.Models
         //propiedades de navegacion.
         [ForeignKey("IdTDetalleTipoPersona")]
         public DetalleTipoPersona? DetalleTipoPersona { get; set; }
-        
+
+        //coleccion de navegacion
+        public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
+
     }
 }
