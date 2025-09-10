@@ -20,12 +20,12 @@ namespace taller_backend.Models
         [Column("Email")]
         public string? Email { get; set; }
 
-        [Column("idDetalleTipoPersona")]
-        public long? idDetalleTipoPersona { get; set; }
+        [Column("idTDetalleTipoPersona")]  
+        public long? IdTDetalleTipoPersona { get; set; }
 
-        //fecha de creacion
         [Column("fechaCreacion")]
-        public DateTime? fechaCreacion { get; set; }
+        public DateTime? FechaCreacion { get; set; }
+
 
 
         //propiedades de navegacion.

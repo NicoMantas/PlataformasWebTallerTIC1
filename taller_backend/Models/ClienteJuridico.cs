@@ -8,6 +8,7 @@ namespace taller_backend.Models
     [Table("ClienteJuridico")]
     public class ClienteJuridico
     {
+        //establecer reglas de validacion de datos
         [Key]
         [Column("idPersona")]
         public long IdPersona { get; set; }
@@ -17,6 +18,7 @@ namespace taller_backend.Models
         public long Nit { get; set; }
 
         [Column("representanteLegal")]
+        [MaxLength(100)] // Máximo 100 caracteres para el representante legal
         public string? RepresentanteLegal { get; set; }
 
         // Propiedades de navegación

@@ -15,6 +15,7 @@ namespace taller_backend.Models
         public long Cedula { get; set; }
 
         [Column("apellido")]
+        [MaxLength(100)]
         public string? Apellido { get; set; }
 
         // Propiedades de navegación

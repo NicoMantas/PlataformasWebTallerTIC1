@@ -34,10 +34,10 @@ namespace taller_backend.Controllers
             {
                 Nombre = dto.Nombre,
                 Apellido = dto.Apellido,
-                Cedula = dto.Cedula,
+                Cedula = dto.Cedula ?? 0,
                 Salario = dto.Salario,
                 FechaContratacion = dto.FechaContratacion,
-                IdDetalleTipoPersona = dto.IdDetalleTipoPersona
+                IdDetalleTipoPersona = dto.IdDetalleTipoPersona ?? 0
             };
 
             _ctx.Empleados.Add(e);
@@ -57,10 +57,10 @@ namespace taller_backend.Controllers
 
             e.Nombre = dto.Nombre;
             e.Apellido = dto.Apellido;
-            e.Cedula = dto.Cedula;
+            e.Cedula = dto.Cedula ?? 0;
             e.Salario = dto.Salario;
             e.FechaContratacion = dto.FechaContratacion;
-            e.IdDetalleTipoPersona = dto.IdDetalleTipoPersona;
+            e.IdDetalleTipoPersona = dto.IdDetalleTipoPersona ?? 0;
 
             await _ctx.SaveChangesAsync();
             return NoContent();

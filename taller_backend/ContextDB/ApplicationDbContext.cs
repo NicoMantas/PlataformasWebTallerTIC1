@@ -161,7 +161,7 @@ namespace taller_backend.ContextDB
             });
 
             // ClientesNaturales
-            modelBuilder.Entity<ClientesNaturales>(e =>
+            modelBuilder.Entity<ClienteNatural>(e =>
             {
                 e.ToTable("clientesNaturales");
                 e.HasKey(x => x.IdPersona); // PK = FK

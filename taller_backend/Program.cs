@@ -60,8 +60,9 @@ namespace taller_backend
                     // No hacemos throw para que la aplicación pueda continuar
                 }
             });
-
-            app.Run();
+            //compilador se queja por no usar await
+            //app.Run();
+            await app.RunAsync();
         }
     }
 }

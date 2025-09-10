@@ -9,8 +9,11 @@ namespace taller_backend.Models
         [Key]
         [Column("id")]
         public long Id { get; set; }
+
         [Column("descripcion")]
         public string? Descripcion { get; set; }
+        [Column("idTipoPersona")]
+        public long? IdTipoPersona { get; set; }
         //propiedade de navegacion
         [ForeignKey("IdTipoPersona")]
         public TipoPersona? TipoPersona { get; set; }
