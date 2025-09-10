@@ -438,7 +438,7 @@ namespace taller_backend.ContextDB
             // ServicioMecanicos (tabla puente)
             modelBuilder.Entity<ServicioMecanico>(e =>
             {
-                e.ToTable("ServicioMecanicos");
+                e.ToTable("ServicioMecanico");
                 e.HasKey(x => new { x.IdServicio, x.IdMecanico });
                 e.Property(x => x.IdServicio).HasColumnName("idServicio");
                 e.Property(x => x.IdMecanico).HasColumnName("idMecanico");
