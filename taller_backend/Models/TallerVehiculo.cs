@@ -7,11 +7,9 @@ namespace taller_backend.Models
     [Table("TallerVehiculo")]
     public class TallerVehiculo
     {
-        [Key]
         [Column("idTaller")]
         public long IdTaller { get; set; }
 
-        [Key]
         [Column("placaVehiculo")]
         [MaxLength(10)]
         public string PlacaVehiculo { get; set; } = string.Empty;

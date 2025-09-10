@@ -6,12 +6,10 @@ namespace taller_backend.Models
 {
     [Table("TallerEmpleado")]
     public class TallerEmpleado
-    {
-        [Key]
+    {       
         [Column("idTaller")]
         public long IdTaller { get; set; }
 
-        [Key]
         [Column("idEmpleado")]
         public long IdEmpleado { get; set; }
 
