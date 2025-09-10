@@ -51,10 +51,10 @@ namespace taller_backend.ContextDB
                 e.Property(x => x.Nombre).HasColumnName("nombre");
                 e.Property(x => x.Contacto).HasColumnName("contacto");
 
-                e.HasMany(x => x.Repuestos)
+               /* e.HasMany(x => x.Repuestos)
                  .WithOne(x => x.Proveedor)
                  .HasForeignKey(x => x.IdProveedor)
-                 .OnDelete(DeleteBehavior.SetNull);
+                 .OnDelete(DeleteBehavior.SetNull);*/
             });
             
             // Configuración para la entidad Repuesto
