@@ -12,18 +12,21 @@ namespace taller_backend.Models
         public long IdTaller { get; set; }
 
         [Key]
-        [Column("placaVehiculo")]
-        [MaxLength(10)]
-        public string PlacaVehiculo { get; set; } = string.Empty;
+        [Column("idRepuesto")]
+        public long IdRepuesto { get; set; }
 
-        [Column("fechaRegistro")]
-        public DateTime? FechaRegistro { get; set; }
+        [Column("cantidad")]
+        public int Cantidad { get; set; }
 
-        // Propiedades de navegación
-        [ForeignKey("IdTaller")]
+        [Column("stockMinimo")]
+        public int StockMinimo { get; set; }
+
+        // Propiedades de navegación con ForeignKey 
+        [ForeignKey(nameof(IdRepuesto))]
+        public Repuesto? Repuesto { get; set; }
+
+        [ForeignKey(nameof(IdTaller))]
         public Taller? Taller { get; set; }
 
-        [ForeignKey("PlacaVehiculo")]
-        public Vehiculo? Vehiculo { get; set; }
     }
 }
