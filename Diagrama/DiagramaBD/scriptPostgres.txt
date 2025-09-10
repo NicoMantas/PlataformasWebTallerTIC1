@@ -1,0 +1,332 @@
+-- ======================================
+-- TABLAS BASE
+-- ======================================
+
+CREATE TABLE "Proveedor" (
+  "id" int8 PRIMARY KEY,
+  "nombre" varchar,
+  "contacto" varchar
+);
+
+CREATE TABLE "Repuesto" (
+  "id" int8 PRIMARY KEY,
+  "nombre" varchar,
+  "numeroParte" int8,
+  "descripcion" varchar,
+  "costoCompra" float8,
+  "precioVenta" float8,
+  "cantidadStock" int,
+  "idProveedor" int8
+);
+
+CREATE TABLE "TipoServicio" (
+  "id" int8 PRIMARY KEY,
+  "descripcion" varchar
+);
+
+CREATE TABLE "Estado" (
+  "id" int8 PRIMARY KEY,
+  "descripcion" varchar
+);
+
+CREATE TABLE "Servicio" (
+  "id" int8 PRIMARY KEY,
+  "descripcion" varchar,
+  "costoBase" float8,
+  "tiempoEstimado" int,
+  "idEstado" int8,
+  "idTipoServicio" int8
+);
+
+CREATE TABLE "Reparacion" (
+  "idServicio" int8 PRIMARY KEY,
+  "mano_de_obra" float8
+);
+
+CREATE TABLE "Revision" (
+  "idServicio" int8 PRIMARY KEY,
+  "diagnostico" text
+);
+
+CREATE TABLE "ServicioMecanicos" (
+  "idServicio" int8,
+  "idMecanico" int8,
+  "fechaAsignacion" timestamp DEFAULT (CURRENT_TIMESTAMP),
+  PRIMARY KEY ("idServicio", "idMecanico")
+);
+
+CREATE TABLE "Persona" (
+  "id" int8 PRIMARY KEY,
+  "nombre" varchar,
+  "email" varchar UNIQUE,
+  "telefono" int8,
+  "idTDetalleTipoPersona" varchar,
+  "fechaCreacion" timestamp DEFAULT (CURRENT_TIMESTAMP)
+);
+
+CREATE TABLE "TipoPersona" (
+  "id" int8 PRIMARY KEY,
+  "descripcion" varchar
+);
+
+CREATE TABLE "DetalleTipoPersona" (
+  "id" int8 PRIMARY KEY,
+  "descripcion" varchar,
+  "idTipoPersona" int
+);
+
+CREATE TABLE "Usuarios" (
+  "id" int8 PRIMARY KEY,
+  "idPersona" int8,
+  "username" varchar UNIQUE,
+  "passwordHash" varchar,
+  "activo" boolean,
+  "fechaCreacion" timestamp DEFAULT (CURRENT_TIMESTAMP),
+  "ultimoLogin" timestamp
+);
+
+CREATE TABLE "clientesNaturales" (
+  "idPersona" int8 PRIMARY KEY,
+  "cedula" int8 UNIQUE,
+  "apellido" varchar
+);
+
+CREATE TABLE "clientesJuridicos" (
+  "idPersona" int8 PRIMARY KEY,
+  "nit" int8 UNIQUE,
+  "representanteLegal" varchar
+);
+
+CREATE TABLE "Empleados" (
+  "id" int8 PRIMARY KEY,
+  "nombre" varchar,
+  "apellido" varchar,
+  "cedula" int8 UNIQUE,
+  "salario" float8,
+  "fechaContratacion" timestamp,
+  "idDetalleTipoPersona" int
+);
+
+CREATE TABLE "Mecanico" (
+  "idEmpleado" int8 PRIMARY KEY,
+  "especialidad" varchar,
+  "tareasTrabajadas" varchar
+);
+
+CREATE TABLE "Vehiculo" (
+  "placa" varchar PRIMARY KEY,
+  "marca" varchar,
+  "modelo" varchar,
+  "año" int,
+  "idPersona" int8,
+  "idTipoVehiculo" varchar,
+  "fechaCreacion" timestamp DEFAULT (CURRENT_TIMESTAMP)
+);
+
+CREATE TABLE "TipoVehiculo" (
+  "id" int8 PRIMARY KEY,
+  "descripcion" varchar
+);
+
+CREATE TABLE "VehiculoGasolina" (
+  "placa" varchar PRIMARY KEY,
+  "cilindraje" int
+);
+
+CREATE TABLE "VehiculoElectrico" (
+  "placa" varchar PRIMARY KEY,
+  "capacidadBateria" int
+);
+
+CREATE TABLE "VehiculoHibrido" (
+  "placa" varchar PRIMARY KEY,
+  "cilindraje" int,
+  "capacidadBateria" int
+);
+
+CREATE TABLE "Taller" (
+  "id" int8 PRIMARY KEY DEFAULT 1,
+  "nombre" varchar,
+  "direccion" varchar,
+  "telefono" varchar,
+  "email" varchar,
+  "horarioAtencion" varchar,
+  "fechaCreacion" timestamp DEFAULT (CURRENT_TIMESTAMP)
+);
+
+CREATE TABLE "OrdenDeTrabajo" (
+  "id" int8 PRIMARY KEY,
+  "fechaCreacion" timestamp DEFAULT (CURRENT_TIMESTAMP),
+  "idTipoOrdenEstado" int8,
+  "idPersona" int8,
+  "placaVehiculo" varchar,
+  "total" float8,
+  "fechaInicio" timestamp,
+  "fechaFinalizacion" timestamp,
+  "observaciones" text
+);
+
+CREATE TABLE "TipoOrdenEstado" (
+  "id" int8 PRIMARY KEY,
+  "descripcion" varchar
+);
+
+CREATE TABLE "OrdenServicio" (
+  "idOrden" int8,
+  "idServicio" int8,
+  Primary Key("idOrden","idServicio")
+);
+
+CREATE TABLE "TallerEmpleado" (
+  "idTaller" int8,
+  "idEmpleado" int8,
+  "fechaContratacion" timestamp DEFAULT (CURRENT_TIMESTAMP),
+  Primary Key("idTaller","idEmpleado")
+);
+
+CREATE TABLE "TallerCliente" (
+  "idTaller" int8,
+  "idCliente" int8,
+  "fechaRegistro" timestamp DEFAULT (CURRENT_TIMESTAMP),
+  Primary Key("idTaller","idCliente")
+);
+
+CREATE TABLE "TallerVehiculo" (
+  "idTaller" int8,
+  "placaVehiculo" varchar,
+  "fechaRegistro" timestamp DEFAULT (CURRENT_TIMESTAMP),
+  Primary Key("idTaller","placaVehiculo")
+);
+
+CREATE TABLE "InventarioTaller" (
+  "idTaller" int8,
+  "idRepuesto" int8,
+  "cantidad" int,
+  "stockMinimo" int,
+  Primary Key("idTaller","idRepuesto")
+);
+
+-- ======================================
+-- COMENTARIOS
+-- ======================================
+
+COMMENT ON COLUMN "TipoServicio"."descripcion" IS 'REPARACION, REVISION';
+COMMENT ON COLUMN "Estado"."descripcion" IS 'En Proceso, Pendiente, Terminado';
+COMMENT ON COLUMN "TipoPersona"."descripcion" IS 'NATURAL, JURIDICO, ADMIN, MECANICO, SECRETARIA';
+COMMENT ON COLUMN "DetalleTipoPersona"."idTipoPersona" IS 'CLIENTE, EMPLEADO';
+COMMENT ON COLUMN "TipoVehiculo"."descripcion" IS 'GASOLINA, ELECTRICO, HIBRIDO';
+COMMENT ON COLUMN "TipoOrdenEstado"."descripcion" IS 'En_Progreso, Completada, Cancelada';
+
+-- ======================================
+-- RELACIONES (FKs)
+-- ======================================
+
+-- Repuesto con Proveedor
+ALTER TABLE "Repuesto"
+  ADD FOREIGN KEY ("idProveedor") REFERENCES "Proveedor" ("id");
+
+-- Servicio con Estado y TipoServicio
+ALTER TABLE "Servicio"
+  ADD FOREIGN KEY ("idEstado") REFERENCES "Estado" ("id");
+
+ALTER TABLE "Servicio"
+  ADD FOREIGN KEY ("idTipoServicio") REFERENCES "TipoServicio" ("id");
+
+-- Reparación y Revisión como especialización de Servicio
+ALTER TABLE "Reparacion"
+  ADD FOREIGN KEY ("idServicio") REFERENCES "Servicio" ("id");
+
+ALTER TABLE "Revision"
+  ADD FOREIGN KEY ("idServicio") REFERENCES "Servicio" ("id");
+
+-- ServicioMecanicos con Servicio y Mecanico
+ALTER TABLE "ServicioMecanicos"
+  ADD FOREIGN KEY ("idServicio") REFERENCES "Servicio" ("id");
+
+ALTER TABLE "ServicioMecanicos"
+  ADD FOREIGN KEY ("idMecanico") REFERENCES "Mecanico" ("idEmpleado");
+
+-- Usuarios con Persona
+ALTER TABLE "Usuarios"
+  ADD FOREIGN KEY ("idPersona") REFERENCES "Persona" ("id");
+
+-- Clientes naturales/jurídicos con Persona
+ALTER TABLE "clientesNaturales"
+  ADD FOREIGN KEY ("idPersona") REFERENCES "Persona" ("id");
+
+ALTER TABLE "clientesJuridicos"
+  ADD FOREIGN KEY ("idPersona") REFERENCES "Persona" ("id");
+
+-- Empleados con DetalleTipoPersona
+ALTER TABLE "Empleados"
+  ADD FOREIGN KEY ("idDetalleTipoPersona") REFERENCES "DetalleTipoPersona" ("id");
+
+-- Mecanico con Empleados
+ALTER TABLE "Mecanico"
+  ADD FOREIGN KEY ("idEmpleado") REFERENCES "Empleados" ("id");
+
+-- DetalleTipoPersona con TipoPersona
+ALTER TABLE "DetalleTipoPersona"
+  ADD FOREIGN KEY ("idTipoPersona") REFERENCES "TipoPersona" ("id");
+
+-- Vehiculo con Persona (dueño) y TipoVehiculo
+ALTER TABLE "Vehiculo"
+  ADD FOREIGN KEY ("idPersona") REFERENCES "Persona" ("id");
+
+ALTER TABLE "Vehiculo"
+  ADD FOREIGN KEY ("idTipoVehiculo") REFERENCES "TipoVehiculo" ("id");
+
+-- Vehículos especializados
+ALTER TABLE "VehiculoGasolina"
+  ADD FOREIGN KEY ("placa") REFERENCES "Vehiculo" ("placa");
+
+ALTER TABLE "VehiculoElectrico"
+  ADD FOREIGN KEY ("placa") REFERENCES "Vehiculo" ("placa");
+
+ALTER TABLE "VehiculoHibrido"
+  ADD FOREIGN KEY ("placa") REFERENCES "Vehiculo" ("placa");
+
+-- Orden de Trabajo con Persona, Vehiculo y TipoOrdenEstado
+ALTER TABLE "OrdenDeTrabajo"
+  ADD FOREIGN KEY ("idPersona") REFERENCES "Persona" ("id");
+
+ALTER TABLE "OrdenDeTrabajo"
+  ADD FOREIGN KEY ("placaVehiculo") REFERENCES "Vehiculo" ("placa");
+
+ALTER TABLE "OrdenDeTrabajo"
+  ADD FOREIGN KEY ("idTipoOrdenEstado") REFERENCES "TipoOrdenEstado" ("id");
+
+-- OrdenServicio relaciona OrdenDeTrabajo y Servicio
+ALTER TABLE "OrdenServicio"
+  ADD FOREIGN KEY ("idOrden") REFERENCES "OrdenDeTrabajo" ("id");
+
+ALTER TABLE "OrdenServicio"
+  ADD FOREIGN KEY ("idServicio") REFERENCES "Servicio" ("id");
+
+-- TallerEmpleado
+ALTER TABLE "TallerEmpleado"
+  ADD FOREIGN KEY ("idTaller") REFERENCES "Taller" ("id");
+
+ALTER TABLE "TallerEmpleado"
+  ADD FOREIGN KEY ("idEmpleado") REFERENCES "Empleados" ("id");
+
+-- TallerCliente
+ALTER TABLE "TallerCliente"
+  ADD FOREIGN KEY ("idTaller") REFERENCES "Taller" ("id");
+
+ALTER TABLE "TallerCliente"
+  ADD FOREIGN KEY ("idCliente") REFERENCES "Persona" ("id");
+
+-- TallerVehiculo
+ALTER TABLE "TallerVehiculo"
+  ADD FOREIGN KEY ("idTaller") REFERENCES "Taller" ("id");
+
+ALTER TABLE "TallerVehiculo"
+  ADD FOREIGN KEY ("placaVehiculo") REFERENCES "Vehiculo" ("placa");
+
+-- InventarioTaller
+ALTER TABLE "InventarioTaller"
+  ADD FOREIGN KEY ("idTaller") REFERENCES "Taller" ("id");
+
+ALTER TABLE "InventarioTaller"
+  ADD FOREIGN KEY ("idRepuesto") REFERENCES "Repuesto" ("id");
