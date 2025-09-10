@@ -7,11 +7,9 @@ namespace taller_backend.Models
     [Table("InventarioTaller")]
     public class InventarioTaller
     {
-        [Key]
         [Column("idTaller")]
         public long IdTaller { get; set; }
 
-        [Key]
         [Column("idRepuesto")]
         public long IdRepuesto { get; set; }
 

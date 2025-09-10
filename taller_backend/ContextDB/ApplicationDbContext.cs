@@ -25,6 +25,19 @@ namespace taller_backend.ContextDB
         public DbSet<DetalleTipoPersona> DetallesTipoPersona => Set<DetalleTipoPersona>();
         public DbSet<Empleado> Empleados => Set<Empleado>();
         public DbSet<Mecanico> Mecanicos => Set<Mecanico>();
+        public DbSet<Vehiculo> Vehiculos => Set<Vehiculo>();
+        public DbSet<TipoVehiculo> TiposVehiculo => Set<TipoVehiculo>();
+        public DbSet<VehiculoGasolina> VehiculosGasolina => Set<VehiculoGasolina>();
+        public DbSet<VehiculoElectrico> VehiculosElectricos => Set<VehiculoElectrico>();
+        public DbSet<VehiculoHibrido> VehiculosHibridos => Set<VehiculoHibrido>();
+        public DbSet<Taller> Talleres => Set<Taller>();
+        public DbSet<OrdenDeTrabajo> OrdenesDeTrabajo => Set<OrdenDeTrabajo>();
+        public DbSet<OrdenServicio> OrdenServicios => Set<OrdenServicio>();
+        public DbSet<TipoOrdenEstado> TiposOrdenEstado => Set<TipoOrdenEstado>();
+        public DbSet<TallerEmpleado> TallerEmpleados => Set<TallerEmpleado>();
+        public DbSet<TallerCliente> TallerClientes => Set<TallerCliente>();
+        public DbSet<TallerVehiculo> TallerVehiculos => Set<TallerVehiculo>();
+        public DbSet<InventarioTaller> InventariosTaller => Set<InventarioTaller>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -248,6 +261,61 @@ namespace taller_backend.ContextDB
                 e.Property(x => x.IdEmpleado).HasColumnName("idEmpleado");
                 e.Property(x => x.Especialidad).HasColumnName("especialidad");
                 e.Property(x => x.TareasTrabajadas).HasColumnName("tareasTrabajadas");
+            });
+
+            // Mecanico
+            modelBuilder.Entity<Mecanico>(e =>
+            {
+                e.ToTable("Mecanico");
+                e.HasKey(x => x.IdEmpleado); // PK = FK
+                e.Property(x => x.IdEmpleado).HasColumnName("idEmpleado");
+                e.Property(x => x.Especialidad).HasColumnName("especialidad");
+                e.Property(x => x.TareasTrabajadas).HasColumnName("tareasTrabajadas");
+            });
+
+            // Claves compuestas y mapeos mínimos
+            modelBuilder.Entity<OrdenServicio>(e =>
+            {
+                e.ToTable("OrdenServicio");
+                e.HasKey(x => new { x.IdOrden, x.IdServicio });
+            });
+
+            modelBuilder.Entity<TallerEmpleado>(e =>
+            {
+                e.ToTable("TallerEmpleado");
+                e.HasKey(x => new { x.IdTaller, x.IdEmpleado });
+            });
+
+            modelBuilder.Entity<TallerCliente>(e =>
+            {
+                e.ToTable("TallerCliente");
+                e.HasKey(x => new { x.IdTaller, x.IdCliente });
+            });
+
+            modelBuilder.Entity<TallerVehiculo>(e =>
+            {
+                e.ToTable("TallerVehiculo");
+                e.HasKey(x => new { x.IdTaller, x.PlacaVehiculo });
+            });
+
+            modelBuilder.Entity<InventarioTaller>(e =>
+            {
+                e.ToTable("InventarioTaller");
+                e.HasKey(x => new { x.IdTaller, x.IdRepuesto });
+                e.Property(x => x.IdTaller).HasColumnName("idTaller");
+                e.Property(x => x.IdRepuesto).HasColumnName("idRepuesto");
+                e.Property(x => x.Cantidad).HasColumnName("cantidad");
+                e.Property(x => x.StockMinimo).HasColumnName("stockMinimo");
+
+                e.HasOne(x => x.Taller)
+                 .WithMany(t => t.InventarioTaller)
+                 .HasForeignKey(x => x.IdTaller)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.Repuesto)
+                 .WithMany()
+                 .HasForeignKey(x => x.IdRepuesto)
+                 .OnDelete(DeleteBehavior.Restrict);
             });
 
         }

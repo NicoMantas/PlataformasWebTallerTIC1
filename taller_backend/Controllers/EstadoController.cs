@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using taller_backend.ContextDB;
 using taller_backend.DTOs;
 using taller_backend.Models;
@@ -12,23 +13,17 @@ namespace taller_backend.Controllers
         private readonly ApplicationDbContext _ctx;
         public EstadoController(ApplicationDbContext ctx) { _ctx = ctx; }
 
-        //api para obtener todos los estados
-//<<<<<<< HEAD
-       /* [HttpGet]
+        // api para obtener todos los estados
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<Estado>>> GetAll()
-           => Ok(await _ctx.Estados.ToListAsync());*/
-//=======
-    /*    [HttpGet]
-        public async Task<ActionResult<IEnumerable<Estado>>> GetAll()
-            => Ok(await _ctx.Estados.ToListAsync());*/
-//>>>>>>> 43d0f10111d04c7c9a099d4872340cf648fc00d2
+            => Ok(await _ctx.Estados.ToListAsync());
 
-        //api para obtener un estado por id
+        // api para obtener un estado por id
         [HttpGet("{id:long}")]
         public async Task<ActionResult<Estado>> GetById(long id)
             => await _ctx.Estados.FindAsync(id) is { } e ? Ok(e) : NotFound();
 
-        //api para crear un estado
+        // api para crear un estado
         [HttpPost]
         public async Task<ActionResult<Estado>> Create(EstadoCreateDto dto)
         {
@@ -38,7 +33,7 @@ namespace taller_backend.Controllers
             return CreatedAtAction(nameof(GetById), new { id = e.Id }, e);
         }
 
-        //api para actualizar un estado
+        // api para actualizar un estado
         [HttpPut("{id:long}")]
         public async Task<IActionResult> Update(long id, EstadoUpdateDto dto)
         {
@@ -49,7 +44,7 @@ namespace taller_backend.Controllers
             return NoContent();
         }
 
-        //api para eliminar un estado
+        // api para eliminar un estado
         [HttpDelete("{id:long}")]
         public async Task<IActionResult> Delete(long id)
         {
@@ -61,4 +56,3 @@ namespace taller_backend.Controllers
         }
     }
 }
-
