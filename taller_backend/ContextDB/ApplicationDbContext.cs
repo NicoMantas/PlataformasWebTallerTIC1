@@ -38,6 +38,7 @@ namespace taller_backend.ContextDB
         public DbSet<TallerCliente> TallerClientes => Set<TallerCliente>();
         public DbSet<TallerVehiculo> TallerVehiculos => Set<TallerVehiculo>();
         public DbSet<InventarioTaller> InventariosTaller => Set<InventarioTaller>();
+        public DbSet<ServicioMecanico> ServiciosMecanicos => Set<ServicioMecanico>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -317,6 +318,145 @@ namespace taller_backend.ContextDB
                  .HasForeignKey(x => x.IdRepuesto)
                  .OnDelete(DeleteBehavior.Restrict);
             });
+
+             // Claves compuestas y mapeos mínimos
+            modelBuilder.Entity<OrdenServicio>(e =>
+            {
+                e.ToTable("OrdenServicio");
+                e.HasKey(x => new { x.IdOrden, x.IdServicio });
+            });
+
+            modelBuilder.Entity<TallerEmpleado>(e =>
+            {
+                e.ToTable("TallerEmpleado");
+                e.HasKey(x => new { x.IdTaller, x.IdEmpleado });
+            });
+
+            modelBuilder.Entity<TallerCliente>(e =>
+            {
+                e.ToTable("TallerCliente");
+                e.HasKey(x => new { x.IdTaller, x.IdCliente });
+            });
+
+            modelBuilder.Entity<TipoOrdenEstado>(e =>
+            {
+                e.ToTable("TipoOrdenEstado");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).HasColumnName("id").UseIdentityByDefaultColumn();
+                e.Property(x => x.Descripcion).HasColumnName("descripcion");
+            });
+
+            modelBuilder.Entity<InventarioTaller>(e =>
+            {
+                e.ToTable("InventarioTaller");
+                e.HasKey(x => new { x.IdTaller, x.IdRepuesto });
+                e.Property(x => x.IdTaller).HasColumnName("idTaller");
+                e.Property(x => x.IdRepuesto).HasColumnName("idRepuesto");
+                e.Property(x => x.Cantidad).HasColumnName("cantidad");
+                e.Property(x => x.StockMinimo).HasColumnName("stockMinimo");
+
+                e.HasOne(x => x.Taller)
+                 .WithMany(t => t.InventarioTaller)
+                 .HasForeignKey(x => x.IdTaller)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.Repuesto)
+                 .WithMany()
+                 .HasForeignKey(x => x.IdRepuesto)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Vehiculo y derivados
+            modelBuilder.Entity<Vehiculo>(e =>
+            {
+                e.ToTable("Vehiculo");
+                e.HasKey(x => x.Placa);
+                e.Property(x => x.Placa).HasColumnName("placa");
+                e.Property(x => x.Marca).HasColumnName("marca");
+                e.Property(x => x.Modelo).HasColumnName("modelo");
+                e.Property(x => x.Año).HasColumnName("año");
+                e.Property(x => x.IdPersona).HasColumnName("idPersona");
+                e.Property(x => x.IdTipoVehiculo).HasColumnName("idTipoVehiculo");
+                e.Property(x => x.FechaCreacion).HasColumnName("fechaCreacion");
+
+                e.HasOne(x => x.Persona)
+                 .WithMany()
+                 .HasForeignKey(x => x.IdPersona)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.TipoVehiculo)
+                 .WithMany(tv => tv.Vehiculos)
+                 .HasForeignKey(x => x.IdTipoVehiculo)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<TipoVehiculo>(e =>
+            {
+                e.ToTable("TipoVehiculo");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).HasColumnName("id").UseIdentityByDefaultColumn();
+                e.Property(x => x.Descripcion).HasColumnName("descripcion");
+            });
+
+            modelBuilder.Entity<VehiculoGasolina>(e =>
+            {
+                e.ToTable("VehiculoGasolina");
+                e.HasKey(x => x.Placa);
+                e.Property(x => x.Placa).HasColumnName("placa");
+                e.Property(x => x.Cilindraje).HasColumnName("cilindraje");
+                e.HasOne(x => x.Vehiculo)
+                 .WithOne()
+                 .HasForeignKey<VehiculoGasolina>(x => x.Placa)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<VehiculoElectrico>(e =>
+            {
+                e.ToTable("VehiculoElectrico");
+                e.HasKey(x => x.Placa);
+                e.Property(x => x.Placa).HasColumnName("placa");
+                e.Property(x => x.CapacidadBateria).HasColumnName("capacidadBateria");
+                e.HasOne(x => x.Vehiculo)
+                 .WithOne()
+                 .HasForeignKey<VehiculoElectrico>(x => x.Placa)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<VehiculoHibrido>(e =>
+            {
+                e.ToTable("VehiculoHibrido");
+                e.HasKey(x => x.Placa);
+                e.Property(x => x.Placa).HasColumnName("placa");
+                e.Property(x => x.Cilindraje).HasColumnName("cilindraje");
+                e.Property(x => x.CapacidadBateria).HasColumnName("capacidadBateria");
+                e.HasOne(x => x.Vehiculo)
+                 .WithOne()
+                 .HasForeignKey<VehiculoHibrido>(x => x.Placa)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ServicioMecanicos (tabla puente)
+            modelBuilder.Entity<ServicioMecanico>(e =>
+            {
+                e.ToTable("ServicioMecanicos");
+                e.HasKey(x => new { x.IdServicio, x.IdMecanico });
+                e.Property(x => x.IdServicio).HasColumnName("idServicio");
+                e.Property(x => x.IdMecanico).HasColumnName("idMecanico");
+                e.Property(x => x.FechaAsignacion)
+                 .HasColumnName("fechaAsignacion")
+                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                e.HasOne(x => x.Servicio)
+                 .WithMany()
+                 .HasForeignKey(x => x.IdServicio)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.Mecanico)
+                 .WithMany()
+                 .HasForeignKey(x => x.IdMecanico)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
 
         }
     }

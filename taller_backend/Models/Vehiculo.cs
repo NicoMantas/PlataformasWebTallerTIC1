@@ -27,7 +27,7 @@ namespace taller_backend.Models
 
         [Column("idTipoVehiculo")]
         [MaxLength(20)]
-        public string? IdTipoVehiculo { get; set; }
+        public long? IdTipoVehiculo { get; set; }
 
         [Column("fechaCreacion")]
         public DateTime? FechaCreacion { get; set; }
