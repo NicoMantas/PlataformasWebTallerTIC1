@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace B_TallerAutomoviles.Interfaces
 {
-    public interface IRevision
+    interface IFactura
     {
-        string RealizarRevision();
+        string GenerarFactura();
+        double CalcularMontoTotal();
     }
 }

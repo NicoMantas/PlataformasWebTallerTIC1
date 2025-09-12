@@ -3,41 +3,44 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using B_TallerAutomoviles.Clases.Clientes;
-using B_TallerAutomoviles.Clases.Servicios;
-using B_TallerAutomoviles.Clases.Vehiculos;
 using B_TallerAutomoviles.Interfaces;
 
 namespace B_TallerAutomoviles.Clases
 {
-    public class OrdenDeTrabajo
+    public class OrdenDeTrabajo : IOrdenTrabajo
     {
-        public enum estadoOrden { EnProceso, Completada, Cancelada}
+        public enum EstadoOrden
+        {
+            EnProgreso,
+            Completada,
+            Cancelada
+        }
 
-        private long id;
+        private int id;
+        private List<Servicio> servicios = new List<Servicio>();
         private DateTime fechaCreacion;
-        private estadoOrden estado;
-        private Cliente cliente;
-        private Vehiculo vehiculo;
-        private List<Servicio> servicio;
+        private EstadoOrden estado;
 
-        protected readonly IGestionOrden gestionarOrdenDeTrabajo;
-
-        public long Id { get => id; set => id = value; }
+        public int Id { get => id; set => id = value; }
+        public List<Servicio> Servicios { get => servicios; set => servicios = value; }
         public DateTime FechaCreacion { get => fechaCreacion; set => fechaCreacion = value; }
-        public estadoOrden Estado { get => estado; set => estado = value; }
-        public Cliente Cliente { get => cliente; set => cliente = value; }
-        public Vehiculo Vehiculo { get => vehiculo; set => vehiculo = value; }
-        public List<Servicio> Servicio { get => servicio; set => servicio = value; }
+        public EstadoOrden Estado { get => estado; set => estado = value; }
 
-        public OrdenDeTrabajo(long id, DateTime fechaCreacion, estadoOrden estado, Cliente cliente, Vehiculo vehiculo, IGestionOrden gestionarOrdenDeTrabajo)
+        public OrdenDeTrabajo(int id, List<Servicio> servicios, EstadoOrden estado)
         {
             this.Id = id;
-            this.FechaCreacion = fechaCreacion;
+            this.Servicios = servicios ?? new List<Servicio>();
+            this.FechaCreacion = DateTime.Now;
             this.Estado = estado;
-            this.Cliente = cliente;
-            this.Vehiculo = vehiculo;
-            this.Servicio = new List<Servicio>();
+        }
+
+        public void AgregarOrden(Servicio servicios)
+        {
+            //Se agrega el servicio a la lista de servicios en la orden
+            if (servicios != null)
+            {
+                Servicios.Add(servicios);
+            }
         }
     }
 }

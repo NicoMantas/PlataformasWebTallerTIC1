@@ -3,31 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using B_TallerAutomoviles.Interfaces;
 
 namespace B_TallerAutomoviles.Clases
 {
     public class Proveedor
     {
-        private long id;
+        private int id;
         private string nombre;
-        private long contacto;
+        private string contacto;
 
-        protected readonly IValidarProveedor validarProveedor;
-
-        public Proveedor(long id, string nombre, long contacto)
+        public Proveedor(int id, string nombre, string contacto)
         {
             this.Id = id;
             this.Nombre = nombre;
             this.Contacto = contacto;
-            
-            // Validar después de asignar los valores
-            if (!validarProveedor.ValidarProveedor(this))
-                throw new ArgumentException("Datos del proveedor inválidos");
         }
 
-        public long Id { get => id; set => id = value; }
+        public int Id { get => id; set => id = value; }
         public string Nombre { get => nombre; set => nombre = value; }
-        public long Contacto { get => contacto; set => contacto = value; }
+        public string Contacto { get => contacto; set => contacto = value; }
     }
 }
