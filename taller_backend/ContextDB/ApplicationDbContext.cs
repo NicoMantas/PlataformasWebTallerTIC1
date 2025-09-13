@@ -12,16 +12,16 @@ namespace taller_backend.ContextDB
         // acá se agregan los bdset de las tablas
         public DbSet<Proveedor> Proveedores => Set<Proveedor>();
         public DbSet<Repuesto> Repuestos => Set<Repuesto>();
-        public DbSet<taller_backend.Models.Estado> Estados => Set<taller_backend.Models.Estado>();
-        public DbSet<taller_backend.Models.TipoServicio> TiposServicio => Set<taller_backend.Models.TipoServicio>();
-        public DbSet<taller_backend.Models.Servicio> Servicios => Set<taller_backend.Models.Servicio>();
-        public DbSet<taller_backend.Models.Reparacion> Reparaciones => Set<taller_backend.Models.Reparacion>();
-        public DbSet<taller_backend.Models.Revision> Revisiones => Set<taller_backend.Models.Revision>();
+        public DbSet<Estado> Estados => Set<Estado>();
+        public DbSet<TipoServicio> TiposServicio => Set<TipoServicio>();
+        public DbSet<Servicio> Servicios => Set<Servicio>();
+        public DbSet<Reparacion> Reparaciones => Set<Reparacion>();
+        public DbSet<Revision> Revisiones => Set<Revision>();
         public DbSet<Persona> Personas => Set<Persona>();
         public DbSet<Usuario> Usuarios => Set<Usuario>();
         public DbSet<ClienteNatural> ClientesNaturales => Set<ClienteNatural>();
         public DbSet<ClienteJuridico> ClientesJuridicos => Set<ClienteJuridico>();
-        public DbSet<TipoPersona> TiposPersona => Set<TipoPersona>();
+        public DbSet<TipoPersona> TipoPersona => Set<TipoPersona>();
         public DbSet<DetalleTipoPersona> DetallesTipoPersona => Set<DetalleTipoPersona>();
         public DbSet<Empleado> Empleados => Set<Empleado>();
         public DbSet<Mecanico> Mecanicos => Set<Mecanico>();
@@ -33,7 +33,7 @@ namespace taller_backend.ContextDB
         public DbSet<Taller> Talleres => Set<Taller>();
         public DbSet<OrdenDeTrabajo> OrdenesDeTrabajo => Set<OrdenDeTrabajo>();
         public DbSet<OrdenServicio> OrdenServicios => Set<OrdenServicio>();
-        public DbSet<TipoOrdenEstado> TiposOrdenEstado => Set<TipoOrdenEstado>();
+        public DbSet<TipoOrdenEstado> TipoOrdenEstado => Set<TipoOrdenEstado>();
         public DbSet<TallerEmpleado> TallerEmpleados => Set<TallerEmpleado>();
         public DbSet<TallerCliente> TallerClientes => Set<TallerCliente>();
         public DbSet<TallerVehiculo> TallerVehiculos => Set<TallerVehiculo>();
@@ -51,10 +51,10 @@ namespace taller_backend.ContextDB
                 e.Property(x => x.Nombre).HasColumnName("nombre");
                 e.Property(x => x.Contacto).HasColumnName("contacto");
 
-               /* e.HasMany(x => x.Repuestos)
+                e.HasMany(x => x.Repuestos)
                  .WithOne(x => x.Proveedor)
                  .HasForeignKey(x => x.IdProveedor)
-                 .OnDelete(DeleteBehavior.SetNull);*/
+                 .OnDelete(DeleteBehavior.SetNull);
             });
             
             // Configuración para la entidad Repuesto

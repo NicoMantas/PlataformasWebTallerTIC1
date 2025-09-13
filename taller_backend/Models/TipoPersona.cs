@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema; //para mapear la clase con la tabla de la base de datos
+using System.ComponentModel.DataAnnotations.Schema; //para mapear la clase con la tabla de la base de
+using System.Text.Json.Serialization; //para ignorar la propiedad en la serialización JSON
 
 namespace taller_backend.Models
 {
@@ -16,6 +17,7 @@ namespace taller_backend.Models
         public string? Descripcion { get; set; }
 
         // Colección de navegación
+        [JsonIgnore]
         public ICollection<DetalleTipoPersona> DetallesTipoPersona { get; set; } = new List<DetalleTipoPersona>();
     }
 }

@@ -7,7 +7,7 @@ using B_TallerAutomoviles.Clases;
 
 namespace B_TallerAutomoviles.Interfaces
 {
-    interface IOrdenTrabajo
+   public interface IOrdenTrabajo
     {
         void AgregarOrden(Servicio servicios);
     }

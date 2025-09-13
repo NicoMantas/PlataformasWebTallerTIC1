@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema; //para mapear la clase con la tabla de la base de datos
+using System.Text.Json.Serialization; //para ignorar la propiedad en la serialización JSON
 
 
 namespace taller_backend.Models
@@ -19,7 +20,9 @@ namespace taller_backend.Models
         public string? Contacto { get; set; }
 
         // navegación (colección)
-       public ICollection<Repuesto> Repuestos { get; set; } = new List<Repuesto>(); //inicializamos la colección para evitar errores de referencia nula
+        //para evitar referencias circulares en la serialización JSON
+        [JsonIgnore]
+        public  ICollection<Repuesto> Repuestos { get; set; } = new List<Repuesto>(); //inicializamos la colección para evitar errores de referencia nula
 
     }
 }

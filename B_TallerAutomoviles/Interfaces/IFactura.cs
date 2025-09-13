@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace B_TallerAutomoviles.Interfaces
 {
-    interface IFactura
+    public interface IFactura
     {
         string GenerarFactura();
         double CalcularMontoTotal();

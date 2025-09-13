@@ -6,6 +6,7 @@ using taller_backend.ContextDB;
 using taller_backend.Models;
 using taller_backend.DTOs;
 namespace taller_backend.Controllers
+//Las tablas de tipo catalogo no necesitan put, ni delete, solo get
 {
     [ApiController]
     [Route("api/[controller]")]
