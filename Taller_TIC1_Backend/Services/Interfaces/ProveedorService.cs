@@ -1,8 +1,7 @@
-﻿using B_TallerAutomoviles.Clases;
+﻿using Taller_TIC1_Backend.Models;
 using Taller_TIC1_Backend.Models.DTOs;
 using Taller_TIC1_Backend.Repositories.Interfaces;
 using Taller_TIC1_Backend.Services.Interfaces;
-using static Taller_TIC1_Backend.Models.DTOs.PorveedorCreateDTOcs;
 
 namespace Taller_TIC1_Backend.Services.Interfaces
 {
@@ -29,11 +28,15 @@ namespace Taller_TIC1_Backend.Services.Interfaces
 
         public async Task<ProveedorResponseDto> CreateAsync(ProveedorCreateDto dto)
         {
-            var proveedor = new Proveedor(
-                id: 0,
-                nombre: dto.Nombre,
-                contacto: dto.Contacto
-            );
+            // Generar el siguiente ID disponible
+            var nextId = await GetNextIdAsync();
+            
+            var proveedor = new Proveedor
+            {
+                Id = nextId,
+                Nombre = dto.Nombre,
+                Contacto = dto.Contacto ?? string.Empty
+            };
 
             var createdProveedor = await _repository.CreateAsync(proveedor);
             return MapToResponseDto(createdProveedor);
@@ -41,11 +44,12 @@ namespace Taller_TIC1_Backend.Services.Interfaces
 
         public async Task<ProveedorResponseDto?> UpdateAsync(ProveedorUpdateDto dto)
         {
-            var proveedor = new Proveedor(
-                id: dto.Id,
-                nombre: dto.Nombre,
-                contacto: dto.Contacto
-            );
+            var proveedor = new Proveedor
+            {
+                Id = dto.Id,
+                Nombre = dto.Nombre,
+                Contacto = dto.Contacto ?? string.Empty
+            };
 
             var updatedProveedor = await _repository.UpdateAsync(proveedor);
             return updatedProveedor != null ? MapToResponseDto(updatedProveedor) : null;
@@ -62,13 +66,22 @@ namespace Taller_TIC1_Backend.Services.Interfaces
             return proveedores.Select(MapToResponseDto);
         }
 
+        private async Task<int> GetNextIdAsync()
+        {
+            var allProveedores = await _repository.GetAllAsync();
+            if (!allProveedores.Any())
+                return 1;
+            
+            return allProveedores.Max(p => p.Id) + 1;
+        }
+
         private static ProveedorResponseDto MapToResponseDto(Proveedor proveedor)
         {
             return new ProveedorResponseDto
             {
                 Id = proveedor.Id,
                 Nombre = proveedor.Nombre,
-                Contacto = proveedor.Contacto,
+                Contacto = proveedor.Contacto
             };
         }
     }

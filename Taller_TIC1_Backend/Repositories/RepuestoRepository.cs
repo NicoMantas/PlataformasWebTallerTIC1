@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using B_TallerAutomoviles.Clases;
 using Taller_TIC1_Backend.Data;
+using Taller_TIC1_Backend.Models;
 using Taller_TIC1_Backend.Repositories.Interfaces;
 
 namespace Taller_TIC1_Backend.Repositories
@@ -17,14 +17,12 @@ namespace Taller_TIC1_Backend.Repositories
         public async Task<IEnumerable<Repuesto>> GetAllAsync()
         {
             return await _context.Repuestos
-                .Include(r => r.Proveedores)
                 .ToListAsync();
         }
 
         public async Task<Repuesto?> GetByIdAsync(int id)
         {
             return await _context.Repuestos
-                .Include(r => r.Proveedores)
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
@@ -61,7 +59,6 @@ namespace Taller_TIC1_Backend.Repositories
         public async Task<IEnumerable<Repuesto>> SearchByNameAsync(string name)
         {
             return await _context.Repuestos
-                .Include(r => r.Proveedores)
                 .Where(r => r.Nombre.Contains(name))
                 .ToListAsync();
         }
@@ -69,7 +66,6 @@ namespace Taller_TIC1_Backend.Repositories
         public async Task<IEnumerable<Repuesto>> GetByStockAsync(int minStock)
         {
             return await _context.Repuestos
-                .Include(r => r.Proveedores)
                 .Where(r => r.Stock >= minStock)
                 .ToListAsync();
         }
@@ -77,7 +73,6 @@ namespace Taller_TIC1_Backend.Repositories
         public async Task<Repuesto?> GetByNumeroSerieAsync(long numeroSerie)
         {
             return await _context.Repuestos
-                .Include(r => r.Proveedores)
                 .FirstOrDefaultAsync(r => r.Numero_serie == numeroSerie);
         }
     }

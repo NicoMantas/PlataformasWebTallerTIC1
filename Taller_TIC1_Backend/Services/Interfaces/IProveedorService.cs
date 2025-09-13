@@ -1,5 +1,4 @@
 ﻿using Taller_TIC1_Backend.Models.DTOs;
-using static Taller_TIC1_Backend.Models.DTOs.PorveedorCreateDTOcs;
 namespace Taller_TIC1_Backend.Services.Interfaces
 {
     public interface IProveedorService

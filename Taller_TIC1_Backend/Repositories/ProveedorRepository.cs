@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using B_TallerAutomoviles.Clases;
 using Taller_TIC1_Backend.Data;
+using Taller_TIC1_Backend.Models;
 using Taller_TIC1_Backend.Repositories.Interfaces;
 
 namespace Taller_TIC1_Backend.Repositories

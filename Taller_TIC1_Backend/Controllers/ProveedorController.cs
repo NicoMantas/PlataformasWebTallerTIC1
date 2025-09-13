@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Taller_TIC1_Backend.Models.DTOs;
 using Taller_TIC1_Backend.Services.Interfaces;
-using static Taller_TIC1_Backend.Models.DTOs.PorveedorCreateDTOcs;
 
 namespace Taller_TIC1_Backend.Controllers
 {

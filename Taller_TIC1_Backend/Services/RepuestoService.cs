@@ -1,4 +1,4 @@
-using B_TallerAutomoviles.Clases;
+using Taller_TIC1_Backend.Models;
 using Taller_TIC1_Backend.Models.DTOs;
 using Taller_TIC1_Backend.Repositories.Interfaces;
 using Taller_TIC1_Backend.Services.Interfaces;
@@ -28,14 +28,31 @@ namespace Taller_TIC1_Backend.Services
 
         public async Task<RepuestoResponseDto> CreateAsync(RepuestoCreateDto dto)
         {
-            var entity = new Repuesto(0, dto.Nombre, dto.NumeroSerie ?? 0, dto.Precio, dto.Stock, new List<Proveedor>());
+            // Generar el siguiente ID disponible
+            var nextId = await GetNextIdAsync();
+            
+            var entity = new Repuesto
+            {
+                Id = nextId,
+                Nombre = dto.Nombre,
+                Numero_serie = dto.NumeroSerie ?? 0,
+                Precio = dto.Precio,
+                Stock = dto.Stock
+            };
             var created = await _repository.CreateAsync(entity);
             return MapToResponseDto(created);
         }
 
         public async Task<RepuestoResponseDto?> UpdateAsync(RepuestoUpdateDto dto)
         {
-            var entity = new Repuesto(dto.Id, dto.Nombre, dto.NumeroSerie ?? 0, dto.Precio, dto.Stock, new List<Proveedor>());
+            var entity = new Repuesto
+            {
+                Id = dto.Id,
+                Nombre = dto.Nombre,
+                Numero_serie = dto.NumeroSerie ?? 0,
+                Precio = dto.Precio,
+                Stock = dto.Stock
+            };
             var updated = await _repository.UpdateAsync(entity);
             return updated != null ? MapToResponseDto(updated) : null;
         }
@@ -60,6 +77,15 @@ namespace Taller_TIC1_Backend.Services
             return item != null ? MapToResponseDto(item) : null;
         }
 
+        private async Task<int> GetNextIdAsync()
+        {
+            var allRepuestos = await _repository.GetAllAsync();
+            if (!allRepuestos.Any())
+                return 1;
+            
+            return allRepuestos.Max(r => r.Id) + 1;
+        }
+
         private static RepuestoResponseDto MapToResponseDto(Repuesto repuesto)
         {
             return new RepuestoResponseDto
@@ -69,12 +95,7 @@ namespace Taller_TIC1_Backend.Services
                 NumeroSerie = repuesto.Numero_serie,
                 Precio = repuesto.Precio,
                 Stock = repuesto.Stock,
-                Proveedores = repuesto.Proveedores?.Select(p => new ProveedorResponseDto
-                {
-                    Id = p.Id,
-                    Nombre = p.Nombre,
-                    Contacto = p.Contacto
-                }).ToList() ?? new List<ProveedorResponseDto>()
+                Proveedores = new List<ProveedorResponseDto>()
             };
         }
     }

@@ -1,4 +1,4 @@
-using B_TallerAutomoviles.Clases;
+using Taller_TIC1_Backend.Models;
 
 namespace Taller_TIC1_Backend.Repositories.Interfaces
 {
