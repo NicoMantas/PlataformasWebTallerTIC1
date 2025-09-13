@@ -14,4 +14,10 @@
     <Folder Include="Controllers\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="B_TallerAutomoviles">
+      <HintPath>..\B_TallerAutomoviles\bin\Debug\net9.0\B_TallerAutomoviles.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
