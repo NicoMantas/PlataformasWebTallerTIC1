@@ -18,5 +18,12 @@ namespace Taller_TIC1_Backend.Models.DTOs
         
         [Required]
         public int IdVehiculo { get; set; }
+
+        // Campos para subtipos
+        public string? Tipo { get; set; } // "Natural" o "Empresa"
+        public long? Cedula { get; set; }
+        public string? Apellido { get; set; }
+        public long? Nit { get; set; }
+        public string? RepresentanteLegal { get; set; }
     }
 }

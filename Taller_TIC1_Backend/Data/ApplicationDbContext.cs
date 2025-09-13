@@ -181,13 +181,14 @@ namespace Taller_TIC1_Backend.Data
             {
                 e.ToTable("Cliente");
                 e.HasKey(x => x.Id);
-                e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
+                e.Property(x => x.Id).HasColumnName("id");
                 e.Property(x => x.Nombre).HasColumnName("nombre").HasMaxLength(255);
                 e.Property(x => x.Email).HasColumnName("email").HasMaxLength(255);
                 e.Property(x => x.Telefono).HasColumnName("telefono").HasColumnType("bigint");
                 e.Property(x => x.IdVehiculo).HasColumnName("idVehiculo");
 
-                e.HasOne<Vehiculo>()
+
+                e.HasOne(c => c.Vehiculo)
                  .WithMany()
                  .HasForeignKey(x => x.IdVehiculo)
                  .OnDelete(DeleteBehavior.Restrict);
@@ -202,8 +203,8 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.Cedula).HasColumnName("cedula").HasColumnType("bigint");
                 e.Property(x => x.Apellido).HasColumnName("apellido").HasMaxLength(255);
 
-                e.HasOne<Cliente>()
-                 .WithOne()
+                e.HasOne(c => c.Cliente)
+                 .WithOne(c => c.CNatural)
                  .HasForeignKey<CNatural>(x => x.IdCliente)
                  .OnDelete(DeleteBehavior.Cascade);
             });
@@ -217,8 +218,8 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.Nit).HasColumnName("nit").HasColumnType("bigint");
                 e.Property(x => x.RepresentanteLegal).HasColumnName("representante").HasMaxLength(255);
 
-                e.HasOne<Cliente>()
-                 .WithOne()
+                e.HasOne(c => c.Cliente)
+                 .WithOne(c => c.CEmpresa)
                  .HasForeignKey<CEmpresa>(x => x.IdCliente)
                  .OnDelete(DeleteBehavior.Cascade);
             });

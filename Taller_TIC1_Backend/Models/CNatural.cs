@@ -8,5 +8,6 @@ namespace Taller_TIC1_Backend.Models
         
         // Propiedad de navegación
         public Cliente? Cliente { get; set; }
+        
     }
 }

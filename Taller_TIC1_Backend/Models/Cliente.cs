@@ -12,5 +12,19 @@ namespace Taller_TIC1_Backend.Models
         
         // Propiedades de navegación
         public Vehiculo? Vehiculo { get; set; }
+        //propiedades para determinar tipo de cliente
+        public CNatural? CNatural { get; set; }
+        public CEmpresa? CEmpresa { get; set; }
+
+        // Propiedad para determinar el tipo
+        public string TipoCliente
+        {
+            get
+            {
+                if (CNatural != null) return "Natural";
+                if (CEmpresa != null) return "Empresa";
+                return "General";
+            }
+        }
     }
 }

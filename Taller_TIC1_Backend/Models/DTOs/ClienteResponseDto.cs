@@ -7,6 +7,12 @@ namespace Taller_TIC1_Backend.Models.DTOs
         public string Email { get; set; } = string.Empty;
         public long Telefono { get; set; }
         public int IdVehiculo { get; set; }
+        public string TipoCliente { get; set; } = string.Empty;
+        public long? Cedula { get; set; }
+        public string? Apellido { get; set; }
+        public long? Nit { get; set; }
+        public string? RepresentanteLegal { get; set; }
         public string? VehiculoInfo { get; set; }
+
     }
 }

@@ -40,8 +40,9 @@ namespace Taller_TIC1_Backend.Controllers
 
             try
             {
-                var cliente = await _clienteService.CreateAsync(clienteCreateDto);
-                return CreatedAtAction(nameof(GetById), new { id = cliente.Id }, cliente);
+                // Intentar crear el cliente
+                var cliente = await _clienteService.CreateAsync(clienteCreateDto); // Crear el cliente
+                return CreatedAtAction(nameof(GetById), new { id = cliente.Id }, cliente); // Retornar 201 Created con la ubicación del nuevo recurso
             }
             catch (Exception ex)
             {
