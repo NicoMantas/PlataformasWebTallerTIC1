@@ -35,6 +35,12 @@ namespace B_TallerAutomoviles.Clases
         public double MontoTotal { get => montoTotal; set => montoTotal = value; }
         public MetodoPago MetodoPagoFactura { get => metodoPagoFactura; set => metodoPagoFactura = value; }
 
+        public Factura()
+        {
+            this.FechaEmision = DateTime.Now;
+            this.MetodoPagoFactura = MetodoPago.Efectivo;
+        }
+
         public Factura(int id, Cliente cliente, OrdenDeTrabajo ordenTrabajo, double montoParcial, float impuesto, double montoTotal, MetodoPago metodoPago)
         {
             this.Id = id;

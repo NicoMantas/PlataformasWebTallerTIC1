@@ -21,6 +21,12 @@ namespace B_TallerAutomoviles.Clases
         private Estado estado1;
 
 
+        protected Servicio()
+        {
+            this.Mecanico = new List<Empleado>();
+            this.Estado1 = Estado.Pendiente;
+        }
+
         protected Servicio(int id, Cliente cliente, List<Empleado> mecanico, Estado estado)
         {
             this.Id = id;

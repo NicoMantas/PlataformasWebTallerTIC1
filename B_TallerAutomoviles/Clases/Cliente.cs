@@ -20,6 +20,10 @@ namespace B_TallerAutomoviles.Clases
         public long Telefono { get => telefono; set => telefono = value; }
         public Vehiculo Carro { get => carro; set => carro = value; }
 
+        protected Cliente()
+        {
+        }
+
         public Cliente(int id, string nombre, string email, long telefono, Vehiculo carro)
         {
             this.Id = id;

@@ -12,6 +12,10 @@ namespace B_TallerAutomoviles.Clases
         private string nombre;
         private string contacto;
 
+        public Proveedor()
+        {
+        }
+
         public Proveedor(int id, string nombre, string contacto)
         {
             this.Id = id;

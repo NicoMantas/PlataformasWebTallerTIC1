@@ -31,6 +31,11 @@ namespace B_TallerAutomoviles.Clases
         public DateTime FechaContratacion { get => fechaContratacion; set => fechaContratacion = value; }
         public TipoEmpleado Tipo { get => tipo; set => tipo = value; }
 
+        public Empleado()
+        {
+            this.FechaContratacion = DateTime.Now;
+        }
+
         public Empleado(int id, string nombre, string apellido, long cedula, double salario, TipoEmpleado tipo)
         {
             this.Id = id;

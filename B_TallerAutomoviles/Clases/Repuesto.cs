@@ -15,6 +15,11 @@ namespace B_TallerAutomoviles.Clases
         private int stock;
         private List<Proveedor> proveedores;
 
+        public Repuesto()
+        {
+            proveedores = new List<Proveedor>();
+        }
+
         public Repuesto(int id, string nombre, long numero_serie, float precio, int stock, List<Proveedor> proveedores)
         {
             this.Id = id;

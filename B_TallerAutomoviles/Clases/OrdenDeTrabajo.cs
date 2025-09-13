@@ -26,6 +26,13 @@ namespace B_TallerAutomoviles.Clases
         public DateTime FechaCreacion { get => fechaCreacion; set => fechaCreacion = value; }
         public EstadoOrden Estado { get => estado; set => estado = value; }
 
+        public OrdenDeTrabajo()
+        {
+            this.Servicios = new List<Servicio>();
+            this.FechaCreacion = DateTime.Now;
+            this.Estado = EstadoOrden.EnProgreso;
+        }
+
         public OrdenDeTrabajo(int id, List<Servicio> servicios, EstadoOrden estado)
         {
             this.Id = id;
