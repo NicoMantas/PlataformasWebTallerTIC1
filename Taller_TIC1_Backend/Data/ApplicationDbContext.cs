@@ -67,13 +67,14 @@ namespace Taller_TIC1_Backend.Data
                 e.HasKey(x => new { x.IdRepuesto, x.IdProveedor });
                 e.Property(x => x.IdRepuesto).HasColumnName("idRepuesto");
                 e.Property(x => x.IdProveedor).HasColumnName("idProveedor");
-                
-                e.HasOne<Repuesto>()
+
+                // Configuración de las relaciones con navegación
+                e.HasOne(rp => rp.Repuesto)
                  .WithMany()
                  .HasForeignKey(x => x.IdRepuesto)
                  .OnDelete(DeleteBehavior.Cascade);
-                 
-                e.HasOne<Proveedor>()
+
+                e.HasOne(rp => rp.Proveedor)
                  .WithMany()
                  .HasForeignKey(x => x.IdProveedor)
                  .OnDelete(DeleteBehavior.Cascade);

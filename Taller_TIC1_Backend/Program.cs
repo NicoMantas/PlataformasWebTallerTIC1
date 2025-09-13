@@ -45,6 +45,10 @@ namespace Taller_TIC1_Backend
             builder.Services.AddScoped<IEmpleadoRepository, EmpleadoRepository>();
             builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
 
+            // Agrega estas líneas para registrar los nuevos servicios
+            builder.Services.AddScoped<IRepuestoProveedorRepository, RepuestoProveedorRepository>();
+            builder.Services.AddScoped<IRepuestoProveedorService, RepuestoProveedorService>();
+
 
             var app = builder.Build();
 

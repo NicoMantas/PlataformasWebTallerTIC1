@@ -3,7 +3,7 @@ using Taller_TIC1_Backend.Models.DTOs;
 using Taller_TIC1_Backend.Repositories.Interfaces;
 using Taller_TIC1_Backend.Services.Interfaces;
 
-namespace Taller_TIC1_Backend.Services.Interfaces
+namespace Taller_TIC1_Backend.Services
 {
     public class ProveedorService : IProveedorService
     {

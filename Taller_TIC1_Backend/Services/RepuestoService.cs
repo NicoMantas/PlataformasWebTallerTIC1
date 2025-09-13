@@ -1,5 +1,6 @@
 using Taller_TIC1_Backend.Models;
 using Taller_TIC1_Backend.Models.DTOs;
+using Taller_TIC1_Backend.Repositories;
 using Taller_TIC1_Backend.Repositories.Interfaces;
 using Taller_TIC1_Backend.Services.Interfaces;
 
@@ -8,10 +9,12 @@ namespace Taller_TIC1_Backend.Services
     public class RepuestoService : IRepuestoService
     {
         private readonly IRepuestoRepository _repository;
+        private readonly IRepuestoProveedorRepository _repuestoProveedorRepository;
 
-        public RepuestoService(IRepuestoRepository repository)
+        public RepuestoService(IRepuestoRepository repository, IRepuestoProveedorRepository repuestoProveedorRepository)
         {
             _repository = repository;
+            _repuestoProveedorRepository = repuestoProveedorRepository;
         }
 
         public async Task<IEnumerable<RepuestoResponseDto>> GetAllAsync()
@@ -23,7 +26,22 @@ namespace Taller_TIC1_Backend.Services
         public async Task<RepuestoResponseDto?> GetByIdAsync(int id)
         {
             var entity = await _repository.GetByIdAsync(id);
-            return entity != null ? MapToResponseDto(entity) : null;
+            if (entity == null) return null;
+
+            var response = MapToResponseDto(entity);
+
+            // Obtener los proveedores relacionados
+            var repuestoProveedores = await _repuestoProveedorRepository.GetByRepuestoIdAsync(id);
+            response.Proveedores = repuestoProveedores
+                .Select(rp => new ProveedorResponseDto
+                {
+                    Id = rp.Proveedor.Id,
+                    Nombre = rp.Proveedor.Nombre,
+                    Contacto = rp.Proveedor.Contacto
+                })
+                .ToList();
+
+            return response;
         }
 
         public async Task<RepuestoResponseDto> CreateAsync(RepuestoCreateDto dto)
