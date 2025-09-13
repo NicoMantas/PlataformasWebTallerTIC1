@@ -27,7 +27,7 @@ namespace taller_backend.Models
         public DateTime? FechaContratacion { get; set; }
 
         [Column("idDetalleTipoPersona")]
-        public int IdDetalleTipoPersona { get; set; }
+        public long IdDetalleTipoPersona { get; set; }
 
         // Propiedades de navegación
         [ForeignKey("IdDetalleTipoPersona")]

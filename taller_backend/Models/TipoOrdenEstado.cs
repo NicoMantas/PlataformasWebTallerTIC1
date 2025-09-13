@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace taller_backend.Models
 {
@@ -16,6 +17,7 @@ namespace taller_backend.Models
         public string? Descripcion { get; set; }
 
         // Colección de navegación
+        [JsonIgnore]
         public ICollection<OrdenDeTrabajo> OrdenesTrabajo { get; set; } = new List<OrdenDeTrabajo>();
     }
 }

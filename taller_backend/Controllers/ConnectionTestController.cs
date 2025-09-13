@@ -4,6 +4,9 @@ using Supabase;
 using taller_backend.ContextDB;
 using static System.Runtime.InteropServices.Marshalling.IIUnknownCacheStrategy;
 
+//las operaciones hacia la base de datos deben tartarse como operaciones asincrónicas porque siempre estamos esperando el resultado de esa operación
+//es decir como un select * from tabla donde esperamos que la base de datos nos devuelva los datos pero al esperar debemos permitir que el hilo principal siga ejecutándose y asi 
+//no se bloquee la aplicación mientras esperamos la respuesta de la base de datos
 
 namespace taller_backend.Controllers
 {
@@ -12,7 +15,7 @@ namespace taller_backend.Controllers
     public class ConnectionTestController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly Client _supabase;
+        private readonly Client _supabase; //inyectar quiere decir que se le pasa una instancia de la clase Client al constructor de la clase ConnectionTestController
 
         public ConnectionTestController(ApplicationDbContext context, Client supabase)
         {
@@ -29,7 +32,7 @@ namespace taller_backend.Controllers
         {
             try
             {
-                var canConnect = await _context.Database.CanConnectAsync();
+                var canConnect = await _context.Database.CanConnectAsync(); //verifica si se puede conectar a la base de datos de forma asincrónica
 
                 return Ok(new
                 {
@@ -108,8 +111,8 @@ namespace taller_backend.Controllers
             }
 
             [HttpGet("tables")]
-            public async Task<IActionResult> GetTables()
-            {
+            public async Task<IActionResult> GetTables()  //task representa una operación asincrónica que puede devolver un valor
+        {
                 try
                 {
                     var connection = _context.Database.GetDbConnection();

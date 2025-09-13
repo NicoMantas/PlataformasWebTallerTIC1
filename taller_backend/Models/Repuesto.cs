@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 namespace taller_backend.Models
 
 {
@@ -33,6 +34,7 @@ namespace taller_backend.Models
         public long? IdProveedor { get; set; }
 
         //navegación de repuestos
+        [JsonIgnore]
         public Proveedor? Proveedor { get; set; } 
     }
 }

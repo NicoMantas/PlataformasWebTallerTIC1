@@ -14,6 +14,9 @@ namespace taller_backend.Models
         public string? Descripcion { get; set; }
         [Column("idTipoPersona")]
         public long? IdTipoPersona { get; set; }
+
+
+
         //propiedade de navegacion
         [ForeignKey("IdTipoPersona")]
         public TipoPersona? TipoPersona { get; set; }
