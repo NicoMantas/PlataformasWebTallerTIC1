@@ -6,7 +6,10 @@ namespace Taller_TIC1_Backend.Models.DTOs
         public string Placa { get; set; } = string.Empty;
         public string Marca { get; set; } = string.Empty;
         public string Modelo { get; set; } = string.Empty;
-        public int Año { get; set; }
+        public int Anio { get; set; }
         public string TipoVehiculo { get; set; } = string.Empty;
+        public int? Cilindraje { get; set; }
+        public int? CapacidadBateria { get; set; }
+
     }
 }

@@ -18,6 +18,6 @@ namespace Taller_TIC1_Backend.Models.DTOs
         
         [Required]
         [Range(1900, 2030)]
-        public int Año { get; set; }
+        public int Anio { get; set; }
     }
 }

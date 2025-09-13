@@ -49,6 +49,20 @@ namespace Taller_TIC1_Backend
             builder.Services.AddScoped<IRepuestoProveedorRepository, RepuestoProveedorRepository>();
             builder.Services.AddScoped<IRepuestoProveedorService, RepuestoProveedorService>();
 
+            // Registrar repositorios
+            builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+            builder.Services.AddScoped<ITallerRepository, TallerRepository>();
+            builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+            builder.Services.AddScoped<IEmpleadoRepository, EmpleadoRepository>();
+            builder.Services.AddScoped<IVehiculoRepository, VehiculoRepository>();
+
+            // Registrar servicios
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<ITallerService, TallerService>();
+            builder.Services.AddScoped<IClienteService, ClienteService>();
+            builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
+            builder.Services.AddScoped<IVehiculoService, VehiculoService>();
+
 
             var app = builder.Build();
 

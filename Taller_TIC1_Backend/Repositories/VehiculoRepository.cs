@@ -19,11 +19,17 @@ namespace Taller_TIC1_Backend.Repositories
             return await _context.Vehiculos.ToListAsync();
         }
 
+        // Get a vehicle by its ID
         public async Task<Vehiculo?> GetByIdAsync(int id)
         {
-            return await _context.Vehiculos.FindAsync(id);
+            return await _context.Vehiculos
+                .Include(v => v.VGasolina)
+                .Include(v => v.VElectrico)
+                .Include(v => v.VHibrido)
+                .FirstOrDefaultAsync(v => v.Id == id);
         }
 
+        // Create a new vehicle
         public async Task<Vehiculo> CreateAsync(Vehiculo vehiculo)
         {
             _context.Vehiculos.Add(vehiculo);
@@ -40,7 +46,7 @@ namespace Taller_TIC1_Backend.Repositories
             existingVehiculo.Placa = vehiculo.Placa;
             existingVehiculo.Marca = vehiculo.Marca;
             existingVehiculo.Modelo = vehiculo.Modelo;
-            existingVehiculo.Año = vehiculo.Año;
+            existingVehiculo.Anio = vehiculo.Anio;
 
             await _context.SaveChangesAsync();
             return existingVehiculo;
