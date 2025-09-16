@@ -1,0 +1,47 @@
+/* src/pages/RegisterEmpresa.css */
+.register-empresa-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .auth-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  }
+  
+  .auth-form-container {
+    background: white;
+    padding: 3rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 600px;
+  }
+  
+  .auth-form-container h2 {
+    text-align: center;
+    color: #1a2a6c;
+    margin-bottom: 0.5rem;
+  }
+  
+  .auth-form-container p {
+    text-align: center;
+    color: #666;
+    margin-bottom: 2rem;
+  }
+  
+  .auth-links {
+    text-align: center;
+    margin-top: 1.5rem;
+  }
+  
+  @media (max-width: 768px) {
+    .auth-form-container {
+      padding: 2rem 1.5rem;
+    }
+  }

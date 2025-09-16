@@ -1,0 +1,135 @@
+/* src/pages/HomeCliente.css */
+.home-cliente-page {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+  }
+  
+  .cliente-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .cliente-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .cliente-header h1 {
+    color: #1a2a6c;
+    margin-bottom: 0.5rem;
+  }
+  
+  .cliente-header p {
+    color: #666;
+    font-size: 1.1rem;
+  }
+  
+  .cliente-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .vehiculos-section, .servicios-section, .quick-actions {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .vehiculos-section h2, .servicios-section h2, .quick-actions h2 {
+    color: #1a2a6c;
+    margin-bottom: 1.5rem;
+  }
+  
+  .vehiculos-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .vehiculo-card {
+    padding: 1.5rem;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+  }
+  
+  .vehiculo-card h3 {
+    color: #1a2a6c;
+    margin-bottom: 0.5rem;
+  }
+  
+  .vehiculo-card p {
+    margin-bottom: 0.5rem;
+    color: #666;
+  }
+  
+  .servicios-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .servicio-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+  }
+  
+  .servicio-status {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+  }
+  
+  .servicio-status.completed {
+    background-color: #e6f4ea;
+    color: #137333;
+  }
+  
+  .servicio-status.in-progress {
+    background-color: #e8f0fe;
+    color: #1a73e8;
+  }
+  
+  .servicio-date {
+    color: #666;
+    font-size: 0.9rem;
+  }
+  
+  .action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  
+  @media (max-width: 768px) {
+    .cliente-container {
+      padding: 1rem;
+    }
+    
+    .vehiculos-list {
+      grid-template-columns: 1fr;
+    }
+    
+    .servicio-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    
+    .action-buttons {
+      grid-template-columns: 1fr;
+    }
+  }
