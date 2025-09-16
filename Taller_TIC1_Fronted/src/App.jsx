@@ -1,3 +1,4 @@
+import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import RoleSelect from './pages/RoleSelect';
@@ -7,6 +8,7 @@ import RegisterCliente from './pages/RegisterCliente';
 import RegisterEmpresa from './pages/RegisterEmpresa';
 import HomeCliente from './pages/HomeCliente';
 import HomeEmpresa from './pages/HomeEmpresa';
+import HomeEmpleado from './pages/HomeEmpleado';
 import './App.css';
 
 function App() {
@@ -29,6 +31,7 @@ function App() {
           {/* Rutas protegidas - Home pages */}
           <Route path="/home/cliente" element={<HomeCliente />} />
           <Route path="/home/empresa" element={<HomeEmpresa />} />
+          <Route path="/home/empleado/:tipo" element={<HomeEmpleado />} />
           
           {/* Ruta de fallback - redirigir a la página principal */}
           <Route path="*" element={<Navigate to="/" replace />} />

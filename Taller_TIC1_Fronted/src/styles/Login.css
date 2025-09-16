@@ -46,6 +46,15 @@
     margin-bottom: 0.5rem;
     color: #666;
   }
+
+  .login-hint {
+    background-color: #e8f0fe;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #1a73e8;
+    margin-top: 0.5rem;
+  }
   
   @media (max-width: 768px) {
     .auth-form-container {

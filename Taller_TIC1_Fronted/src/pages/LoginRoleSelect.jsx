@@ -34,6 +34,13 @@ const LoginRoleSelect = () => {
             <p>Acceso para empresas con flotas vehiculares</p>
             <button className="btn-primary">Seleccionar</button>
           </div>
+
+          <div className="role-card" onClick={() => handleRoleSelect('empleado')}>
+            <div className="role-icon">🔧</div>
+            <h3>Empleado</h3>
+            <p>Acceso para el personal del taller</p>
+            <button className="btn-primary">Seleccionar</button>
+          </div>
         </div>
         
         <div className="register-redirect">
