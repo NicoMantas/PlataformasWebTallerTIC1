@@ -304,7 +304,7 @@ namespace Taller_TIC1_Backend.Data
             {
                 e.ToTable("Taller");
                 e.HasKey(x => x.Id);
-                e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
+                e.Property(x => x.Id).HasColumnName("id");
                 e.Property(x => x.Nombre).HasColumnName("nombre").HasMaxLength(255);
                 e.Property(x => x.Direccion).HasColumnName("direccion").HasMaxLength(255);
             });

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 namespace Taller_TIC1_Backend.Models
 {
     public class Taller
@@ -7,6 +8,7 @@ namespace Taller_TIC1_Backend.Models
         public string Direccion { get; set; } = string.Empty;
 
         // Propiedades de navegación
+        [JsonIgnore]
         public List<UsuarioEmpleadoTaller> UsuariosEmpleados { get; set; } = new List<UsuarioEmpleadoTaller>();
         public List<UsuarioClienteTaller> UsuariosClientes { get; set; } = new List<UsuarioClienteTaller>();
     }

@@ -8,5 +8,7 @@ namespace Taller_TIC1_Backend.Services.Interfaces
         Task<TallerResponseDto?> GetByIdAsync(int id);
         Task<TallerResponseDto> CreateAsync(TallerCreateDto tallerCreateDto);
         Task<bool> ExistsAsync(int id);
+        Task<TallerResponseDto?> UpdateAsync(int id, TallerUpdateDto dto);
+        Task<bool> DeleteAsync(int id);
     }
 }
