@@ -1,0 +1,13 @@
+﻿using Taller_TIC1_Backend.Models.DTOs;
+
+namespace Taller_TIC1_Backend.Services.Interfaces
+{
+    public interface IServicioService
+    {
+        Task<IEnumerable<ServicioDTO>> GetAllServiciosAsync();
+        Task<ServicioDTO?> GetServicioByIdAsync(int id);
+        Task<ServicioDTO> CreateServicioAsync(ServicioCreateDTO servicioDto);
+        Task<ServicioDTO> UpdateServicioAsync(int id, ServicioDTO servicioDto);
+        Task<bool> DeleteServicioAsync(int id);
+    }
+}

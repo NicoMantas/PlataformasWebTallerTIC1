@@ -5,6 +5,8 @@ using Taller_TIC1_Backend.Repositories;
 using Taller_TIC1_Backend.Repositories.Interfaces;
 using Taller_TIC1_Backend.Services;
 using Taller_TIC1_Backend.Services.Interfaces;
+
+
 namespace Taller_TIC1_Backend
 {
     public class Program
@@ -19,6 +21,15 @@ namespace Taller_TIC1_Backend
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            // Agregar después de builder.Services.AddControllers();
+            builder.Services.AddScoped<IServicioRepository, ServicioRepository>();
+            builder.Services.AddScoped<IOrdenTrabajoRepository, OrdenTrabajoRepository>();
+            builder.Services.AddScoped<IServicioService, ServicioService>();
+            builder.Services.AddScoped<IOrdenTrabajoService, OrdenTrabajoService>();
+
+            // Agregar AutoMapper
+            builder.Services.AddAutoMapper(typeof(Program));
 
             // DbContext (PostgreSQL)
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
