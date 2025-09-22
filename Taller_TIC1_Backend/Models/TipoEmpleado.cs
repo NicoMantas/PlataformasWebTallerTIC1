@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 namespace Taller_TIC1_Backend.Models
 {
     public class TipoEmpleado
@@ -7,6 +8,7 @@ namespace Taller_TIC1_Backend.Models
 
 
         // Propiedad de navegación
+        [JsonIgnore]
         public List<Empleado> Empleados { get; set; } = new List<Empleado>();
     }
 }

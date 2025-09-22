@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 namespace Taller_TIC1_Backend.Models.DTOs
 {
     public class ClienteResponseDto

@@ -314,7 +314,7 @@ namespace Taller_TIC1_Backend.Data
             {
                 e.ToTable("UsuariosEmpleadoTaller");
                 e.HasKey(x => x.Id);
-                e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
+                e.Property(x => x.Id).HasColumnName("id");
                 e.Property(x => x.Email).HasColumnName("email").HasMaxLength(255);
                 e.Property(x => x.Contrasena).HasColumnName("contrasena").HasMaxLength(255);
                 e.Property(x => x.IdTaller).HasColumnName("idTaller");
@@ -336,7 +336,7 @@ namespace Taller_TIC1_Backend.Data
             {
                 e.ToTable("UsuariosClienteTaller");
                 e.HasKey(x => x.Id);
-                e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
+                e.Property(x => x.Id).HasColumnName("id");
                 e.Property(x => x.Email).HasColumnName("email").HasMaxLength(255);
                 e.Property(x => x.Contrasena).HasColumnName("contrasena").HasMaxLength(255);
                 e.Property(x => x.IdTaller).HasColumnName("idTaller");

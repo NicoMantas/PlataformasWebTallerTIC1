@@ -1,9 +1,11 @@
-﻿using System.Security.Cryptography;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 using System.Text;
 using Taller_TIC1_Backend.Models;
 using Taller_TIC1_Backend.Models.DTOs;
 using Taller_TIC1_Backend.Repositories.Interfaces;
 using Taller_TIC1_Backend.Services.Interfaces;
+using Taller_TIC1_Backend.Data;
 
 namespace Taller_TIC1_Backend.Services
 {
@@ -14,19 +16,41 @@ namespace Taller_TIC1_Backend.Services
         private readonly IEmpleadoRepository _empleadoRepository;
         private readonly IClienteRepository _clienteRepository;
         private readonly ITallerRepository _tallerRepository;
+        private readonly ApplicationDbContext _context;
 
-        public AuthService( // Inyección de dependencias
+        public AuthService(
+             // Inyección de dependencias
+             ApplicationDbContext context,
             IAuthRepository authRepository,
             IEmpleadoRepository empleadoRepository,
             IClienteRepository clienteRepository,
             ITallerRepository tallerRepository)
+           
         {
             _authRepository = authRepository;
             _empleadoRepository = empleadoRepository;
             _clienteRepository = clienteRepository;
             _tallerRepository = tallerRepository;
+            _context = context;
+
+        }
+        private async Task<int> GetNextIdClientesAsync()
+        {
+            var Auth = await _context.UsuariosClienteTaller.ToListAsync();
+            if (!Auth.Any())
+                return 1;
+
+            return Auth.Max(t => t.Id) + 1;
         }
 
+        private async Task<int> GetNextIdEmpleadoAsync()
+        {
+            var Auth = await _context.UsuariosEmpleadoTaller.ToListAsync();
+            if (!Auth.Any())
+                return 1;
+
+            return Auth.Max(t => t.Id) + 1;
+        }
         public async Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequest)
         {
             // Buscar primero como empleado
@@ -130,6 +154,7 @@ namespace Taller_TIC1_Backend.Services
 
             var usuario = new UsuarioEmpleadoTaller
             {
+                Id = await GetNextIdEmpleadoAsync(),
                 Email = registerRequest.Email,
                 Contrasena = HashPassword(registerRequest.Password),
                 IdTaller = registerRequest.IdTaller,
@@ -196,6 +221,7 @@ namespace Taller_TIC1_Backend.Services
 
             var usuario = new UsuarioClienteTaller
             {
+                Id = await GetNextIdClientesAsync(),
                 Email = registerRequest.Email,
                 Contrasena = HashPassword(registerRequest.Password),
                 IdTaller = registerRequest.IdTaller,
@@ -225,6 +251,132 @@ namespace Taller_TIC1_Backend.Services
             return _authRepository.EmailExistsAsync(email);
         }
 
+        // Nuevos métodos CRUD para UsuarioEmpleadoTaller
+        public async Task<IEnumerable<UsuarioEmpleadoTaller>> GetAllUsuariosEmpleadoAsync()
+        {
+            return await _authRepository.GetAllUsuariosEmpleadoAsync();
+        }
+
+        public async Task<UsuarioEmpleadoTaller?> GetUsuarioEmpleadoByIdAsync(int id)
+        {
+            return await _authRepository.GetUsuarioEmpleadoByIdAsync(id);
+        }
+
+        public async Task<AuthResponseDto> UpdateUsuarioEmpleadoAsync(int id, UpdateUsuarioEmpleadoDto updateDto)
+        {
+            var usuarioExistente = await _authRepository.GetUsuarioEmpleadoByIdAsync(id);
+            if (usuarioExistente == null)
+            {
+                return new AuthResponseDto { Success = false, Message = "Usuario no encontrado" };
+            }
+
+            // Verificar si el email ya existe en otro usuario
+            if (usuarioExistente.Email != updateDto.Email &&
+                await _authRepository.EmailExistsAsync(updateDto.Email))
+            {
+                return new AuthResponseDto { Success = false, Message = "El email ya está en uso" };
+            }
+
+            usuarioExistente.Email = updateDto.Email;
+            usuarioExistente.IdTaller = updateDto.IdTaller;
+            usuarioExistente.IdEmpleado = updateDto.IdEmpleado;
+
+            if (!string.IsNullOrEmpty(updateDto.Password))
+            {
+                usuarioExistente.Contrasena = HashPassword(updateDto.Password);
+            }
+
+            await _authRepository.UpdateUsuarioEmpleadoAsync(usuarioExistente);
+
+            var empleado = await _empleadoRepository.GetByIdAsync(updateDto.IdEmpleado);
+            var taller = await _tallerRepository.GetByIdAsync(updateDto.IdTaller);
+
+            return new AuthResponseDto
+            {
+                Success = true,
+                Message = "Usuario actualizado exitosamente",
+                User = new UserInfoDto
+                {
+                    Id = usuarioExistente.Id,
+                    Email = usuarioExistente.Email,
+                    TipoUsuario = "empleado",
+                    IdTaller = usuarioExistente.IdTaller,
+                    NombreTaller = taller?.Nombre ?? string.Empty,
+                    InfoEspecifica = empleado
+                }
+            };
+        }
+
+        public async Task<bool> DeleteUsuarioEmpleadoAsync(int id)
+        {
+            await _authRepository.DeleteUsuarioEmpleadoAsync(id);
+            return true;
+        }
+
+        // Nuevos métodos CRUD para UsuarioClienteTaller
+        public async Task<IEnumerable<UsuarioClienteTaller>> GetAllUsuariosClienteAsync()
+        {
+            return await _authRepository.GetAllUsuariosClienteAsync();
+        }
+
+        public async Task<UsuarioClienteTaller?> GetUsuarioClienteByIdAsync(int id)
+        {
+            return await _authRepository.GetUsuarioClienteByIdAsync(id);
+        }
+
+        public async Task<AuthResponseDto> UpdateUsuarioClienteAsync(int id, UpdateUsuarioClienteDto updateDto)
+        {
+            var usuarioExistente = await _authRepository.GetUsuarioClienteByIdAsync(id);
+            if (usuarioExistente == null)
+            {
+                return new AuthResponseDto { Success = false, Message = "Usuario no encontrado" };
+            }
+
+            if (usuarioExistente.Email != updateDto.Email &&
+                await _authRepository.EmailExistsAsync(updateDto.Email))
+            {
+                return new AuthResponseDto { Success = false, Message = "El email ya está en uso" };
+            }
+
+            usuarioExistente.Email = updateDto.Email;
+            usuarioExistente.IdTaller = updateDto.IdTaller;
+            usuarioExistente.IdCliente = updateDto.IdCliente;
+
+            if (!string.IsNullOrEmpty(updateDto.Password))
+            {
+                usuarioExistente.Contrasena = HashPassword(updateDto.Password);
+            }
+
+            await _authRepository.UpdateUsuarioClienteAsync(usuarioExistente);
+
+            var cliente = await _clienteRepository.GetByIdAsync(updateDto.IdCliente);
+            var taller = await _tallerRepository.GetByIdAsync(updateDto.IdTaller);
+
+            return new AuthResponseDto
+            {
+                Success = true,
+                Message = "Usuario actualizado exitosamente",
+                User = new UserInfoDto
+                {
+                    Id = usuarioExistente.Id,
+                    Email = usuarioExistente.Email,
+                    TipoUsuario = "cliente",
+                    IdTaller = usuarioExistente.IdTaller,
+                    NombreTaller = taller?.Nombre ?? string.Empty,
+                    InfoEspecifica = cliente
+                }
+            };
+        }
+
+        public async Task<bool> DeleteUsuarioClienteAsync(int id)
+        {
+            await _authRepository.DeleteUsuarioClienteAsync(id);
+            return true;
+        }
+
+        // Elimina la segunda definición duplicada de HashPassword en la clase AuthService.
+        // Mantén solo una definición de HashPassword y una de VerifyPassword.
+
         private string HashPassword(string password)
         {
             using var sha256 = SHA256.Create();
@@ -236,6 +388,6 @@ namespace Taller_TIC1_Backend.Services
         {
             return HashPassword(password) == hashedPassword;
         }
-    }
 
+    }
 }

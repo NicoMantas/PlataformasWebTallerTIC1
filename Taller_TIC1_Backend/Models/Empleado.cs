@@ -1,4 +1,5 @@
 using B_TallerAutomoviles.Clases;
+using System.Text.Json.Serialization;
 
 namespace Taller_TIC1_Backend.Models
 {
@@ -11,8 +12,9 @@ namespace Taller_TIC1_Backend.Models
         public double Salario { get; set; }
         public DateTime FechaContratacion { get; set; }
         public int IdTipoEmpleado { get; set; }
-        
+
         // Propiedad de navegación
+        [JsonIgnore]
         public TipoEmpleado? TipoEmpleado { get; set; }
     }
 }
