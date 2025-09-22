@@ -17,7 +17,7 @@ namespace Taller_TIC1_Backend.Repositories
         public async Task<IEnumerable<Empleado>> GetAllAsync()
         {
             return await _context.Empleados
-                .Include(e => e.TipoEmpleado)
+                .Include(emp => emp.TipoEmpleado)
                 .ToListAsync();
         }
 
@@ -45,7 +45,7 @@ namespace Taller_TIC1_Backend.Repositories
             existingEmpleado.Apellido = empleado.Apellido;
             existingEmpleado.Cedula = empleado.Cedula;
             existingEmpleado.Salario = empleado.Salario;
-            existingEmpleado.IdTipoEmpleado = empleado.IdTipoEmpleado;
+            existingEmpleado.IdTipoEmpleado = empleado.IdTipoEmpleado; 
 
             await _context.SaveChangesAsync();
             return existingEmpleado;

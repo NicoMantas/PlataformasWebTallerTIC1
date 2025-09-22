@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Taller_TIC1_Backend.Data;
 using Taller_TIC1_Backend.Models;
 using Taller_TIC1_Backend.Models.DTOs;
 using Taller_TIC1_Backend.Repositories.Interfaces;
@@ -8,10 +10,23 @@ namespace Taller_TIC1_Backend.Services
     public class EmpleadoService : IEmpleadoService
     {
         private readonly IEmpleadoRepository _empleadoRepository;
+        private readonly ApplicationDbContext _context;
 
-        public EmpleadoService(IEmpleadoRepository empleadoRepository)
+        public EmpleadoService(IEmpleadoRepository empleadoRepository, ApplicationDbContext context)
         {
             _empleadoRepository = empleadoRepository;
+            _context = context;
+        }
+
+
+
+        private async Task<int> GetNextIdAsync()
+        {
+            var empleados = await _context.Empleados.ToListAsync();
+            if (!empleados.Any())
+                return 1;
+
+            return empleados.Max(t => t.Id) + 1;
         }
 
         public async Task<IEnumerable<EmpleadoResponseDto>> GetAllAsync()
@@ -27,9 +42,13 @@ namespace Taller_TIC1_Backend.Services
         }
 
         public async Task<EmpleadoResponseDto> CreateAsync(EmpleadoCreateDto empleadoCreateDto)
+
         {
+            var nextId = await GetNextIdAsync();
+
             var empleado = new Empleado
             {
+                Id = nextId,
                 Nombre = empleadoCreateDto.Nombre,
                 Apellido = empleadoCreateDto.Apellido,
                 Cedula = empleadoCreateDto.Cedula,
@@ -37,9 +56,10 @@ namespace Taller_TIC1_Backend.Services
                 FechaContratacion = DateTime.Now,
                 IdTipoEmpleado = empleadoCreateDto.IdTipoEmpleado
             };
+            _context.Empleados.Add(empleado);
+            await _context.SaveChangesAsync();
 
-            var createdEmpleado = await _empleadoRepository.CreateAsync(empleado);
-            return MapToResponseDto(createdEmpleado);
+            return MapToResponseDto(empleado);
         }
 
         public async Task<EmpleadoResponseDto?> UpdateAsync(int id, EmpleadoUpdateDto empleadoUpdateDto)

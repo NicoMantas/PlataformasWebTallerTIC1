@@ -85,7 +85,7 @@ namespace Taller_TIC1_Backend.Data
             {
                 e.ToTable("TipoEmpleado");
                 e.HasKey(x => x.Id);
-                e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
+                e.Property(x => x.Id).HasColumnName("id");
                 e.Property(x => x.Descripcion).HasColumnName("descripcion").HasMaxLength(255);
             });
 
@@ -94,7 +94,7 @@ namespace Taller_TIC1_Backend.Data
             {
                 e.ToTable("Empleado");
                 e.HasKey(x => x.Id);
-                e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
+                e.Property(x => x.Id).HasColumnName("id");
                 e.Property(x => x.Nombre).HasColumnName("nombre").HasMaxLength(255);
                 e.Property(x => x.Apellido).HasColumnName("apellido").HasMaxLength(255);
                 e.Property(x => x.Cedula).HasColumnName("cedula").HasColumnType("bigint");
@@ -102,13 +102,13 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.FechaContratacion).HasColumnName("fechaContratacion").HasColumnType("date");
                 e.Property(x => x.IdTipoEmpleado).HasColumnName("idTipoEmpleado");
 
-                e.HasOne<TipoEmpleado>()
-                 .WithMany()
-                 .HasForeignKey(x => x.IdTipoEmpleado)
+                e.HasOne(emp => emp.TipoEmpleado)
+                 .WithMany(te => te.Empleados) //te.Empleados para la navegación inversa
+                 .HasForeignKey(emp => emp.IdTipoEmpleado)
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // Configuración para EstadoServicio
+            // Configuración para EstadoServicio    
             modelBuilder.Entity<EstadoServicio>(e =>
             {
                 e.ToTable("EstadoServicio");
@@ -352,9 +352,10 @@ namespace Taller_TIC1_Backend.Data
                  .WithMany()
                  .HasForeignKey(u => u.IdCliente)
                  .OnDelete(DeleteBehavior.Restrict);
+            });
 
-                // Configuración para TipoEstadoOrden
-                modelBuilder.Entity<TipoEstadoOrden>(e =>
+            // Configuración para TipoEstadoOrden
+            modelBuilder.Entity<TipoEstadoOrden>(e =>
             {
                 e.ToTable("TipoEstadoOrden");
                 e.HasKey(x => x.Id);
@@ -362,39 +363,38 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.Descripcion).HasColumnName("descripcion").HasMaxLength(255);
             });
 
-                // Configuración para OrdenDeTrabajo
-                modelBuilder.Entity<OrdenDeTrabajo>(e =>
-                {
-                    e.ToTable("OrdenTrabajo");
-                    e.HasKey(x => x.Id);
-                    e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
-                    e.Property(x => x.FechaCreacion).HasColumnName("fechaCreacion").HasColumnType("date");
-                    e.Property(x => x.IdTipoEstadoOrden).HasColumnName("idTipoEstadoOrden");
+            // Configuración para OrdenDeTrabajo
+            modelBuilder.Entity<OrdenDeTrabajo>(e =>
+            {
+                e.ToTable("OrdenTrabajo");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
+                e.Property(x => x.FechaCreacion).HasColumnName("fechaCreacion").HasColumnType("date");
+                e.Property(x => x.IdTipoEstadoOrden).HasColumnName("idTipoEstadoOrden");
 
-                    e.HasOne<TipoEstadoOrden>()
-                     .WithMany()
-                     .HasForeignKey(x => x.IdTipoEstadoOrden)
-                     .OnDelete(DeleteBehavior.Restrict);
-                });
+                e.HasOne<TipoEstadoOrden>()
+                 .WithMany()
+                 .HasForeignKey(x => x.IdTipoEstadoOrden)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
 
-                // Configuración para DetalleServicioOrden
-                modelBuilder.Entity<DetalleServicioOrden>(e =>
-                {
-                    e.ToTable("DetalleServicioOrden");
-                    e.HasKey(x => new { x.IdOrdenTrabajo, x.IdServicio });
-                    e.Property(x => x.IdOrdenTrabajo).HasColumnName("idOrdenTrabajo");
-                    e.Property(x => x.IdServicio).HasColumnName("idServicio");
+            // Configuración para DetalleServicioOrden
+            modelBuilder.Entity<DetalleServicioOrden>(e =>
+            {
+                e.ToTable("DetalleServicioOrden");
+                e.HasKey(x => new { x.IdOrdenTrabajo, x.IdServicio });
+                e.Property(x => x.IdOrdenTrabajo).HasColumnName("idOrdenTrabajo");
+                e.Property(x => x.IdServicio).HasColumnName("idServicio");
 
-                    e.HasOne<OrdenDeTrabajo>()
-                     .WithMany()
-                     .HasForeignKey(x => x.IdOrdenTrabajo)
-                     .OnDelete(DeleteBehavior.Cascade);
+                e.HasOne<OrdenDeTrabajo>()
+                 .WithMany()
+                 .HasForeignKey(x => x.IdOrdenTrabajo)
+                 .OnDelete(DeleteBehavior.Cascade);
 
-                    e.HasOne<Servicio>()
-                     .WithMany()
-                     .HasForeignKey(x => x.IdServicio)
-                     .OnDelete(DeleteBehavior.Cascade);
-                });
+                e.HasOne<Servicio>()
+                 .WithMany()
+                 .HasForeignKey(x => x.IdServicio)
+                 .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

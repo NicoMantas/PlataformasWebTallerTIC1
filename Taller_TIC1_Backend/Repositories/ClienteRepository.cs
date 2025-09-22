@@ -14,6 +14,15 @@ namespace Taller_TIC1_Backend.Repositories
             _context = context;
         }
 
+         private async Task<int> GetNextIdAsync()
+        {
+            var clientes = await _context.Clientes.ToListAsync();
+            if (!clientes.Any())
+                return 1;
+
+            return clientes.Max(t => t.Id) + 1;
+        }
+
         public async Task<IEnumerable<Cliente>> GetAllAsync()
         {
             return await _context.Clientes
