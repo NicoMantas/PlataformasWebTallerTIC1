@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { listVehiculos, createVehiculo, updateVehiculo, deleteVehiculo } from '../services/vehiculosService';
+import { listVehiculos, createVehiculo, updateVehiculo, deleteVehiculo } from '../services/vehiculosService.js';
 import '../styles/VehiculosManager.css';
 
 const VehiculosManager = ({ onVehiculoSelect }) => {
