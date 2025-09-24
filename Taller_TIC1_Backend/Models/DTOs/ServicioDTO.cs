@@ -3,12 +3,17 @@
     public class ServicioDTO
     {
         public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+        public float Costo { get; set; }
         public int IdCliente { get; set; }
         public int IdEmpleado { get; set; }
         public int IdEstado { get; set; }
-        public float Costo { get; set; }
         public string? TipoServicio { get; set; } // "Revision" o "Reparacion"
         public string? DetallesRevision { get; set; }
         public List<RepuestoCantidadDTO>? RepuestosReparacion { get; set; }
+        public string? EstadoDescripcion { get; set; }
+        public string? ClienteNombre { get; set; }
+        public string? EmpleadoNombre { get; set; }
     }
 }

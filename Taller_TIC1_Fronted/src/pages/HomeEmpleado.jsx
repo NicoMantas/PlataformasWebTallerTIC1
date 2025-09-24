@@ -1,11 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import '../styles/HomeEmpleado.css';
+import { listOrdenes, updateOrden } from '../services/ordenesService';
+import { listServicios } from '../services/serviciosService';
+import { listFacturas } from '../services/facturasService';
 
 const HomeEmpleado = () => {
   const navigate = useNavigate();
   const { tipo } = useParams(); // mecanico, secretaria, administrador
+  const [ordenes, setOrdenes] = useState([]);
+  const [servicios, setServicios] = useState([]);
+  const [facturas, setFacturas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [ordenesData, serviciosData, facturasData] = await Promise.all([
+        listOrdenes(),
+        listServicios(),
+        listFacturas()
+      ]);
+      setOrdenes(ordenesData || []);
+      setServicios(serviciosData || []);
+      setFacturas(facturasData || []);
+    } catch (e) {
+      setError(e?.message || 'Error al cargar datos');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Contenido específico para cada tipo de empleado
   const getEmpleadoContent = () => {
@@ -15,15 +45,51 @@ const HomeEmpleado = () => {
           title: 'Panel de Mecánico',
           subtitle: 'Gestiona tus reparaciones y mantenimientos',
           features: [
-            { title: 'Reparaciones Asignadas', count: 8, action: () => navigate('/reparaciones') },
-            { title: 'Vehiculos en Taller', count: 5, action: () => navigate('/vehiculos') },
-            { title: 'Tareas Pendientes', count: 3, action: () => navigate('/tareas') }
+            { title: 'Órdenes Asignadas', count: ordenes.filter(o => o.idTipoEstadoOrden === 2).length },
+            { title: 'En Proceso', count: ordenes.filter(o => o.idTipoEstadoOrden === 3).length },
+            { title: 'Completadas', count: ordenes.filter(o => o.idTipoEstadoOrden === 4).length }
           ],
-          actions: [
-            { label: 'Registrar Diagnóstico', action: () => navigate('/diagnostico') },
-            { label: 'Actualizar Estado Reparación', action: () => navigate('/estado-reparacion') },
-            { label: 'Solicitar Repuestos', action: () => navigate('/repuestos') }
-          ]
+          content: (
+            <div className="mecanico-content">
+              <h3>Órdenes de Trabajo</h3>
+              {loading ? <p>Cargando...</p> : (
+                <div className="ordenes-list">
+                  {ordenes.map(orden => (
+                    <div key={orden.id} className="orden-card">
+                      <div className="orden-info">
+                        <h4>Orden #{orden.id}</h4>
+                        <p>Cliente: {orden.clienteNombre}</p>
+                        <p>Vehículo: {orden.vehiculoPlaca}</p>
+                        <p>Estado: {orden.estadoDescripcion}</p>
+                        <p>Fecha: {new Date(orden.fechaCreacion).toLocaleDateString()}</p>
+                      </div>
+                      <div className="orden-actions">
+                        <select 
+                          value={orden.idTipoEstadoOrden}
+                          onChange={async (e) => {
+                            try {
+                              await updateOrden(orden.id, {
+                                ...orden,
+                                idTipoEstadoOrden: parseInt(e.target.value)
+                              });
+                              loadData();
+                            } catch (err) {
+                              alert('Error al actualizar estado');
+                            }
+                          }}
+                        >
+                          <option value={1}>Pendiente</option>
+                          <option value={2}>Asignada</option>
+                          <option value={3}>En Proceso</option>
+                          <option value={4}>Completada</option>
+                        </select>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
         };
       
       case 'secretaria':
@@ -31,15 +97,49 @@ const HomeEmpleado = () => {
           title: 'Panel de Secretaría',
           subtitle: 'Gestiona citas, clientes y administración',
           features: [
-            { title: 'Citas Hoy', count: 12, action: () => navigate('/citas') },
-            { title: 'Clientes Registrados', count: 45, action: () => navigate('/clientes') },
-            { title: 'Facturas Pendientes', count: 7, action: () => navigate('/facturas') }
+            { title: 'Órdenes Pendientes', count: ordenes.filter(o => o.idTipoEstadoOrden === 1).length },
+            { title: 'Servicios Disponibles', count: servicios.length },
+            { title: 'Facturas Pendientes', count: facturas.filter(f => f.estado === 'Pendiente').length }
           ],
-          actions: [
-            { label: 'Agendar Cita', action: () => navigate('/agendar-cita') },
-            { label: 'Registrar Cliente', action: () => navigate('/registrar-cliente') },
-            { label: 'Generar Factura', action: () => navigate('/generar-factura') }
-          ]
+          content: (
+            <div className="secretaria-content">
+              <h3>Gestión de Órdenes</h3>
+              {loading ? <p>Cargando...</p> : (
+                <div className="ordenes-list">
+                  {ordenes.filter(o => o.idTipoEstadoOrden === 1).map(orden => (
+                    <div key={orden.id} className="orden-card">
+                      <div className="orden-info">
+                        <h4>Orden #{orden.id}</h4>
+                        <p>Cliente: {orden.clienteNombre}</p>
+                        <p>Vehículo: {orden.vehiculoPlaca}</p>
+                        <p>Servicios: {orden.serviciosIds.length}</p>
+                        <p>Fecha: {new Date(orden.fechaCreacion).toLocaleDateString()}</p>
+                      </div>
+                      <div className="orden-actions">
+                        <button 
+                          className="btn-primary"
+                          onClick={async () => {
+                            try {
+                              await updateOrden(orden.id, {
+                                ...orden,
+                                idTipoEstadoOrden: 2 // Asignada
+                              });
+                              loadData();
+                              alert('Orden asignada a mecánico');
+                            } catch (err) {
+                              alert('Error al asignar orden');
+                            }
+                          }}
+                        >
+                          Asignar a Mecánico
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
         };
       
       case 'administrador':
@@ -47,15 +147,63 @@ const HomeEmpleado = () => {
           title: 'Panel de Administración',
           subtitle: 'Gestiona el taller completo',
           features: [
-            { title: 'Empleados', count: 15, action: () => navigate('/empleados') },
-            { title: 'Vehículos en Taller', count: 8, action: () => navigate('/vehiculos-taller') },
-            { title: 'Ingresos Mensuales', count: '$12,450', action: () => navigate('/finanzas') }
+            { title: 'Total Órdenes', count: ordenes.length },
+            { title: 'Servicios Activos', count: servicios.length },
+            { title: 'Facturas Generadas', count: facturas.length }
           ],
-          actions: [
-            { label: 'Gestionar Empleados', action: () => navigate('/gestion-empleados') },
-            { label: 'Reportes Financieros', action: () => navigate('/reportes') },
-            { label: 'Configuración Sistema', action: () => navigate('/configuracion') }
-          ]
+          content: (
+            <div className="admin-content">
+              <div className="dashboard-grid">
+                <div className="dashboard-card">
+                  <h3>Resumen de Órdenes</h3>
+                  <div className="stats">
+                    <div className="stat">
+                      <span className="stat-label">Pendientes:</span>
+                      <span className="stat-value">{ordenes.filter(o => o.idTipoEstadoOrden === 1).length}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-label">En Proceso:</span>
+                      <span className="stat-value">{ordenes.filter(o => o.idTipoEstadoOrden === 3).length}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-label">Completadas:</span>
+                      <span className="stat-value">{ordenes.filter(o => o.idTipoEstadoOrden === 4).length}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="dashboard-card">
+                  <h3>Servicios Más Solicitados</h3>
+                  <div className="servicios-stats">
+                    {servicios.slice(0, 5).map(servicio => (
+                      <div key={servicio.id} className="servicio-stat">
+                        <span>{servicio.nombre}</span>
+                        <span>${servicio.costo}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="dashboard-card">
+                  <h3>Facturación</h3>
+                  <div className="facturas-stats">
+                    <div className="stat">
+                      <span className="stat-label">Pendientes:</span>
+                      <span className="stat-value">{facturas.filter(f => f.estado === 'Pendiente').length}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-label">Pagadas:</span>
+                      <span className="stat-value">{facturas.filter(f => f.estado === 'Pagada').length}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-label">Total Facturado:</span>
+                      <span className="stat-value">${facturas.reduce((sum, f) => sum + f.total, 0).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
         };
       
       default:
@@ -87,29 +235,19 @@ const HomeEmpleado = () => {
           <h2>Resumen</h2>
           <div className="stats-grid">
             {content.features.map((feature, index) => (
-              <div key={index} className="stat-card" onClick={feature.action}>
+              <div key={index} className="stat-card">
                 <h3>{feature.title}</h3>
                 <div className="stat-value">{feature.count}</div>
-                <button className="btn-secondary">Ver detalles</button>
               </div>
             ))}
           </div>
         </div>
         
-        <div className="actions-section">
-          <h2>Acciones Rápidas</h2>
-          <div className="actions-grid">
-            {content.actions.map((action, index) => (
-              <button
-                key={index}
-                className="btn-primary action-btn"
-                onClick={action.action}
-              >
-                {action.label}
-              </button>
-            ))}
+        {content.content && (
+          <div className="content-section">
+            {content.content}
           </div>
-        </div>
+        )}
         
         <div className="recent-activity">
           <h2>Actividad Reciente</h2>

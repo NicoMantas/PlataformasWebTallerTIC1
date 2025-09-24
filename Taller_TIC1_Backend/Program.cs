@@ -22,7 +22,7 @@ namespace Taller_TIC1_Backend
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            // Agregar después de builder.Services.AddControllers();
+            // Agregar despuï¿½s de builder.Services.AddControllers();
             builder.Services.AddScoped<IServicioRepository, ServicioRepository>();
             builder.Services.AddScoped<IOrdenTrabajoRepository, OrdenTrabajoRepository>();
             builder.Services.AddScoped<IServicioService, ServicioService>();
@@ -44,6 +44,10 @@ namespace Taller_TIC1_Backend
             builder.Services.AddScoped<IRepuestoRepository, RepuestoRepository>();
             builder.Services.AddScoped<IRepuestoService, RepuestoService>();
 
+            // DI Factura
+            builder.Services.AddScoped<IFacturaRepository, FacturaRepository>();
+            builder.Services.AddScoped<IFacturaService, FacturaService>();
+
             // DI Cliente
             builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
             builder.Services.AddScoped<IClienteService, ClienteService>();
@@ -56,7 +60,7 @@ namespace Taller_TIC1_Backend
             builder.Services.AddScoped<IEmpleadoRepository, EmpleadoRepository>();
             builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
 
-            // Agrega estas líneas para registrar los nuevos servicios
+            // Agrega estas lï¿½neas para registrar los nuevos servicios
             builder.Services.AddScoped<IRepuestoProveedorRepository, RepuestoProveedorRepository>();
             builder.Services.AddScoped<IRepuestoProveedorService, RepuestoProveedorService>();
 

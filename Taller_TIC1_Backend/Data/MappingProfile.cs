@@ -20,6 +20,10 @@ namespace Taller_TIC1_Backend.Data
             CreateMap<DetalleReparacionRepuesto, RepuestoCantidadDTO>()
                 .ForMember(dest => dest.IdRepuesto, opt => opt.MapFrom(src => src.IdRepuesto))
                 .ForMember(dest => dest.Cantidad, opt => opt.MapFrom(src => src.Cantidad));
+
+            // Factura mappings
+            CreateMap<Factura, FacturaDTO>().ReverseMap();
+            CreateMap<FacturaCreateDTO, Factura>();
         }
     }
 }

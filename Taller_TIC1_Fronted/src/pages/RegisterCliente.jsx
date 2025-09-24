@@ -3,31 +3,37 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import AuthForm from '../components/AuthForm';
 import '../styles/RegisterCliente.css';
+import { registerCliente } from '../services/authService';
 
 const RegisterCliente = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
 
-  const handleRegister = (formData) => {
-    // Validación básica
+  const handleRegister = async (formData) => {
     if (formData.password !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden');
       return;
     }
-    
-    // Simulación de registro exitoso
-    console.log('Cliente registrado:', formData);
-    navigate('/login/cliente');
+    try {
+      // En este flujo asumimos que el Cliente ya existe (IdCliente) y el IdTaller es conocido
+      // Como mínimo requerimos email, password e idTaller; idCliente puede ser null si backend lo permite
+      await registerCliente({
+        email: formData.email,
+        password: formData.password,
+        idTaller: Number(import.meta.env.VITE_ID_TALLER) || 1,
+        idCliente: formData.idCliente ? Number(formData.idCliente) : null
+      });
+      navigate('/login/cliente');
+    } catch (e) {
+      setError(e?.message || 'Error al registrar cliente');
+    }
   };
 
   const registerFields = [
-    { name: 'firstName', type: 'text', label: 'Nombre', required: true },
-    { name: 'lastName', type: 'text', label: 'Apellido', required: true },
     { name: 'email', type: 'email', label: 'Correo Electrónico', required: true },
-    { name: 'phone', type: 'tel', label: 'Teléfono', required: true },
-    { name: 'address', type: 'text', label: 'Dirección', required: true },
     { name: 'password', type: 'password', label: 'Contraseña', required: true },
-    { name: 'confirmPassword', type: 'password', label: 'Confirmar Contraseña', required: true }
+    { name: 'confirmPassword', type: 'password', label: 'Confirmar Contraseña', required: true },
+    { name: 'idCliente', type: 'number', label: 'ID Cliente (opcional)', required: false }
   ];
 
   return (

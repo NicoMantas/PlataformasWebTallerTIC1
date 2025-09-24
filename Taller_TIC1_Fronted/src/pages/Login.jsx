@@ -3,50 +3,41 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import AuthForm from '../components/AuthForm';
 import '../styles/Login.css';
+import { login as loginApi } from '../services/authService';
 
 const Login = () => {
   const navigate = useNavigate();
   const { role } = useParams();
   const [error, setError] = useState('');
 
-  // Simulación de login que determina el tipo de empleado
   const handleLogin = async (formData) => {
     try {
-      // En una app real, esto sería una llamada a la API
-      if (formData.email && formData.password) {
-        // Simulamos la respuesta del backend con el tipo de empleado
-        let userType = '';
-        
-        // Lógica de ejemplo para determinar el tipo de empleado
-        if (formData.email.includes('mecanico')) {
-          userType = 'mecanico';
-        } else if (formData.email.includes('secretaria')) {
-          userType = 'secretaria';
-        } else if (formData.email.includes('admin')) {
-          userType = 'administrador';
-        } else {
-          // Por defecto o según lógica de negocio
-          userType = 'mecanico';
-        }
-        
-        // Guardar en localStorage o context
-        localStorage.setItem('userRole', role);
-        localStorage.setItem('employeeType', userType);
-        localStorage.setItem('userEmail', formData.email);
-        
-        // Redirigir según el tipo de usuario
-        if (role === 'cliente') {
-          navigate('/home/cliente');
-        } else if (role === 'empresa') {
-          navigate('/home/empresa');
-        } else if (role === 'empleado') {
-          navigate(`/home/empleado/${userType}`);
-        }
-      } else {
+      if (!formData.email || !formData.password) {
         setError('Por favor completa todos los campos');
+        return;
+      }
+
+      const res = await loginApi({ email: formData.email, password: formData.password });
+
+      const user = res?.user;
+      if (!user) throw new Error('Respuesta inválida del servidor');
+
+      // Decide destino por tipo de usuario y tipo empleado si aplica
+      if (user.tipoUsuario === 'cliente') {
+        navigate('/home/cliente');
+      } else if (user.tipoUsuario === 'empleado') {
+        // employee specific info may contain role, fallback by email hint
+        const info = user.infoEspecifica || {};
+        const tipo = info.tipoEmpleado ||
+          (formData.email.includes('mecanico') ? 'mecanico' :
+          formData.email.includes('secretaria') ? 'secretaria' : 'administrador');
+        navigate(`/home/empleado/${tipo}`);
+      } else {
+        // Empresas pueden estar modeladas como clientes empresa; enviar a home empresa si title contiene taller
+        navigate('/home/empresa');
       }
     } catch (err) {
-      setError('Error al iniciar sesión. Por favor intenta nuevamente.');
+      setError(err?.message || 'Error al iniciar sesión. Por favor intenta nuevamente.');
     }
   };
 

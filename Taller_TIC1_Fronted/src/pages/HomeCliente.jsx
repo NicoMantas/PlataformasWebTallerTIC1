@@ -1,11 +1,33 @@
 // src/pages/HomeCliente.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
+import VehiculosManager from '../components/VehiculosManager';
 import '../styles/HomeCliente.css';
+import api from '../services/api';
+import { listServicios } from '../services/serviciosService';
+import { createOrden } from '../services/ordenesService';
 
 const HomeCliente = () => {
   const navigate = useNavigate();
+  const [servicios, setServicios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedVehiculo, setSelectedVehiculo] = useState(null);
+  const [showVehiculos, setShowVehiculos] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await listServicios(api);
+        setServicios(data || []);
+      } catch (e) {
+        setError(e?.message || 'No se pudieron cargar los servicios');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   return (
     <div className="home-cliente-page">
@@ -18,59 +40,94 @@ const HomeCliente = () => {
         </div>
         
         <div className="cliente-dashboard">
-          <div className="vehiculos-section">
-            <h2>Mis Vehículos</h2>
-            <div className="vehiculos-list">
-              <div className="vehiculo-card">
-                <h3>Toyota Corolla 2020</h3>
-                <p>Placa: ABC-1234</p>
-                <p>Próximo mantenimiento: 15 Dic 2023</p>
-                <button className="btn-primary">Solicitar Servicio</button>
-              </div>
+          <div className="dashboard-tabs">
+            <button 
+              className={`tab-button ${!showVehiculos ? 'active' : ''}`}
+              onClick={() => setShowVehiculos(false)}
+            >
+              Servicios
+            </button>
+            <button 
+              className={`tab-button ${showVehiculos ? 'active' : ''}`}
+              onClick={() => setShowVehiculos(true)}
+            >
+              Mis Vehículos
+            </button>
+          </div>
+
+          {!showVehiculos ? (
+            <div className="servicios-section">
+              <h2>Servicios Disponibles</h2>
+              {loading && <p>Cargando servicios...</p>}
+              {error && <div className="error-message">{error}</div>}
               
-              <div className="vehiculo-card">
-                <h3>Honda Civic 2018</h3>
-                <p>Placa: XYZ-5678</p>
-                <p>Próximo mantenimiento: 20 Ene 2024</p>
-                <button className="btn-primary">Solicitar Servicio</button>
+              {!selectedVehiculo && (
+                <div className="vehiculo-selection">
+                  <p>Selecciona un vehículo para solicitar servicios:</p>
+                  <button 
+                    className="btn-primary"
+                    onClick={() => setShowVehiculos(true)}
+                  >
+                    Gestionar Vehículos
+                  </button>
+                </div>
+              )}
+
+              {selectedVehiculo && (
+                <div className="selected-vehiculo">
+                  <p><strong>Vehículo seleccionado:</strong> {selectedVehiculo.marca} {selectedVehiculo.modelo} ({selectedVehiculo.placa})</p>
+                  <button 
+                    className="btn-secondary"
+                    onClick={() => setSelectedVehiculo(null)}
+                  >
+                    Cambiar Vehículo
+                  </button>
+                </div>
+              )}
+
+              <div className="servicios-list">
+                {servicios.map((s) => (
+                  <div key={s.id} className="servicio-item">
+                    <div className="servicio-info">
+                      <h3>{s.nombre}</h3>
+                      <p>{s.descripcion}</p>
+                      <p><strong>Costo:</strong> ${s.costo}</p>
+                    </div>
+                    <button
+                      className="btn-primary"
+                      disabled={!selectedVehiculo}
+                      onClick={async () => {
+                        if (!selectedVehiculo) {
+                          alert('Por favor selecciona un vehículo primero');
+                          return;
+                        }
+                        try {
+                          await createOrden({
+                            clienteId: 1, // TODO: obtener del usuario autenticado
+                            vehiculoId: selectedVehiculo.id,
+                            serviciosIds: [s.id],
+                            descripcion: `Solicitud de ${s.nombre}`
+                          });
+                          alert('Solicitud enviada correctamente');
+                        } catch (e) {
+                          alert(e?.message || 'No se pudo solicitar');
+                        }
+                      }}
+                    >
+                      Solicitar
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
-            
-            <button className="btn-secondary">Agregar Vehículo</button>
-          </div>
-          
-          <div className="servicios-section">
-            <h2>Servicios Recientes</h2>
-            <div className="servicios-list">
-              <div className="servicio-item">
-                <p>Cambio de aceite y filtro - Toyota Corolla</p>
-                <span className="servicio-status completed">Completado</span>
-                <span className="servicio-date">05 Nov 2023</span>
-              </div>
-              <div className="servicio-item">
-                <p>Revisión de frenos - Honda Civic</p>
-                <span className="servicio-status in-progress">En Proceso</span>
-                <span className="servicio-date">02 Nov 2023</span>
-              </div>
-              <div className="servicio-item">
-                <p>Alineación y balanceo - Toyota Corolla</p>
-                <span className="servicio-status completed">Completado</span>
-                <span className="servicio-date">25 Oct 2023</span>
-              </div>
-            </div>
-            
-            <button className="btn-secondary">Ver Historial Completo</button>
-          </div>
-          
-          <div className="quick-actions">
-            <h2>Acciones Rápidas</h2>
-            <div className="action-buttons">
-              <button className="btn-primary">Solicitar Servicio</button>
-              <button className="btn-primary">Agendar Cita</button>
-              <button className="btn-primary">Consultar Promociones</button>
-              <button className="btn-primary">Contactar Soporte</button>
-            </div>
-          </div>
+          ) : (
+            <VehiculosManager 
+              onVehiculoSelect={(vehiculo) => {
+                setSelectedVehiculo(vehiculo);
+                setShowVehiculos(false);
+              }}
+            />
+          )}
         </div>
       </div>
     </div>

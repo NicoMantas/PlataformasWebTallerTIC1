@@ -1,11 +1,29 @@
 // src/pages/HomeEmpresa.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import '../styles/HomeEmpresa.css';
+import api from '../services/api';
+import { listServicios, crearOrden } from '../services/serviciosService';
 
 const HomeEmpresa = () => {
   const navigate = useNavigate();
+  const [servicios, setServicios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await listServicios(api);
+        setServicios(data || []);
+      } catch (e) {
+        setError(e?.message || 'No se pudieron cargar los servicios');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   return (
     <div className="home-empresa-page">
@@ -18,52 +36,32 @@ const HomeEmpresa = () => {
         </div>
         
         <div className="empresa-dashboard">
-          <div className="dashboard-cards">
-            <div className="dashboard-card">
-              <h3>Vehículos Registrados</h3>
-              <p className="stat">24</p>
-              <button className="btn-secondary">Ver Detalles</button>
-            </div>
-            
-            <div className="dashboard-card">
-              <h3>Servicios Activos</h3>
-              <p className="stat">8</p>
-              <button className="btn-secondary">Ver Detalles</button>
-            </div>
-            
-            <div className="dashboard-card">
-              <h3>Próximos Mantenimientos</h3>
-              <p className="stat">5</p>
-              <button className="btn-secondary">Ver Detalles</button>
-            </div>
-          </div>
-          
-          <div className="empresa-actions">
-            <h2>Acciones Rápidas</h2>
-            <div className="action-buttons">
-              <button className="btn-primary">Registrar Nuevo Vehículo</button>
-              <button className="btn-primary">Solicitar Servicio</button>
-              <button className="btn-primary">Ver Historial</button>
-              <button className="btn-primary">Generar Reporte</button>
-            </div>
-          </div>
-          
-          <div className="recent-activity">
-            <h2>Actividad Reciente</h2>
-            <div className="activity-list">
-              <div className="activity-item">
-                <p>Cambio de aceite - Toyota Corolla</p>
-                <span className="activity-date">15 Nov 2023</span>
+          <h2>Servicios Disponibles</h2>
+          {loading && <p>Cargando servicios...</p>}
+          {error && <div className="error-message">{error}</div>}
+          <div className="servicios-list">
+            {servicios.map((s) => (
+              <div key={s.id} className="servicio-item">
+                <p>{s.nombre} - {s.descripcion}</p>
+                <button
+                  className="btn-primary"
+                  onClick={async () => {
+                    try {
+                      await crearOrden(api, {
+                        clienteId: 0,
+                        vehiculoId: 0,
+                        serviciosIds: [s.id]
+                      });
+                      alert('Solicitud enviada');
+                    } catch (e) {
+                      alert(e?.message || 'No se pudo solicitar');
+                    }
+                  }}
+                >
+                  Solicitar
+                </button>
               </div>
-              <div className="activity-item">
-                <p>Revisión de frenos - Honda Civic</p>
-                <span className="activity-date">12 Nov 2023</span>
-              </div>
-              <div className="activity-item">
-                <p>Alineación y balanceo - Nissan Sentra</p>
-                <span className="activity-date">10 Nov 2023</span>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>

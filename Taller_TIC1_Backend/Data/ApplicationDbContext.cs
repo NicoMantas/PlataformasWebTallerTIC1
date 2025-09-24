@@ -33,6 +33,7 @@ namespace Taller_TIC1_Backend.Data
         public DbSet<TipoEstadoOrden> TiposEstadoOrden { get; set; }
         public DbSet<OrdenDeTrabajo> OrdenesDeTrabajo { get; set; }
         public DbSet<DetalleServicioOrden> DetallesServicioOrden { get; set; }
+        public DbSet<Factura> Facturas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -395,6 +396,25 @@ namespace Taller_TIC1_Backend.Data
                  .WithMany()
                  .HasForeignKey(x => x.IdServicio)
                  .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configuración para Factura
+            modelBuilder.Entity<Factura>(e =>
+            {
+                e.ToTable("Factura");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
+                e.Property(x => x.IdOrdenTrabajo).HasColumnName("idOrdenTrabajo");
+                e.Property(x => x.FechaEmision).HasColumnName("fechaEmision").HasColumnType("date");
+                e.Property(x => x.Subtotal).HasColumnName("subtotal").HasColumnType("real");
+                e.Property(x => x.Impuestos).HasColumnName("impuestos").HasColumnType("real");
+                e.Property(x => x.Total).HasColumnName("total").HasColumnType("real");
+                e.Property(x => x.Estado).HasColumnName("estado").HasMaxLength(50);
+
+                e.HasOne<OrdenDeTrabajo>()
+                 .WithMany()
+                 .HasForeignKey(x => x.IdOrdenTrabajo)
+                 .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

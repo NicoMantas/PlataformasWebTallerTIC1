@@ -24,6 +24,11 @@ namespace Taller_TIC1_Backend.Services
             foreach (var servicio in servicios)
             {
                 var servicioDto = _mapper.Map<ServicioDTO>(servicio);
+                
+                // Cargar información adicional
+                servicioDto.EstadoDescripcion = servicio.Estado?.Descripcion ?? "Sin estado";
+                servicioDto.ClienteNombre = servicio.Cliente?.Nombre ?? "Sin cliente";
+                servicioDto.EmpleadoNombre = servicio.Empleado?.Nombre ?? "Sin empleado";
 
                 // Determinar tipo de servicio y cargar detalles específicos
                 var detalleRevision = await _servicioRepository.GetDetalleRevisionByServicioIdAsync(servicio.Id);

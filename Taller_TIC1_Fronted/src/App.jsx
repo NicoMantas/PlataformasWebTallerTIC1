@@ -10,6 +10,14 @@ import HomeCliente from './pages/HomeCliente';
 import HomeEmpresa from './pages/HomeEmpresa';
 import HomeEmpleado from './pages/HomeEmpleado';
 import './App.css';
+import { getCurrentUser } from './services/authService';
+
+function PrivateRoute({ element, allowed }) {
+  const user = getCurrentUser();
+  if (!user) return <Navigate to="/login-roles" replace />;
+  if (allowed && !allowed(user)) return <Navigate to="/" replace />;
+  return element;
+}
 
 function App() {
   return (
@@ -29,9 +37,9 @@ function App() {
           <Route path="/register/empresa" element={<RegisterEmpresa />} />
           
           {/* Rutas protegidas - Home pages */}
-          <Route path="/home/cliente" element={<HomeCliente />} />
-          <Route path="/home/empresa" element={<HomeEmpresa />} />
-          <Route path="/home/empleado/:tipo" element={<HomeEmpleado />} />
+          <Route path="/home/cliente" element={<PrivateRoute element={<HomeCliente />} allowed={(u)=>u.tipoUsuario==='cliente'} />} />
+          <Route path="/home/empresa" element={<PrivateRoute element={<HomeEmpresa />} allowed={(u)=>u.tipoUsuario==='cliente'} />} />
+          <Route path="/home/empleado/:tipo" element={<PrivateRoute element={<HomeEmpleado />} allowed={(u)=>u.tipoUsuario==='empleado'} />} />
           
           {/* Ruta de fallback - redirigir a la página principal */}
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -27,6 +27,12 @@ namespace Taller_TIC1_Backend.Services
                 var ordenDto = _mapper.Map<OrdenTrabajoDTO>(orden);
                 var servicios = await _ordenRepository.GetServiciosByOrdenIdAsync(orden.Id);
                 ordenDto.ServiciosIds = servicios.Select(s => s.Id).ToList();
+                
+                // Cargar información adicional
+                ordenDto.EstadoDescripcion = orden.TipoEstadoOrden?.Descripcion ?? "Sin estado";
+                ordenDto.ClienteNombre = "Cliente"; // Se puede mejorar con join
+                ordenDto.VehiculoPlaca = "Placa"; // Se puede mejorar con join
+                
                 ordenesDto.Add(ordenDto);
             }
 

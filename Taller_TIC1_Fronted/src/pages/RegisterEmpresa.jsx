@@ -3,32 +3,36 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import AuthForm from '../components/AuthForm';
 import '../styles/RegisterEmpresa.css';
+import { registerCliente } from '../services/authService';
 
 const RegisterEmpresa = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
 
-  const handleRegister = (formData) => {
-    // Validación básica
+  const handleRegister = async (formData) => {
     if (formData.password !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden');
       return;
     }
-    
-    // Simulación de registro exitoso
-    console.log('Empresa registrada:', formData);
-    navigate('/login/empresa');
+    try {
+      // Empresas también son clientes tipo empresa en el backend
+      await registerCliente({
+        email: formData.email,
+        password: formData.password,
+        idTaller: Number(import.meta.env.VITE_ID_TALLER) || 1,
+        idCliente: formData.idEmpresa ? Number(formData.idEmpresa) : null
+      });
+      navigate('/login/empresa');
+    } catch (e) {
+      setError(e?.message || 'Error al registrar empresa');
+    }
   };
 
   const registerFields = [
-    { name: 'companyName', type: 'text', label: 'Nombre de la Empresa', required: true },
-    { name: 'rut', type: 'text', label: 'RUT', required: true },
-    { name: 'contactName', type: 'text', label: 'Nombre del Contacto', required: true },
     { name: 'email', type: 'email', label: 'Correo Electrónico', required: true },
-    { name: 'phone', type: 'tel', label: 'Teléfono', required: true },
-    { name: 'address', type: 'text', label: 'Dirección', required: true },
     { name: 'password', type: 'password', label: 'Contraseña', required: true },
-    { name: 'confirmPassword', type: 'password', label: 'Confirmar Contraseña', required: true }
+    { name: 'confirmPassword', type: 'password', label: 'Confirmar Contraseña', required: true },
+    { name: 'idEmpresa', type: 'number', label: 'ID Empresa (opcional)', required: false }
   ];
 
   return (
