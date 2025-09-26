@@ -2,8 +2,6 @@
 {
     public class ServicioCreateDTO
     {
-        public string Nombre { get; set; } = string.Empty;
-        public string Descripcion { get; set; } = string.Empty;
         public float Costo { get; set; }
         public int IdCliente { get; set; }
         public int IdEmpleado { get; set; }

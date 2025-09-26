@@ -95,12 +95,20 @@ namespace Taller_TIC1_Backend.Services
                     IdServicio = servicioCreado.Id,
                     Detalles = servicioDto.DetallesRevision
                 };
-                // Aquí necesitarías un repositorio para DetalleRevision
+                await _servicioRepository.CreateDetalleRevisionAsync(detalleRevision);
             }
             else if (servicioDto.TipoServicio == "Reparacion" && servicioDto.RepuestosReparacion != null)
             {
-                // Lógica para crear detalles de reparación
-                // Esto sería más complejo y requeriría transacciones
+                // Crear detalles de reparación con repuestos
+                var detalleReparacionRepuesto = new DetalleReparacionRepuesto();
+                await _servicioRepository.CreateDetalleReparacionRepuestoAsync(detalleReparacionRepuesto);
+                
+                var detalleReparacion = new DetalleReparacion
+                {
+                    IdServicio = servicioCreado.Id,
+                    IdDetalleReparacionRepuesto = detalleReparacionRepuesto.Id
+                };
+                await _servicioRepository.CreateDetalleReparacionAsync(detalleReparacion);
             }
 
             return _mapper.Map<ServicioDTO>(servicioCreado);

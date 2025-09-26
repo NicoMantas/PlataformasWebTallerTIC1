@@ -29,7 +29,9 @@ namespace Taller_TIC1_Backend
             builder.Services.AddScoped<IOrdenTrabajoService, OrdenTrabajoService>();
 
             // Agregar AutoMapper
-            builder.Services.AddAutoMapper(typeof(Program));
+            builder.Services.AddAutoMapper(cfg => {
+                cfg.AddProfile<Data.MappingProfile>();
+            });
 
             // DbContext (PostgreSQL)
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -78,6 +80,17 @@ namespace Taller_TIC1_Backend
             builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
             builder.Services.AddScoped<IVehiculoService, VehiculoService>();
 
+            // Configurar CORS
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("ReactPolicy", policy =>
+                {
+                    policy.WithOrigins("http://localhost:3000", "http://localhost:5173") // URL de tu aplicación React
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
+
 
             var app = builder.Build();
 
@@ -89,6 +102,9 @@ namespace Taller_TIC1_Backend
             }
 
             app.UseHttpsRedirection();
+
+            // Usar CORS - debe estar antes de UseAuthorization y MapControllers
+            app.UseCors("ReactPolicy");
 
             app.UseAuthorization();
 

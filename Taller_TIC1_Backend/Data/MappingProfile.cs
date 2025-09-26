@@ -13,8 +13,8 @@ namespace Taller_TIC1_Backend.Data
             CreateMap<ServicioCreateDTO, Servicio>();
 
             // OrdenTrabajo mappings
-            CreateMap<OrdenDeTrabajo, OrdenTrabajoDTO>().ReverseMap();
-            CreateMap<OrdenTrabajoCreateDTO, OrdenDeTrabajo>();
+            CreateMap<Models.OrdenDeTrabajo, OrdenTrabajoDTO>().ReverseMap();
+            CreateMap<OrdenTrabajoCreateDTO, Models.OrdenDeTrabajo>();
 
             // Detalles mappings
             CreateMap<DetalleReparacionRepuesto, RepuestoCantidadDTO>()

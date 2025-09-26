@@ -53,7 +53,7 @@ namespace Taller_TIC1_Backend.Services
 
         public async Task<OrdenTrabajoDTO> CreateOrdenAsync(OrdenTrabajoCreateDTO ordenDto)
         {
-            var orden = _mapper.Map<OrdenDeTrabajo>(ordenDto);
+            var orden = _mapper.Map<Models.OrdenDeTrabajo>(ordenDto);
             var ordenCreada = await _ordenRepository.CreateAsync(orden);
 
             // Agregar servicios a la orden
