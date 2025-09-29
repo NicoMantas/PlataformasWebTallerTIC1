@@ -16,7 +16,7 @@ namespace Taller_TIC1_Backend.Controllers
         {
             try
             {
-                // Realiza una consulta simple para verificar la conexión (puedes cambiar "Pigmentos" por otra tabla)
+                // Realiza una consulta simple para verificar la conexión
                 return Ok(new
                 {
                     message = "Conexión exitosa con Supabase",

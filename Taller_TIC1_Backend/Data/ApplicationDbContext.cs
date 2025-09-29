@@ -236,19 +236,19 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.IdEstado).HasColumnName("idEstado");
                 e.Property(x => x.Costo).HasColumnName("costo").HasColumnType("real");
 
-                e.HasOne<Cliente>()
+                e.HasOne(s => s.Cliente) //correción se usa la porpiedad de navegación s.Cliente en vez de s.IdCliente
                  .WithMany()
-                 .HasForeignKey(x => x.IdCliente)
+                 .HasForeignKey(s => s.IdCliente)
                  .OnDelete(DeleteBehavior.Restrict);
 
-                e.HasOne<Empleado>()
+                e.HasOne(s => s.Empleado)
                  .WithMany()
-                 .HasForeignKey(x => x.IdEmpleado)
+                 .HasForeignKey(s => s.IdEmpleado)
                  .OnDelete(DeleteBehavior.Restrict);
 
-                e.HasOne<EstadoServicio>()
+                e.HasOne(s => s.Estado)
                  .WithMany()
-                 .HasForeignKey(x => x.IdEstado)
+                 .HasForeignKey(s => s.IdEstado)
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
