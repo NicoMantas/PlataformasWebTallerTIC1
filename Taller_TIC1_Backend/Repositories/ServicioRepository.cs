@@ -72,7 +72,7 @@ namespace Taller_TIC1_Backend.Repositories
         {
             return await _context.DetallesReparacionRepuesto
                 .Where(drr => drr.Id == idDetalleReparacionRepuesto)
-                .Include(drr => drr.IdRepuesto)
+                .Include(drr => drr.Repuesto)
                 .ToListAsync();
         }
 

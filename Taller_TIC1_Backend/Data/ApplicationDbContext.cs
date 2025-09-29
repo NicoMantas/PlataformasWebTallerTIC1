@@ -281,6 +281,21 @@ namespace Taller_TIC1_Backend.Data
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
+            // Configuración para DetalleReparacionRepuesto
+            modelBuilder.Entity<DetalleReparacionRepuesto>(e =>
+            {
+                e.ToTable("DetalleReparacionRepuesto");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
+                e.Property(x => x.IdRepuesto).HasColumnName("idRepuesto");
+                e.Property(x => x.Cantidad).HasColumnName("cantidad");
+
+                e.HasOne(drr => drr.Repuesto)
+                 .WithMany()
+                 .HasForeignKey(x => x.IdRepuesto)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
             // Configuración para DetalleReparacion
             modelBuilder.Entity<DetalleReparacion>(e =>
             {
@@ -289,12 +304,14 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.IdServicio).HasColumnName("idServicio");
                 e.Property(x => x.IdDetalleReparacionRepuesto).HasColumnName("idDetalleReparacionRepuesto");
 
-                e.HasOne<Servicio>()
+                //relacion con servicio uno a uno
+                e.HasOne(dr => dr.Servicio)
                  .WithOne()
                  .HasForeignKey<DetalleReparacion>(x => x.IdServicio)
                  .OnDelete(DeleteBehavior.Cascade);
 
-                e.HasOne<DetalleReparacionRepuesto>()
+                //relacion con DetalleReparacionRepuesto
+                e.HasOne(dr => dr.DetalleReparacionRepuesto)
                  .WithMany()
                  .HasForeignKey(x => x.IdDetalleReparacionRepuesto)
                  .OnDelete(DeleteBehavior.Restrict);
