@@ -38,6 +38,18 @@
     color: #1a73e8;
     font-weight: 500;
   }
+
+  .taller-info {
+    color: #666;
+    font-size: 0.9rem;
+    margin-left: 0.5rem;
+  }
+
+  .tipo-empleado {
+    color: #1a73e8;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
   
   .dashboard-section, .actions-section, .recent-activity {
     background: white;

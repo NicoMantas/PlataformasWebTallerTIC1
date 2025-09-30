@@ -5,7 +5,7 @@ using Taller_TIC1_Backend.Data;
 namespace Taller_TIC1_Backend.Controllers
 {
     [ApiController]
-    [Route("api / [controller]")]
+    [Route("api/[controller]")]
     public class HealthController : Controller
     {
         private readonly ApplicationDbContext _db;

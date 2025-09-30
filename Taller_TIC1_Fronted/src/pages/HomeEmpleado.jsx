@@ -5,6 +5,7 @@ import '../styles/HomeEmpleado.css';
 import { listOrdenes, updateOrden } from '../services/ordenesService';
 import { listServicios } from '../services/serviciosService';
 import { listFacturas } from '../services/facturasService';
+import { getCurrentUser } from '../services/authService';
 
 const HomeEmpleado = () => {
   const navigate = useNavigate();
@@ -14,8 +15,12 @@ const HomeEmpleado = () => {
   const [facturas, setFacturas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
+    // Get current user information
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
     loadData();
   }, []);
 
@@ -227,7 +232,13 @@ const HomeEmpleado = () => {
           <h1>{content.title}</h1>
           <p>{content.subtitle}</p>
           <div className="user-info">
-            <span>Conectado como: {localStorage.getItem('userEmail')}</span>
+            <span>Conectado como: {user?.infoEspecifica?.nombre || user?.email || 'Empleado'}</span>
+            {user?.infoEspecifica?.tipoEmpleado && (
+              <span className="tipo-empleado"> ({user.infoEspecifica.tipoEmpleado})</span>
+            )}
+            {user?.nombreTaller && (
+              <span className="taller-info"> - {user.nombreTaller}</span>
+            )}
           </div>
         </div>
         

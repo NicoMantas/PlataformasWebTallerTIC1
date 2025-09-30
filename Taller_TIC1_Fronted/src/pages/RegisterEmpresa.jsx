@@ -4,35 +4,89 @@ import Header from '../components/Header';
 import AuthForm from '../components/AuthForm';
 import '../styles/RegisterEmpresa.css';
 import { registerCliente } from '../services/authService';
+import { createCliente } from '../services/clientesService';
+import { createVehiculo } from '../services/vehiculosService';
 
 const RegisterEmpresa = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async (formData) => {
     if (formData.password !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden');
       return;
     }
+
+    setLoading(true);
+    setError('');
+
     try {
-      // Empresas también son clientes tipo empresa en el backend
+      // Paso 1: Crear el vehículo primero
+      let vehiculoId = null;
+      if (formData.placa && formData.marca && formData.modelo && formData.anio) {
+        const vehiculoData = {
+          placa: formData.placa,
+          marca: formData.marca,
+          modelo: formData.modelo,
+          anio: parseInt(formData.anio),
+          tipo: formData.tipoVehiculo || 'Gasolina'
+        };
+        const vehiculoResponse = await createVehiculo(vehiculoData);
+        vehiculoId = vehiculoResponse.id;
+      }
+
+      // Paso 2: Crear el cliente empresa
+      const clienteData = {
+        nombre: formData.nombreEmpresa,
+        email: formData.email,
+        telefono: parseInt(formData.telefono),
+        idVehiculo: vehiculoId || 1, // Usar ID por defecto si no se creó vehículo
+        tipo: 'Empresa',
+        nit: parseInt(formData.nit),
+        representanteLegal: formData.representanteLegal
+      };
+      const clienteResponse = await createCliente(clienteData);
+
+      // Paso 3: Registrar en el sistema de autenticación
       await registerCliente({
         email: formData.email,
         password: formData.password,
         idTaller: Number(import.meta.env.VITE_ID_TALLER) || 1,
-        idCliente: formData.idEmpresa ? Number(formData.idEmpresa) : null
+        idCliente: clienteResponse.id
       });
-      navigate('/login/empresa');
+
+      // Redirigir al Home de la empresa
+      navigate('/home/empresa');
     } catch (e) {
       setError(e?.message || 'Error al registrar empresa');
+    } finally {
+      setLoading(false);
     }
   };
 
   const registerFields = [
+    // Información de la empresa
+    { name: 'nombreEmpresa', type: 'text', label: 'Nombre de la Empresa', required: true },
+    { name: 'nit', type: 'number', label: 'NIT', required: true },
+    { name: 'representanteLegal', type: 'text', label: 'Representante Legal', required: true },
+    { name: 'telefono', type: 'tel', label: 'Teléfono', required: true },
     { name: 'email', type: 'email', label: 'Correo Electrónico', required: true },
+    
+    // Información del vehículo (opcional)
+    { name: 'placa', type: 'text', label: 'Placa del Vehículo', required: false },
+    { name: 'marca', type: 'text', label: 'Marca del Vehículo', required: false },
+    { name: 'modelo', type: 'text', label: 'Modelo del Vehículo', required: false },
+    { name: 'anio', type: 'number', label: 'Año del Vehículo', required: false },
+    { name: 'tipoVehiculo', type: 'select', label: 'Tipo de Vehículo', required: false, options: [
+      { value: 'Gasolina', label: 'Gasolina' },
+      { value: 'Electrico', label: 'Eléctrico' },
+      { value: 'Hibrido', label: 'Híbrido' }
+    ]},
+    
+    // Credenciales
     { name: 'password', type: 'password', label: 'Contraseña', required: true },
-    { name: 'confirmPassword', type: 'password', label: 'Confirmar Contraseña', required: true },
-    { name: 'idEmpresa', type: 'number', label: 'ID Empresa (opcional)', required: false }
+    { name: 'confirmPassword', type: 'password', label: 'Confirmar Contraseña', required: true }
   ];
 
   return (
@@ -51,7 +105,8 @@ const RegisterEmpresa = () => {
           <AuthForm 
             fields={registerFields}
             onSubmit={handleRegister}
-            submitText="Registrar Empresa"
+            submitText={loading ? "Registrando..." : "Registrar Empresa"}
+            disabled={loading}
           />
           
           <div className="auth-links">

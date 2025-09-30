@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './AuthForm.css';
 
-const AuthForm = ({ fields, onSubmit, submitText }) => {
+const AuthForm = ({ fields, onSubmit, submitText, disabled = false }) => {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
 
@@ -49,22 +49,41 @@ const AuthForm = ({ fields, onSubmit, submitText }) => {
             {field.label}
             {field.required && <span className="required"> *</span>}
           </label>
-          <input
-            type={field.type}
-            id={field.name}
-            name={field.name}
-            value={formData[field.name] || ''}
-            onChange={handleInputChange}
-            className={`form-input ${errors[field.name] ? 'error' : ''}`}
-            placeholder={`Ingresa tu ${field.label.toLowerCase()}`}
-          />
+          {field.type === 'select' ? (
+            <select
+              id={field.name}
+              name={field.name}
+              value={formData[field.name] || ''}
+              onChange={handleInputChange}
+              className={`form-input ${errors[field.name] ? 'error' : ''}`}
+              disabled={disabled}
+            >
+              <option value="">Selecciona una opción</option>
+              {field.options?.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type={field.type}
+              id={field.name}
+              name={field.name}
+              value={formData[field.name] || ''}
+              onChange={handleInputChange}
+              className={`form-input ${errors[field.name] ? 'error' : ''}`}
+              placeholder={`Ingresa tu ${field.label.toLowerCase()}`}
+              disabled={disabled}
+            />
+          )}
           {errors[field.name] && (
             <span className="error-message">{errors[field.name]}</span>
           )}
         </div>
       ))}
       
-      <button type="submit" className="btn-submit">
+      <button type="submit" className="btn-submit" disabled={disabled}>
         {submitText}
       </button>
     </form>

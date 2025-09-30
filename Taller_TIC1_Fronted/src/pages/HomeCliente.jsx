@@ -7,6 +7,7 @@ import '../styles/HomeCliente.css';
 import api from '../services/api';
 import { listServicios } from '../services/serviciosService';
 import { createOrden } from '../services/ordenesService';
+import { getCurrentUser } from '../services/authService';
 
 const HomeCliente = () => {
   const navigate = useNavigate();
@@ -15,8 +16,13 @@ const HomeCliente = () => {
   const [error, setError] = useState('');
   const [selectedVehiculo, setSelectedVehiculo] = useState(null);
   const [showVehiculos, setShowVehiculos] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
+    // Get current user information
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+
     (async () => {
       try {
         const data = await listServicios(api);
@@ -35,8 +41,11 @@ const HomeCliente = () => {
       
       <div className="cliente-container">
         <div className="cliente-header">
-          <h1>Bienvenido de vuelta, Juan Pérez</h1>
+          <h1>Bienvenido de vuelta, {user?.infoEspecifica?.nombre || user?.email || 'Cliente'}</h1>
           <p>Gestiona tus vehículos y servicios de manera fácil y rápida</p>
+          {user?.nombreTaller && (
+            <p className="taller-info">Taller: {user.nombreTaller}</p>
+          )}
         </div>
         
         <div className="cliente-dashboard">

@@ -22,18 +22,32 @@ const Login = () => {
       const user = res?.user;
       if (!user) throw new Error('Respuesta inválida del servidor');
 
+      // Store user information in localStorage for use across the app
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('userEmail', user.email);
+      localStorage.setItem('userType', user.tipoUsuario);
+      localStorage.setItem('tallerId', user.idTaller);
+      localStorage.setItem('tallerNombre', user.nombreTaller);
+
       // Decide destino por tipo de usuario y tipo empleado si aplica
       if (user.tipoUsuario === 'cliente') {
         navigate('/home/cliente');
       } else if (user.tipoUsuario === 'empleado') {
-        // employee specific info may contain role, fallback by email hint
+        // Get employee type from the specific info returned by the backend
         const info = user.infoEspecifica || {};
-        const tipo = info.tipoEmpleado ||
-          (formData.email.includes('mecanico') ? 'mecanico' :
-          formData.email.includes('secretaria') ? 'secretaria' : 'administrador');
-        navigate(`/home/empleado/${tipo}`);
+        const tipo = info.tipoEmpleado || 'mecanico'; // Default to mecanico if not specified
+        
+        // Map employee types to route parameters
+        let routeType = 'mecanico';
+        if (tipo.toLowerCase().includes('secretaria') || tipo.toLowerCase().includes('secretary')) {
+          routeType = 'secretaria';
+        } else if (tipo.toLowerCase().includes('admin') || tipo.toLowerCase().includes('administrador')) {
+          routeType = 'administrador';
+        }
+        
+        navigate(`/home/empleado/${routeType}`);
       } else {
-        // Empresas pueden estar modeladas como clientes empresa; enviar a home empresa si title contiene taller
+        // Empresas pueden estar modeladas como clientes empresa; enviar a home empresa
         navigate('/home/empresa');
       }
     } catch (err) {

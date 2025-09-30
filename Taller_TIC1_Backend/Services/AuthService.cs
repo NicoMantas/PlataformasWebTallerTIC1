@@ -73,7 +73,17 @@ namespace Taller_TIC1_Backend.Services
                             TipoUsuario = "empleado",
                             IdTaller = usuarioEmpleado.IdTaller,
                             NombreTaller = taller?.Nombre ?? string.Empty,
-                            InfoEspecifica = empleado
+                            InfoEspecifica = new
+                            {
+                                empleado.Id,
+                                empleado.Nombre,
+                                empleado.Apellido,
+                                empleado.Cedula,
+                                empleado.Salario,
+                                empleado.FechaContratacion,
+                                empleado.IdTipoEmpleado,
+                                tipoEmpleado = empleado.TipoEmpleado?.Descripcion ?? "Empleado"
+                            }
                         }
                     };
                 }
@@ -99,7 +109,16 @@ namespace Taller_TIC1_Backend.Services
                             TipoUsuario = "cliente",
                             IdTaller = usuarioCliente.IdTaller,
                             NombreTaller = taller?.Nombre ?? string.Empty,
-                            InfoEspecifica = cliente
+                            InfoEspecifica = new
+                            {
+                                cliente.Id,
+                                cliente.Nombre,
+                                cliente.Apellido,
+                                cliente.Cedula,
+                                cliente.Telefono,
+                                cliente.Direccion,
+                                cliente.Email
+                            }
                         }
                     };
                 }
