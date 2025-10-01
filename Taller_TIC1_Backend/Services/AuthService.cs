@@ -113,10 +113,7 @@ namespace Taller_TIC1_Backend.Services
                             {
                                 cliente.Id,
                                 cliente.Nombre,
-                                cliente.Apellido,
-                                cliente.Cedula,
                                 cliente.Telefono,
-                                cliente.Direccion,
                                 cliente.Email
                             }
                         }
