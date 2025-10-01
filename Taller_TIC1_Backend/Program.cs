@@ -85,7 +85,7 @@ namespace Taller_TIC1_Backend
             {
                 options.AddPolicy("ReactPolicy", policy =>
                 {
-                    policy.WithOrigins("http://localhost:3000", "http://localhost:5174", "https://localhost:5174", "http://localhost:3000", "https://localhost:3000") // URLs de tu aplicación React
+                    policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "https://localhost:5173", "http://localhost:3000", "https://localhost:3000") // URLs de tu aplicación React
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();
