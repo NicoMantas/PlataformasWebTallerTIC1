@@ -78,5 +78,19 @@ namespace Taller_TIC1_Backend.Controllers
             return Ok();
         }
 
+        [HttpPost("secretaria/asignaciones")]
+        public async Task<IActionResult> SecretariaAsignarServicios([FromBody] AsignacionOrdenServiciosDto dto)
+        {
+            // Endpoint de secretaría para asignar múltiples servicios a una orden
+            if (dto.ServiciosIds == null || !dto.ServiciosIds.Any())
+                return BadRequest("Debe proporcionar al menos un servicio.");
+
+            foreach (var servicioId in dto.ServiciosIds)
+            {
+                var ok = await _ordenService.AddServicioToOrdenAsync(dto.OrdenId, servicioId);
+            }
+            return Ok();
+        }
+
     }
 }

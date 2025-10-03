@@ -1,117 +1,83 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Taller_TIC1_Backend.Data;
 using Taller_TIC1_Backend.Models;
-using Taller_TIC1_Backend.Models.DTOs;
 
 namespace Taller_TIC1_Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class DetalleReparacionController : ControllerBase
+    public class DetalleRevisionController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
 
-        public DetalleReparacionController(ApplicationDbContext context)
+        public DetalleRevisionController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/DetalleReparacion
+        // GET: api/DetalleRevision
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<DetalleReparacion>>> GetDetallesReparacion()
+        public async Task<ActionResult<IEnumerable<DetalleRevision>>> GetRevisiones()
         {
-            var items = await _context.DetallesReparacion
-                .Include(dr => dr.Servicio)
-                .Include(dr => dr.DetalleReparacionRepuesto)
-                    .ThenInclude(drr => drr.Repuesto)
+            // Trae revisiones con su servicio
+            var items = await _context.DetallesRevision
+                .Include(dr => dr.IdServicio)
                 .ToListAsync();
-
             return Ok(items);
         }
 
-        // GET: api/DetalleReparacion/5
+        // GET: api/DetalleRevision/5  (idServicio)
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<DetalleReparacion>> GetDetalleReparacion(int id)
+        public async Task<ActionResult<DetalleRevision>> GetRevision(int id)
         {
-            var detalleReparacion = await _context.DetallesReparacion
-                .Include(dr => dr.Servicio)
-                .Include(dr => dr.DetalleReparacionRepuesto)
-                    .ThenInclude(drr => drr.Repuesto)
-                .FirstOrDefaultAsync(dr => dr.IdServicio == id);
-
-            if (detalleReparacion == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(detalleReparacion);
+            var entity = await _context.DetallesRevision.FirstOrDefaultAsync(x => x.IdServicio == id);
+            if (entity == null) return NotFound();
+            return Ok(entity);
         }
 
-        // POST: api/DetalleReparacion
+        // POST: api/DetalleRevision
         [HttpPost]
-        public async Task<ActionResult<DetalleReparacion>> PostDetalleReparacion(DetalleReparacionCreateDTO dto)
+        public async Task<ActionResult<DetalleRevision>> PostRevision(DetalleRevision dto)
         {
+            // Validar que el servicio exista
             var servicioExists = await _context.Servicios.AnyAsync(s => s.Id == dto.IdServicio);
             if (!servicioExists) return BadRequest("El servicio especificado no existe.");
 
-            var detalleRepuestoExists = await _context.DetallesReparacionRepuesto.AnyAsync(drr => drr.Id == dto.IdDetalleReparacionRepuesto);
-            if (!detalleRepuestoExists) return BadRequest("El detalle de repuesto especificado no existe.");
+            // Validar que no exista ya una revisión para ese servicio (1:1)
+            var exists = await _context.DetallesRevision.AnyAsync(r => r.IdServicio == dto.IdServicio);
+            if (exists) return BadRequest("Ya existe una revisión para este servicio.");
 
-            var existingDetail = await _context.DetallesReparacion.FindAsync(dto.IdServicio);
-            if (existingDetail != null) return BadRequest("Ya existe un detalle de reparación para este servicio.");
-
-            var entity = new DetalleReparacion
-            {
-                IdServicio = dto.IdServicio,
-                IdDetalleReparacionRepuesto = dto.IdDetalleReparacionRepuesto
-            };
-
-            _context.DetallesReparacion.Add(entity);
+            _context.DetallesRevision.Add(dto);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetDetalleReparacion), new { id = entity.IdServicio }, entity);
+            return CreatedAtAction(nameof(GetRevision), new { id = dto.IdServicio }, dto);
         }
-        // PUT: api/DetalleReparacion/5
+
+        // PUT: api/DetalleRevision/5
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> PutDetalleReparacion(int id, DetalleReparacionUpdateDto dto)
+        public async Task<IActionResult> PutRevision(int id, DetalleRevision dto)
         {
             if (id != dto.IdServicio) return BadRequest();
 
-            var entity = await _context.DetallesReparacion.FindAsync(id);
+            var entity = await _context.DetallesRevision.FindAsync(id);
             if (entity == null) return NotFound();
 
-            var detalleRepuestoExists = await _context.DetallesReparacionRepuesto.AnyAsync(drr => drr.Id == dto.IdDetalleReparacionRepuesto);
-            if (!detalleRepuestoExists) return BadRequest("El detalle de repuesto especificado no existe.");
-
-            entity.IdDetalleReparacionRepuesto = dto.IdDetalleReparacionRepuesto;
-
+            entity.Detalles = dto.Detalles;
             await _context.SaveChangesAsync();
             return NoContent();
         }
 
-        // DELETE: api/DetalleReparacion/5
+        // DELETE: api/DetalleRevision/5
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteDetalleReparacion(int id)
+        public async Task<IActionResult> DeleteRevision(int id)
         {
-            var detalleReparacion = await _context.DetallesReparacion.FindAsync(id);
-            if (detalleReparacion == null)
-            {
-                return NotFound();
-            }
+            var entity = await _context.DetallesRevision.FindAsync(id);
+            if (entity == null) return NotFound();
 
-            _context.DetallesReparacion.Remove(detalleReparacion);
+            _context.DetallesRevision.Remove(entity);
             await _context.SaveChangesAsync();
-
             return NoContent();
-        }
-
-        private bool DetalleReparacionExists(int id)
-        {
-            return _context.DetallesReparacion.Any(e => e.IdServicio == id);
         }
     }
 }
