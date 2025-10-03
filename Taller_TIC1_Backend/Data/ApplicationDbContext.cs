@@ -390,9 +390,9 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.FechaCreacion).HasColumnName("fechaCreacion").HasColumnType("date");
                 e.Property(x => x.IdTipoEstadoOrden).HasColumnName("idTipoEstadoOrden");
 
-                e.HasOne<TipoEstadoOrden>()
+                e.HasOne(o => o.TipoEstadoOrden)
                  .WithMany()
-                 .HasForeignKey(x => x.IdTipoEstadoOrden)
+                 .HasForeignKey(o => o.IdTipoEstadoOrden)
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -404,14 +404,14 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.IdOrdenTrabajo).HasColumnName("idOrdenTrabajo");
                 e.Property(x => x.IdServicio).HasColumnName("idServicio");
 
-                e.HasOne<OrdenDeTrabajo>()
+                e.HasOne(d => d.OrdenTrabajo)
                  .WithMany()
-                 .HasForeignKey(x => x.IdOrdenTrabajo)
+                 .HasForeignKey(d => d.IdOrdenTrabajo)
                  .OnDelete(DeleteBehavior.Cascade);
 
-                e.HasOne<Servicio>()
+                e.HasOne(d => d.Servicio)
                  .WithMany()
-                 .HasForeignKey(x => x.IdServicio)
+                 .HasForeignKey(d => d.IdServicio)
                  .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -421,16 +421,16 @@ namespace Taller_TIC1_Backend.Data
                 e.ToTable("Factura");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
-                e.Property(x => x.IdOrdenTrabajo).HasColumnName("idOrdenTrabajo");
-                e.Property(x => x.FechaEmision).HasColumnName("fechaEmision").HasColumnType("date");
+                e.Property(x => x.IdOrdenTrabajo).HasColumnName("idordentrabajo");
+                e.Property(x => x.FechaEmision).HasColumnName("fechaemision").HasColumnType("date");
                 e.Property(x => x.Subtotal).HasColumnName("subtotal").HasColumnType("real");
                 e.Property(x => x.Impuestos).HasColumnName("impuestos").HasColumnType("real");
                 e.Property(x => x.Total).HasColumnName("total").HasColumnType("real");
                 e.Property(x => x.Estado).HasColumnName("estado").HasMaxLength(50);
 
-                e.HasOne<OrdenDeTrabajo>()
+                e.HasOne(f => f.OrdenTrabajo)
                  .WithMany()
-                 .HasForeignKey(x => x.IdOrdenTrabajo)
+                 .HasForeignKey(f => f.IdOrdenTrabajo)
                  .OnDelete(DeleteBehavior.Restrict);
             });
         }
