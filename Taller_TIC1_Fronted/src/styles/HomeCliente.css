@@ -1,7 +1,7 @@
 /* src/pages/HomeCliente.css */
 .home-cliente-page {
     min-height: 100vh;
-    background-color: #f8f9fa;
+    background-color: var(--background-light);
   }
   
   .cliente-container {
@@ -20,17 +20,17 @@
   }
   
   .cliente-header h1 {
-    color: #1a2a6c;
+    color: var(--primary-color);
     margin-bottom: 0.5rem;
   }
   
   .cliente-header p {
-    color: #666;
+    color: var(--text-light);
     font-size: 1.1rem;
   }
 
   .taller-info {
-    color: #666;
+    color: var(--text-muted);
     font-size: 1rem;
     margin-top: 0.5rem;
     font-style: italic;
@@ -46,7 +46,7 @@
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--border-color);
   }
 
   .tab-button {
@@ -59,13 +59,13 @@
   }
 
   .tab-button.active {
-    border-bottom-color: #007bff;
-    color: #007bff;
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
     font-weight: bold;
   }
 
   .vehiculo-selection {
-    background: #f8f9fa;
+    background: var(--background-light);
     padding: 20px;
     border-radius: 8px;
     text-align: center;
@@ -73,7 +73,7 @@
   }
 
   .selected-vehiculo {
-    background: #e7f3ff;
+    background: #e0f2fe;
     padding: 15px;
     border-radius: 8px;
     margin: 20px 0;
@@ -88,12 +88,12 @@
 
   .servicio-info h3 {
     margin: 0 0 5px 0;
-    color: #333;
+    color: var(--text-color);
   }
 
   .servicio-info p {
     margin: 5px 0;
-    color: #666;
+    color: var(--text-light);
   }
   
   .vehiculos-section, .servicios-section, .quick-actions {
@@ -104,7 +104,7 @@
   }
   
   .vehiculos-section h2, .servicios-section h2, .quick-actions h2 {
-    color: #1a2a6c;
+    color: var(--primary-color);
     margin-bottom: 1.5rem;
   }
   
@@ -117,18 +117,18 @@
   
   .vehiculo-card {
     padding: 1.5rem;
-    border: 1px solid #e1e1e1;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
   }
   
   .vehiculo-card h3 {
-    color: #1a2a6c;
+    color: var(--primary-color);
     margin-bottom: 0.5rem;
   }
   
   .vehiculo-card p {
     margin-bottom: 0.5rem;
-    color: #666;
+    color: var(--text-light);
   }
   
   .servicios-list {
@@ -143,7 +143,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    background: #f8f9fa;
+    background: var(--background-light);
     border-radius: 4px;
   }
   
@@ -155,17 +155,17 @@
   }
   
   .servicio-status.completed {
-    background-color: #e6f4ea;
-    color: #137333;
+    background-color: #ecfdf5;
+    color: var(--success-color);
   }
   
   .servicio-status.in-progress {
-    background-color: #e8f0fe;
-    color: #1a73e8;
+    background-color: #eef2ff;
+    color: var(--primary-color);
   }
   
   .servicio-date {
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.9rem;
   }
   

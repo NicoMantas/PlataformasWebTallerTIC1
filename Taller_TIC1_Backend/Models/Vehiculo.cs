@@ -9,6 +9,7 @@ namespace Taller_TIC1_Backend.Models
         public string Marca { get; set; } = string.Empty;
         public string Modelo { get; set; } = string.Empty;
         public int Anio { get; set; }
+        public int IdCliente { get; set; }
 
         // Propiedad para determinar el tipo
         public string TipoVehiculo

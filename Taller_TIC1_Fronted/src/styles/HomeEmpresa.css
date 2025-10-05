@@ -1,7 +1,7 @@
 /* src/pages/HomeEmpresa.css */
 .home-empresa-page {
     min-height: 100vh;
-    background-color: #f8f9fa;
+    background-color: var(--background-light);
   }
   
   .empresa-container {
@@ -20,24 +20,24 @@
   }
   
   .empresa-header h1 {
-    color: #1a2a6c;
+    color: var(--primary-color);
     margin-bottom: 0.5rem;
   }
   
   .empresa-header p {
-    color: #666;
+    color: var(--text-light);
     font-size: 1.1rem;
   }
 
   .user-info {
-    color: #666;
+    color: var(--text-muted);
     font-size: 1rem;
     margin-top: 0.5rem;
     font-style: italic;
   }
 
   .taller-info {
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.9rem;
     margin-left: 0.5rem;
   }
@@ -58,14 +58,14 @@
   }
   
   .dashboard-card h3 {
-    color: #1a2a6c;
+    color: var(--primary-color);
     margin-bottom: 1rem;
   }
   
   .dashboard-card .stat {
     font-size: 2.5rem;
     font-weight: bold;
-    color: #1a73e8;
+    color: var(--primary-color);
     margin-bottom: 1rem;
   }
   
@@ -78,7 +78,7 @@
   }
   
   .empresa-actions h2 {
-    color: #1a2a6c;
+    color: var(--primary-color);
     margin-bottom: 1.5rem;
     text-align: center;
   }
@@ -97,7 +97,7 @@
   }
   
   .recent-activity h2 {
-    color: #1a2a6c;
+    color: var(--primary-color);
     margin-bottom: 1.5rem;
     text-align: center;
   }
@@ -113,12 +113,12 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    background: #f8f9fa;
+    background: var(--background-light);
     border-radius: 4px;
   }
   
   .activity-date {
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.9rem;
   }
   

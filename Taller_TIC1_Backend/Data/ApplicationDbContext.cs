@@ -119,7 +119,6 @@ namespace Taller_TIC1_Backend.Data
             });
 
             // Configuración para Vehiculo
-            // Configuración para Vehiculo
             modelBuilder.Entity<Vehiculo>(e =>
             {
                 e.ToTable("Vehiculo");
@@ -129,6 +128,7 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.Marca).HasColumnName("marca").HasMaxLength(50);
                 e.Property(x => x.Modelo).HasColumnName("modelo").HasMaxLength(50);
                 e.Property(x => x.Anio).HasColumnName("anio");
+                e.Property(x => x.IdCliente).HasColumnName("idCliente");
             });
 
             // Configuración para VGasolina con relación explícita
@@ -266,22 +266,7 @@ namespace Taller_TIC1_Backend.Data
                  .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Configuración para DetalleReparacionRepuesto
-            modelBuilder.Entity<DetalleReparacionRepuesto>(e =>
-            {
-                e.ToTable("DetalleReparacionRepuesto");
-                e.HasKey(x => x.Id);
-                e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
-                e.Property(x => x.IdRepuesto).HasColumnName("idRepuesto");
-                e.Property(x => x.Cantidad).HasColumnName("cantidad");
-
-                e.HasOne<Repuesto>()
-                 .WithMany()
-                 .HasForeignKey(x => x.IdRepuesto)
-                 .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            // Configuración para DetalleReparacionRepuesto
+            // Configuración para DetalleReparacionRepuesto (una sola definición)
             modelBuilder.Entity<DetalleReparacionRepuesto>(e =>
             {
                 e.ToTable("DetalleReparacionRepuesto");

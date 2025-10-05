@@ -5,7 +5,8 @@ import '../styles/HomeEmpleado.css';
 import { listOrdenes, updateOrden } from '../services/ordenesService';
 import { listServicios } from '../services/serviciosService';
 import { listFacturas } from '../services/facturasService';
-import { getCurrentUser } from '../services/authService';
+import { getCurrentUser, registerEmpleado } from '../services/authService';
+import { createEmpleado, listEmpleados } from '../services/empleadosService';
 
 const HomeEmpleado = () => {
   const navigate = useNavigate();
@@ -16,6 +17,18 @@ const HomeEmpleado = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
+  const [empleados, setEmpleados] = useState([]);
+  const [creating, setCreating] = useState(false);
+  const [empleadoForm, setEmpleadoForm] = useState({
+    nombre: '',
+    apellido: '',
+    cedula: '',
+    salario: '',
+    idTipoEmpleado: 1,
+    email: '',
+    password: '',
+    idTaller: ''
+  });
 
   useEffect(() => {
     // Get current user information
@@ -27,14 +40,16 @@ const HomeEmpleado = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [ordenesData, serviciosData, facturasData] = await Promise.all([
+      const [ordenesData, serviciosData, facturasData, empleadosData] = await Promise.all([
         listOrdenes(),
         listServicios(),
-        listFacturas()
+        listFacturas(),
+        listEmpleados().catch(() => [])
       ]);
       setOrdenes(ordenesData || []);
       setServicios(serviciosData || []);
       setFacturas(facturasData || []);
+      setEmpleados(empleadosData || []);
     } catch (e) {
       setError(e?.message || 'Error al cargar datos');
     } finally {
@@ -204,6 +219,80 @@ const HomeEmpleado = () => {
                       <span className="stat-label">Total Facturado:</span>
                       <span className="stat-value">${facturas.reduce((sum, f) => sum + f.total, 0).toFixed(2)}</span>
                     </div>
+                  </div>
+                </div>
+              </div>
+              <div className="dashboard-card" style={{ marginTop: '1.5rem' }}>
+                <h3>Registro de Empleados</h3>
+                <p>Tipos: 1 Administrador, 2 Secretaria, 3 Mecánico</p>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    try {
+                      setCreating(true);
+                      setError('');
+                      const created = await createEmpleado({
+                        nombre: empleadoForm.nombre,
+                        apellido: empleadoForm.apellido,
+                        cedula: Number(empleadoForm.cedula),
+                        salario: Number(empleadoForm.salario),
+                        idTipoEmpleado: Number(empleadoForm.idTipoEmpleado)
+                      });
+                      const idEmpleado = created?.id;
+                      const idTaller = empleadoForm.idTaller || user?.idTaller || user?.tallerId;
+                      if (!idEmpleado || !idTaller) {
+                        alert('Empleado creado, pero falta idTaller para registro de acceso');
+                        await loadData();
+                        setCreating(false);
+                        return;
+                      }
+                      await registerEmpleado({
+                        email: empleadoForm.email,
+                        password: empleadoForm.password,
+                        idEmpleado,
+                        idTaller
+                      });
+                      alert('Empleado registrado y credenciales creadas');
+                      setEmpleadoForm({ nombre: '', apellido: '', cedula: '', salario: '', idTipoEmpleado: 1, email: '', password: '', idTaller: '' });
+                      await loadData();
+                    } catch (err) {
+                      setError(err?.message || 'Error en registro de empleado');
+                    } finally {
+                      setCreating(false);
+                    }
+                  }}
+                  className="form-container"
+                >
+                  {error && <div className="error-message">{error}</div>}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '1rem' }}>
+                    <input placeholder="Nombre" required value={empleadoForm.nombre} onChange={(e) => setEmpleadoForm({ ...empleadoForm, nombre: e.target.value })} />
+                    <input placeholder="Apellido" required value={empleadoForm.apellido} onChange={(e) => setEmpleadoForm({ ...empleadoForm, apellido: e.target.value })} />
+                    <input placeholder="Cédula" required type="number" value={empleadoForm.cedula} onChange={(e) => setEmpleadoForm({ ...empleadoForm, cedula: e.target.value })} />
+                    <input placeholder="Salario" required type="number" step="0.01" value={empleadoForm.salario} onChange={(e) => setEmpleadoForm({ ...empleadoForm, salario: e.target.value })} />
+                    <select value={empleadoForm.idTipoEmpleado} onChange={(e) => setEmpleadoForm({ ...empleadoForm, idTipoEmpleado: e.target.value })}>
+                      <option value={1}>Administrador</option>
+                      <option value={2}>Secretaria</option>
+                      <option value={3}>Mecánico</option>
+                    </select>
+                    <input placeholder="Email" required type="email" value={empleadoForm.email} onChange={(e) => setEmpleadoForm({ ...empleadoForm, email: e.target.value })} />
+                    <input placeholder="Password" required type="password" value={empleadoForm.password} onChange={(e) => setEmpleadoForm({ ...empleadoForm, password: e.target.value })} />
+                    <input placeholder="Id Taller" type="number" value={empleadoForm.idTaller} onChange={(e) => setEmpleadoForm({ ...empleadoForm, idTaller: e.target.value })} />
+                  </div>
+                  <div style={{ marginTop: '1rem', display: 'flex', gap: '.75rem' }}>
+                    <button className="btn-primary" type="submit" disabled={creating}>{creating ? 'Creando...' : 'Crear y Registrar'}</button>
+                    <button className="btn-secondary" type="button" onClick={() => setEmpleadoForm({ nombre: '', apellido: '', cedula: '', salario: '', idTipoEmpleado: 1, email: '', password: '', idTaller: '' })}>Limpiar</button>
+                  </div>
+                </form>
+                <div className="card" style={{ marginTop: '1rem' }}>
+                  <h4>Empleados actuales</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '1rem' }}>
+                    {empleados.map((emp) => (
+                      <div key={emp.id} className="card" style={{ padding: '1rem' }}>
+                        <div className="card-title">{emp.nombre} {emp.apellido}</div>
+                        <div className="card-subtitle">Tipo: {emp.idTipoEmpleado}</div>
+                        <p className="mb-0">Cédula: {emp.cedula}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

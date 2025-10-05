@@ -25,6 +25,14 @@ const Header = () => {
         </div>
         
         <nav className="nav">
+          {isAuthPage && (
+            <button 
+              className="nav-link"
+              onClick={() => navigate('/')}
+            >
+              Volver al Inicio
+            </button>
+          )}
           {isHomePage && !user && (
             <>
               <button 

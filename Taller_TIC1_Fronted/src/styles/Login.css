@@ -10,7 +10,7 @@
     justify-content: center;
     align-items: center;
     padding: 2rem;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: linear-gradient(135deg, var(--background-light) 0%, rgba(14, 165, 233, 0.08) 40%, rgba(124, 58, 237, 0.08) 100%);
   }
   
   .auth-form-container {
@@ -28,13 +28,13 @@
   }
   
   .auth-header h2 {
-    color: #1a2a6c;
+    color: var(--primary-color);
     margin-bottom: 0.5rem;
     font-size: 1.8rem;
   }
   
   .auth-header p {
-    color: #666;
+    color: var(--text-light);
   }
   
   .auth-links {
@@ -44,15 +44,15 @@
   
   .auth-links p {
     margin-bottom: 0.5rem;
-    color: #666;
+    color: var(--text-light);
   }
 
   .login-hint {
-    background-color: #e8f0fe;
+    background-color: #eef2ff;
     padding: 0.5rem;
     border-radius: 4px;
     font-size: 0.9rem;
-    color: #1a73e8;
+    color: var(--primary-color);
     margin-top: 0.5rem;
   }
   

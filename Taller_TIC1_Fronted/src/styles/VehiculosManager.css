@@ -126,7 +126,7 @@
 }
 
 .btn-danger {
-  background: #dc3545;
+  background: var(--error-color);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -135,7 +135,7 @@
 }
 
 .btn-danger:hover {
-  background: #c82333;
+  background: #b91c1c; /* darker shade of red-700 to match tailwind scale */
 }
 
 .loading {
@@ -145,10 +145,10 @@
 }
 
 .error {
-  color: #dc3545;
+  color: var(--error-color);
   padding: 10px;
-  background: #f8d7da;
-  border: 1px solid #f5c6cb;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
   border-radius: 4px;
   margin: 10px 0;
 }

@@ -12,21 +12,21 @@
   line-height: 1.6;
   font-weight: 400;
   
-  /* Colores principales */
-  --primary-color: #1a2a6c;
-  --secondary-color: #b21f1f;
-  --accent-color: #fdbb2d;
-  --text-color: #333333;
-  --text-light: #666666;
-  --text-muted: #999999;
+  /* Colores principales - nueva gama (sky/violet/amber, tonos modernos) */
+  --primary-color: #0ea5e9; /* sky-500 */
+  --secondary-color: #7c3aed; /* violet-600 */
+  --accent-color: #7c3aed; /* amber-500 */
+  --text-color: #0f172a; /* slate-900 */
+  --text-light: #334155; /* slate-700 */
+  --text-muted: #64748b; /* slate-500 */
   --background-color: #ffffff;
-  --background-light: #f8f9fa;
-  --border-color: #e1e8ed;
-  --border-light: #f1f3f4;
-  --success-color: #28a745;
-  --warning-color: #ffc107;
-  --error-color: #dc3545;
-  --info-color: #17a2b8;
+  --background-light: #f8fafc; /* slate-50 */
+  --border-color: #e2e8f0; /* slate-200 */
+  --border-light: #f1f5f9; /* slate-100 */
+  --success-color: #10b981; /* emerald-500 */
+  --warning-color: #f59e0b; /* amber-500 */
+  --error-color: #ef4444; /* red-500 */
+  --info-color: #06b6d4; /* cyan-500 */
   
   /* Sombras */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -143,7 +143,7 @@ button {
   padding: var(--spacing-md) var(--spacing-xl);
   border-radius: var(--border-radius-lg);
   font-weight: 600;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.2);
 }
 
 .btn-primary:hover {
@@ -154,8 +154,8 @@ button {
 
 .btn-secondary {
   background: var(--background-color);
-  color: var(--primary-color);
-  border: 2px solid var(--primary-color);
+  color: var(--secondary-color);
+  border: 2px solid var(--secondary-color);
   padding: var(--spacing-md) var(--spacing-xl);
   border-radius: var(--border-radius-lg);
   font-weight: 600;

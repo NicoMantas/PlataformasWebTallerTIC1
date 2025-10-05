@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { listVehiculos, createVehiculo, updateVehiculo, deleteVehiculo } from '../services/vehiculosService.js';
+import { getCurrentUser } from '../services/authService';
 import '../styles/VehiculosManager.css';
 
 const VehiculosManager = ({ onVehiculoSelect }) => {
@@ -8,6 +9,7 @@ const VehiculosManager = ({ onVehiculoSelect }) => {
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingVehiculo, setEditingVehiculo] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [formData, setFormData] = useState({
     placa: '',
     marca: '',
@@ -19,14 +21,22 @@ const VehiculosManager = ({ onVehiculoSelect }) => {
   });
 
   useEffect(() => {
-    loadVehiculos();
+    const u = getCurrentUser();
+    setCurrentUser(u);
+    loadVehiculos(u);
   }, []);
 
-  const loadVehiculos = async () => {
+  const loadVehiculos = async (u) => {
     try {
       setLoading(true);
       const data = await listVehiculos();
-      setVehiculos(data || []);
+      const userClientId = u?.infoEspecifica?.id || u?.idCliente;
+      const filtered = (data || []).filter((v) => {
+        const candidateIds = [v.idCliente, v.clienteId, v.id_cliente, v.idDueno, v.id_owner].filter((x) => x !== undefined && x !== null);
+        if (candidateIds.length === 0) return true; // si backend no envía dueño, mostramos todos (fallback)
+        return candidateIds.includes(userClientId);
+      });
+      setVehiculos(filtered);
     } catch (e) {
       setError(e?.message || 'Error al cargar vehículos');
     } finally {
@@ -56,7 +66,7 @@ const VehiculosManager = ({ onVehiculoSelect }) => {
       setShowForm(false);
       setEditingVehiculo(null);
       resetForm();
-      loadVehiculos();
+      loadVehiculos(currentUser);
     } catch (e) {
       setError(e?.message || 'Error al guardar vehículo');
     }
@@ -80,7 +90,7 @@ const VehiculosManager = ({ onVehiculoSelect }) => {
     if (window.confirm('¿Estás seguro de eliminar este vehículo?')) {
       try {
         await deleteVehiculo(id);
-        loadVehiculos();
+        loadVehiculos(currentUser);
       } catch (e) {
         setError(e?.message || 'Error al eliminar vehículo');
       }

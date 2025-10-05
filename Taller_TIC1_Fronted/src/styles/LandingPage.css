@@ -5,7 +5,7 @@
   }
   
   .hero-section {
-    background: linear-gradient(to right, #1a2a6c, #b21f1f, #fdbb2d);
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 60%, var(--accent-color) 100%);
     color: white;
     padding: 6rem 2rem;
     text-align: center;
@@ -48,7 +48,7 @@
     text-align: center;
     margin-bottom: 3rem;
     font-size: 2.5rem;
-    color: #1a2a6c;
+    color: var(--primary-color);
   }
   
   .features-grid {
@@ -58,7 +58,7 @@
   }
   
   .feature-card {
-    background: #f8f9fa;
+    background: var(--background-light);
     padding: 2.5rem 2rem;
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
@@ -77,19 +77,19 @@
   }
   
   .feature-card h3 {
-    color: #1a2a6c;
+    color: var(--primary-color);
     margin-bottom: 1rem;
     font-size: 1.5rem;
   }
   
   .feature-card p {
-    color: #666;
+    color: var(--text-light);
     line-height: 1.6;
   }
   
   .testimonials {
     padding: 5rem 2rem;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: linear-gradient(135deg, var(--background-light) 0%, rgba(14, 165, 233, 0.08) 40%, rgba(124, 58, 237, 0.08) 100%);
   }
   
   .testimonials .container {
@@ -101,7 +101,7 @@
     text-align: center;
     margin-bottom: 3rem;
     font-size: 2.5rem;
-    color: #1a2a6c;
+    color: var(--primary-color);
   }
   
   .testimonials-grid {
@@ -120,13 +120,13 @@
   .testimonial-card p {
     font-style: italic;
     margin-bottom: 1.5rem;
-    color: #555;
+    color: var(--text-light);
     line-height: 1.6;
   }
   
   .testimonial-card span {
     font-weight: 600;
-    color: #1a73e8;
+    color: var(--primary-color);
   }
   
   @media (max-width: 768px) {

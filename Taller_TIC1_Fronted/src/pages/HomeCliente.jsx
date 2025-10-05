@@ -4,36 +4,25 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import VehiculosManager from '../components/VehiculosManager';
 import '../styles/HomeCliente.css';
-import api from '../services/api';
-import { listServicios } from '../services/serviciosService';
-import { createOrden } from '../services/ordenesService';
 import { getCurrentUser } from '../services/authService';
 
 const HomeCliente = () => {
   const navigate = useNavigate();
-  const [servicios, setServicios] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [selectedVehiculo, setSelectedVehiculo] = useState(null);
   const [showVehiculos, setShowVehiculos] = useState(false);
   const [user, setUser] = useState(null);
+  const [showDetailsId, setShowDetailsId] = useState(null);
 
   useEffect(() => {
     // Get current user information
     const currentUser = getCurrentUser();
     setUser(currentUser);
-
-    (async () => {
-      try {
-        const data = await listServicios(api);
-        setServicios(data || []);
-      } catch (e) {
-        setError(e?.message || 'No se pudieron cargar los servicios');
-      } finally {
-        setLoading(false);
-      }
-    })();
   }, []);
+
+  const serviciosBasicos = [
+    { id: 'revision', nombre: 'Revisión', costo: 0, descripcion: 'Inspección general del vehículo para evaluar su estado.' },
+    { id: 'reparacion', nombre: 'Reparación', costo: 0, descripcion: 'Reparación de componentes y sistemas del vehículo.' }
+  ];
 
   return (
     <div className="home-cliente-page">
@@ -67,8 +56,6 @@ const HomeCliente = () => {
           {!showVehiculos ? (
             <div className="servicios-section">
               <h2>Servicios Disponibles</h2>
-              {loading && <p>Cargando servicios...</p>}
-              {error && <div className="error-message">{error}</div>}
               
               {!selectedVehiculo && (
                 <div className="vehiculo-selection">
@@ -95,36 +82,28 @@ const HomeCliente = () => {
               )}
 
               <div className="servicios-list">
-                {servicios.map((s) => (
-                  <div key={s.id} className="servicio-item">
-                    <div className="servicio-info">
-                      <h3>{s.nombre}</h3>
-                      <p>{s.descripcion}</p>
-                      <p><strong>Costo:</strong> ${s.costo}</p>
+                {serviciosBasicos.map((s) => (
+                  <div key={s.id} className="card">
+                    <div className="card-header">
+                      <div className="card-title">{s.nombre}</div>
+                      <div className="card-subtitle">Desde ${s.costo}</div>
                     </div>
-                    <button
-                      className="btn-primary"
-                      disabled={!selectedVehiculo}
-                      onClick={async () => {
-                        if (!selectedVehiculo) {
-                          alert('Por favor selecciona un vehículo primero');
-                          return;
-                        }
-                        try {
-                          await createOrden({
-                            clienteId: 1, // TODO: obtener del usuario autenticado
-                            vehiculoId: selectedVehiculo.id,
-                            serviciosIds: [s.id],
-                            descripcion: `Solicitud de ${s.nombre}`
-                          });
-                          alert('Solicitud enviada correctamente');
-                        } catch (e) {
-                          alert(e?.message || 'No se pudo solicitar');
-                        }
-                      }}
-                    >
-                      Solicitar
-                    </button>
+                    <p>{s.descripcion}</p>
+                    {showDetailsId === s.id && (
+                      <div className="mb-2">
+                        <p className="mb-1"><strong>Duración estimada:</strong> 1-3 horas</p>
+                        <p className="mb-1"><strong>Incluye:</strong> Mano de obra básica, diagnóstico inicial</p>
+                        <p className="mb-0"><strong>Notas:</strong> Puede requerir repuestos adicionales según evaluación</p>
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                      <button className="btn-secondary" onClick={() => setShowDetailsId(showDetailsId === s.id ? null : s.id)}>
+                        {showDetailsId === s.id ? 'Ocultar Detalles' : 'Detalles'}
+                      </button>
+                      <button className="btn-primary" onClick={() => {}}>
+                        Reservar
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -61,7 +61,8 @@ namespace Taller_TIC1_Backend.Services
                     Placa = vehiculoCreateDto.Placa,
                     Marca = vehiculoCreateDto.Marca,
                     Modelo = vehiculoCreateDto.Modelo,
-                    Anio = vehiculoCreateDto.Anio
+                    Anio = vehiculoCreateDto.Anio,
+                    IdCliente = vehiculoCreateDto.IdCliente
                 };
 
                 _context.Vehiculos.Add(vehiculo);
@@ -138,7 +139,8 @@ namespace Taller_TIC1_Backend.Services
                 Placa = vehiculoUpdateDto.Placa,
                 Marca = vehiculoUpdateDto.Marca,
                 Modelo = vehiculoUpdateDto.Modelo,
-                Anio = vehiculoUpdateDto.Anio
+                Anio = vehiculoUpdateDto.Anio,
+                IdCliente = vehiculoUpdateDto.IdCliente
             };
 
             var updatedVehiculo = await _vehiculoRepository.UpdateAsync(id, vehiculo);
@@ -172,7 +174,8 @@ namespace Taller_TIC1_Backend.Services
                 Marca = vehiculo.Marca,
                 Modelo = vehiculo.Modelo,
                 Anio = vehiculo.Anio,
-                TipoVehiculo = vehiculo.TipoVehiculo
+                TipoVehiculo = vehiculo.TipoVehiculo,
+                IdCliente = vehiculo.IdCliente
             };
 
             // Agregar propiedades específicas según el tipo
