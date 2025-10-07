@@ -18,6 +18,7 @@ namespace Taller_TIC1_Backend.Repositories
         {
             return await _context.Servicios
                 .Include(s => s.Cliente)
+                    .ThenInclude(c => c.Vehiculo)
                 .Include(s => s.Empleado)
                 .Include(s => s.Estado)
                 .ToListAsync();
@@ -27,6 +28,7 @@ namespace Taller_TIC1_Backend.Repositories
         {
             return await _context.Servicios
                 .Include(s => s.Cliente)
+                    .ThenInclude(c => c.Vehiculo)
                 .Include(s => s.Empleado)
                 .Include(s => s.Estado)
                 .FirstOrDefaultAsync(s => s.Id == id);
@@ -100,6 +102,7 @@ namespace Taller_TIC1_Backend.Repositories
             var estados = estadosActivosIds.ToList();
             return await _context.Servicios
                 .Include(s => s.Cliente)
+                    .ThenInclude(c => c.Vehiculo)
                 .Include(s => s.Empleado)
                 .Include(s => s.Estado)
                 .Where(s => estados.Contains(s.IdEstado) && s.IdEmpleado == null)
@@ -111,6 +114,7 @@ namespace Taller_TIC1_Backend.Repositories
             var estados = estadosActivosIds.ToList();
             return await _context.Servicios
                 .Include(s => s.Cliente)
+                    .ThenInclude(c => c.Vehiculo)
                 .Include(s => s.Empleado)
                 .Include(s => s.Estado)
                 .Where(s => estados.Contains(s.IdEstado) && s.IdEmpleado != null)
@@ -165,6 +169,28 @@ namespace Taller_TIC1_Backend.Repositories
             _context.DetallesReparacionRepuesto.Add(detalleReparacionRepuesto);
             await _context.SaveChangesAsync();
             return detalleReparacionRepuesto;
+        }
+
+        public async Task<IEnumerable<Servicio>> GetServiciosByEmpleadoAndEstadosAsync(int empleadoId, IEnumerable<int> estadosIds)
+        {
+            var estados = estadosIds.ToList();
+            return await _context.Servicios
+                .Include(s => s.Cliente)
+                    .ThenInclude(c => c.Vehiculo)
+                .Include(s => s.Empleado)
+                .Include(s => s.Estado)
+                .Where(s => s.IdEmpleado == empleadoId && estados.Contains(s.IdEstado))
+                .ToListAsync();
+        }
+
+        public async Task<bool> UpdateServicioEstadoAsync(int servicioId, int estadoId)
+        {
+            var servicio = await _context.Servicios.FindAsync(servicioId);
+            if (servicio == null) return false;
+            servicio.IdEstado = estadoId;
+            servicio.FechaActualizacion = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 

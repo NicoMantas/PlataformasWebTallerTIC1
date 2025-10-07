@@ -17,11 +17,10 @@ namespace Taller_TIC1_Backend.Models.DTOs
         public string Modelo { get; set; } = string.Empty;
         
         [Required]
-        [Range(1900, 2027)]
+        [Range(1900, 2030)]
         public int Anio { get; set; }
 
-        [Required]
-        public int IdCliente { get; set; }
+        public int? IdCliente { get; set; }
 
         // Campos para subtipos (opcionales)
         public string? Tipo { get; set; } // "Gasolina", "Electrico", "Hibrido"

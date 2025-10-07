@@ -60,6 +60,31 @@ export async function secretariaAsignarMecanico(servicioId, empleadoId) {
   return data;
 }
 
+export async function getServicioById(id) {
+  const { data } = await api.get(`/Servicios/${id}`);
+  return data;
+}
+
+export async function updateServicio(id, servicioData) {
+  const { data } = await api.put(`/Servicios/${id}`, servicioData);
+  return data;
+}
+
+export async function updateServicioEstado(servicioId, estadoId) {
+  const { data } = await api.put(`/Servicios/${servicioId}/estado`, { idEstado: estadoId });
+  return data;
+}
+
+export async function mecanicoListAsignados(empleadoId) {
+  const { data } = await api.get(`/Servicios/mecanico/${empleadoId}/asignados`);
+  return data;
+}
+
+export async function mecanicoListCompletados(empleadoId) {
+  const { data } = await api.get(`/Servicios/mecanico/${empleadoId}/completados`);
+  return data;
+}
+
 export async function listEmpleados() {
   const { data } = await api.get('/Empleado');
   return data;

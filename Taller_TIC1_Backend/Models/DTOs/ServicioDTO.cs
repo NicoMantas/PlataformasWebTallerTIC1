@@ -13,5 +13,10 @@
         public string? EstadoDescripcion { get; set; }
         public string? ClienteNombre { get; set; }
         public string? EmpleadoNombre { get; set; }
+        public string? VehiculoPlaca { get; set; }
+        public string? VehiculoMarca { get; set; }
+        public string? VehiculoModelo { get; set; }
+        public DateTime? FechaCreacion { get; set; }
+        public DateTime? FechaActualizacion { get; set; }
     }
 }

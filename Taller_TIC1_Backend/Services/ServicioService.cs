@@ -179,6 +179,11 @@ namespace Taller_TIC1_Backend.Services
                 dto.EstadoDescripcion = servicio.Estado?.Descripcion ?? "";
                 dto.ClienteNombre = servicio.Cliente?.Nombre ?? "";
                 dto.EmpleadoNombre = servicio.Empleado?.Nombre ?? "";
+                dto.VehiculoPlaca = servicio.Cliente?.Vehiculo?.Placa ?? "";
+                dto.VehiculoMarca = servicio.Cliente?.Vehiculo?.Marca ?? "";
+                dto.VehiculoModelo = servicio.Cliente?.Vehiculo?.Modelo ?? "";
+                dto.FechaCreacion = servicio.FechaCreacion;
+                dto.FechaActualizacion = servicio.FechaActualizacion;
 
                 var detalleRevision = await _servicioRepository.GetDetalleRevisionByServicioIdAsync(servicio.Id);
                 if (detalleRevision != null)
@@ -226,6 +231,33 @@ namespace Taller_TIC1_Backend.Services
         public async Task<bool> SecretariaAsignarMecanicoAsync(int servicioId, int empleadoId)
         {
             return await _servicioRepository.AssignEmpleadoAsync(servicioId, empleadoId);
+        }
+
+        public async Task<IEnumerable<ServicioDTO>> GetServiciosByMecanicoAsync(int empleadoId)
+        {
+            // Servicios asignados y en proceso (no completados)
+            var pendienteId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Pendiente");
+            var enProcesoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("En proceso");
+            var ids = new List<int>();
+            if (pendienteId.HasValue) ids.Add(pendienteId.Value);
+            if (enProcesoId.HasValue) ids.Add(enProcesoId.Value);
+            var servicios = await _servicioRepository.GetServiciosByEmpleadoAndEstadosAsync(empleadoId, ids);
+            return await MapDetallesServicios(servicios);
+        }
+
+        public async Task<IEnumerable<ServicioDTO>> GetServiciosCompletadosByMecanicoAsync(int empleadoId)
+        {
+            // Servicios completados por el mecánico
+            var completadoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Completado");
+            var ids = new List<int>();
+            if (completadoId.HasValue) ids.Add(completadoId.Value);
+            var servicios = await _servicioRepository.GetServiciosByEmpleadoAndEstadosAsync(empleadoId, ids);
+            return await MapDetallesServicios(servicios);
+        }
+
+        public async Task<bool> UpdateServicioEstadoAsync(int servicioId, int estadoId)
+        {
+            return await _servicioRepository.UpdateServicioEstadoAsync(servicioId, estadoId);
         }
     }
 }

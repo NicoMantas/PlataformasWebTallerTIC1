@@ -3,10 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import '../styles/HomeEmpleado.css';
 import { listOrdenes, updateOrden } from '../services/ordenesService';
-import { listServicios, secretariaListPendientes, secretariaListAsignados, secretariaAsignarMecanico } from '../services/serviciosService';
+import { listServicios, secretariaListPendientes, secretariaListAsignados, secretariaAsignarMecanico, getServicioById, updateServicioEstado, mecanicoListAsignados, mecanicoListCompletados } from '../services/serviciosService';
 import { listFacturas } from '../services/facturasService';
 import { getCurrentUser, registerEmpleado } from '../services/authService';
 import { createEmpleado, listEmpleados } from '../services/empleadosService';
+import { listRepuestos } from '../services/repuestosService';
+import { getDetalleRevision, createDetalleRevision, updateDetalleRevision, getDetalleReparacion, getRepuestosByDetalleReparacion, addRepuestoToReparacion } from '../services/detallesService';
 
 const HomeEmpleado = () => {
   const navigate = useNavigate();
@@ -32,10 +34,26 @@ const HomeEmpleado = () => {
     password: '',
     idTaller: ''
   });
+  
+  // Mechanic specific states
+  const [mecanicoAsignados, setMecanicoAsignados] = useState([]);
+  const [mecanicoCompletados, setMecanicoCompletados] = useState([]);
+  const [repuestos, setRepuestos] = useState([]);
+  const [selectedServicio, setSelectedServicio] = useState(null);
+  const [showReparacionModal, setShowReparacionModal] = useState(false);
+  const [showRevisionModal, setShowRevisionModal] = useState(false);
+  const [repuestoForm, setRepuestoForm] = useState({
+    idRepuesto: '',
+    cantidad: 1
+  });
+  const [revisionForm, setRevisionForm] = useState({
+    detalles: ''
+  });
 
   useEffect(() => {
     // Get current user information
     const currentUser = getCurrentUser();
+    console.log('Usuario obtenido:', currentUser);
     setUser(currentUser);
     loadData();
   }, []);
@@ -53,7 +71,7 @@ const HomeEmpleado = () => {
       setServicios(serviciosData || []);
       setFacturas(facturasData || []);
       setEmpleados(empleadosData || []);
-      // cargar datos secretaría si aplica
+      // cargar datos específicos según el tipo de empleado
       if (tipo === 'secretaria') {
         const [p, a] = await Promise.all([
           secretariaListPendientes().catch(() => []),
@@ -61,11 +79,112 @@ const HomeEmpleado = () => {
         ]);
         setSecPendientes(p || []);
         setSecAsignados(a || []);
+      } else if (tipo === 'mecanico') {
+        // Debug: mostrar información del usuario
+        console.log('Usuario mecánico:', user);
+        console.log('ID empleado:', user?.infoEspecifica?.id);
+        
+        if (user?.infoEspecifica?.id) {
+          const [asignados, completados, repuestosData] = await Promise.all([
+            mecanicoListAsignados(user.infoEspecifica.id).catch((err) => {
+              console.error('Error cargando servicios asignados:', err);
+              return [];
+            }),
+            mecanicoListCompletados(user.infoEspecifica.id).catch((err) => {
+              console.error('Error cargando servicios completados:', err);
+              return [];
+            }),
+            listRepuestos().catch((err) => {
+              console.error('Error cargando repuestos:', err);
+              return [];
+            })
+          ]);
+          console.log('Servicios asignados:', asignados);
+          console.log('Servicios completados:', completados);
+          console.log('Cantidad servicios completados:', completados?.length || 0);
+          setMecanicoAsignados(asignados || []);
+          setMecanicoCompletados(completados || []);
+          setRepuestos(repuestosData || []);
+        } else {
+          console.log('No se encontró ID de empleado para el mecánico, usando endpoint de secretaría');
+          // Fallback: usar endpoint de secretaría para obtener servicios asignados
+          try {
+            const asignados = await secretariaListAsignados();
+            console.log('Servicios asignados (fallback):', asignados);
+            setMecanicoAsignados(asignados || []);
+          } catch (err) {
+            console.error('Error en fallback:', err);
+            setMecanicoAsignados([]);
+          }
+        }
       }
     } catch (e) {
       setError(e?.message || 'Error al cargar datos');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Mechanic specific functions
+  const handleServicioEstadoChange = async (servicioId, nuevoEstado) => {
+    try {
+      await updateServicioEstado(servicioId, nuevoEstado);
+      await loadData();
+    } catch (err) {
+      alert('Error al actualizar estado del servicio');
+    }
+  };
+
+  const openReparacionModal = (servicio) => {
+    setSelectedServicio(servicio);
+    setShowReparacionModal(true);
+    setRepuestoForm({ idRepuesto: '', cantidad: 1 });
+  };
+
+  const openRevisionModal = async (servicio) => {
+    setSelectedServicio(servicio);
+    try {
+      const detalle = await getDetalleRevision(servicio.id);
+      setRevisionForm({ detalles: detalle?.detalles || '' });
+    } catch (err) {
+      setRevisionForm({ detalles: '' });
+    }
+    setShowRevisionModal(true);
+  };
+
+  const handleAddRepuesto = async () => {
+    try {
+      await addRepuestoToReparacion(selectedServicio.id, {
+        idRepuesto: parseInt(repuestoForm.idRepuesto),
+        cantidad: parseInt(repuestoForm.cantidad)
+      });
+      alert('Repuesto agregado correctamente');
+      setShowReparacionModal(false);
+      await loadData();
+    } catch (err) {
+      console.error('Error al agregar repuesto:', err);
+      alert('Error al agregar repuesto: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleSaveRevision = async () => {
+    try {
+      if (selectedServicio.detallesRevision) {
+        await updateDetalleRevision(selectedServicio.id, {
+          idServicio: selectedServicio.id,
+          detalles: revisionForm.detalles
+        });
+      } else {
+        await createDetalleRevision({
+          idServicio: selectedServicio.id,
+          detalles: revisionForm.detalles
+        });
+      }
+      alert('Detalles de revisión guardados');
+      setShowRevisionModal(false);
+      await loadData();
+    } catch (err) {
+      alert('Error al guardar detalles de revisión');
     }
   };
 
@@ -77,48 +196,89 @@ const HomeEmpleado = () => {
           title: 'Panel de Mecánico',
           subtitle: 'Gestiona tus reparaciones y mantenimientos',
           features: [
-            { title: 'Órdenes Asignadas', count: ordenes.filter(o => o.idTipoEstadoOrden === 2).length },
-            { title: 'En Proceso', count: ordenes.filter(o => o.idTipoEstadoOrden === 3).length },
-            { title: 'Completadas', count: ordenes.filter(o => o.idTipoEstadoOrden === 4).length }
+            { title: 'Servicios Asignados', count: mecanicoAsignados.length },
+            { title: 'En Proceso', count: mecanicoAsignados.filter(s => s.idEstado === 3).length },
+            { title: 'Completados', count: mecanicoCompletados.length }
           ],
           content: (
             <div className="mecanico-content">
-              <h3>Órdenes de Trabajo</h3>
+              <div className="dashboard-tabs" style={{ marginBottom: '1rem' }}>
+                <button className={`tab-button ${secTab==='asignados'?'active':''}`} onClick={()=>setSecTab('asignados')}>Servicios Asignados</button>
+                <button className={`tab-button ${secTab==='completados'?'active':''}`} onClick={()=>setSecTab('completados')}>Servicios Completados</button>
+              </div>
+              
               {loading ? <p>Cargando...</p> : (
-                <div className="ordenes-list">
-                  {ordenes.map(orden => (
-                    <div key={orden.id} className="orden-card">
-                      <div className="orden-info">
-                        <h4>Orden #{orden.id}</h4>
-                        <p>Cliente: {orden.clienteNombre}</p>
-                        <p>Vehículo: {orden.vehiculoPlaca}</p>
-                        <p>Estado: {orden.estadoDescripcion}</p>
-                        <p>Fecha: {new Date(orden.fechaCreacion).toLocaleDateString()}</p>
+                secTab === 'asignados' ? (
+                  <div className="ordenes-list">
+                    {mecanicoAsignados.map(servicio => (
+                      <div key={servicio.id} className="orden-card">
+                        <div className="orden-info">
+                          <h4>Servicio #{servicio.id} · {(servicio.tipoServicio==='Revision'?'Revisión':'Reparación')}</h4>
+                          <p><strong>Cliente:</strong> {servicio.clienteNombre || 'N/D'}</p>
+                          <p><strong>Vehículo:</strong> {servicio.vehiculoMarca} {servicio.vehiculoModelo} - {servicio.vehiculoPlaca || 'Sin placa'}</p>
+                          <p><strong>Estado:</strong> {servicio.estadoDescripcion}</p>
+                          <p><strong>Fecha de Creación:</strong> {servicio.fechaCreacion ? new Date(servicio.fechaCreacion).toLocaleDateString() : 'N/D'}</p>
+                          {servicio.detallesRevision && (
+                            <p><strong>Detalles Revisión:</strong> {servicio.detallesRevision}</p>
+                          )}
+                        </div>
+                        <div className="orden-actions">
+                          <select 
+                            value={servicio.idEstado}
+                            onChange={(e) => handleServicioEstadoChange(servicio.id, parseInt(e.target.value))}
+                          >
+                            <option value={1}>Pendiente</option>
+                            <option value={2}>Asignado</option>
+                            <option value={3}>En Proceso</option>
+                            <option value={4}>Completado</option>
+                          </select>
+                          {servicio.tipoServicio === 'Reparacion' && (
+                            <button 
+                              className="btn-secondary" 
+                              onClick={() => openReparacionModal(servicio)}
+                              style={{ marginTop: '0.5rem' }}
+                            >
+                              Agregar Repuestos
+                            </button>
+                          )}
+                          {servicio.tipoServicio === 'Revision' && (
+                            <button 
+                              className="btn-secondary" 
+                              onClick={() => openRevisionModal(servicio)}
+                              style={{ marginTop: '0.5rem' }}
+                            >
+                              {servicio.detallesRevision ? 'Editar Detalles' : 'Agregar Detalles'}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="orden-actions">
-                        <select 
-                          value={orden.idTipoEstadoOrden}
-                          onChange={async (e) => {
-                            try {
-                              await updateOrden(orden.id, {
-                                ...orden,
-                                idTipoEstadoOrden: parseInt(e.target.value)
-                              });
-                              loadData();
-                            } catch (err) {
-                              alert('Error al actualizar estado');
-                            }
-                          }}
-                        >
-                          <option value={1}>Pendiente</option>
-                          <option value={2}>Asignada</option>
-                          <option value={3}>En Proceso</option>
-                          <option value={4}>Completada</option>
-                        </select>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="ordenes-list">
+                    {mecanicoCompletados.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                        <p>No hay servicios completados</p>
+                        <p><small>Los servicios aparecerán aquí cuando cambies su estado a "Completado"</small></p>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ) : (
+                      mecanicoCompletados.map(servicio => (
+                      <div key={servicio.id} className="orden-card">
+                        <div className="orden-info">
+                          <h4>Servicio #{servicio.id} · {(servicio.tipoServicio==='Revision'?'Revisión':'Reparación')}</h4>
+                          <p><strong>Cliente:</strong> {servicio.clienteNombre || 'N/D'}</p>
+                          <p><strong>Vehículo:</strong> {servicio.vehiculoMarca} {servicio.vehiculoModelo} - {servicio.vehiculoPlaca || 'Sin placa'}</p>
+                          <p><strong>Estado:</strong> {servicio.estadoDescripcion}</p>
+                          <p><strong>Fecha Completado:</strong> {servicio.fechaActualizacion ? new Date(servicio.fechaActualizacion).toLocaleDateString() : (servicio.fechaCreacion ? new Date(servicio.fechaCreacion).toLocaleDateString() : 'N/D')}</p>
+                          {servicio.detallesRevision && (
+                            <p><strong>Detalles Revisión:</strong> {servicio.detallesRevision}</p>
+                          )}
+                        </div>
+                      </div>
+                      ))
+                    )}
+                  </div>
+                )
               )}
             </div>
           )
@@ -186,8 +346,9 @@ const HomeEmpleado = () => {
           subtitle: 'Gestiona el taller completo',
           features: [
             { title: 'Total Órdenes', count: ordenes.length },
-            { title: 'Servicios Activos', count: servicios.length },
-            { title: 'Facturas Generadas', count: facturas.length }
+            { title: 'Servicios Activos', count: servicios.filter(s => s.idEstado !== 4).length },
+            { title: 'Facturas Generadas', count: facturas.length },
+            { title: 'Empleados Activos', count: empleados.length }
           ],
           content: (
             <div className="admin-content">
@@ -211,14 +372,24 @@ const HomeEmpleado = () => {
                 </div>
                 
                 <div className="dashboard-card">
-                  <h3>Servicios Más Solicitados</h3>
+                  <h3>Estados de Servicios</h3>
                   <div className="servicios-stats">
-                    {servicios.slice(0, 5).map(servicio => (
-                      <div key={servicio.id} className="servicio-stat">
-                        <span>{servicio.nombre}</span>
-                        <span>${servicio.costo}</span>
-                      </div>
-                    ))}
+                    <div className="stat">
+                      <span className="stat-label">Pendientes:</span>
+                      <span className="stat-value">{servicios.filter(s => s.idEstado === 1).length}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-label">Asignados:</span>
+                      <span className="stat-value">{servicios.filter(s => s.idEstado === 2).length}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-label">En Proceso:</span>
+                      <span className="stat-value">{servicios.filter(s => s.idEstado === 3).length}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-label">Completados:</span>
+                      <span className="stat-value">{servicios.filter(s => s.idEstado === 4).length}</span>
+                    </div>
                   </div>
                 </div>
                 
@@ -374,13 +545,119 @@ const HomeEmpleado = () => {
               <p>Sesión iniciada correctamente</p>
               <span className="activity-time">Hace unos momentos</span>
             </div>
-            <div className="activity-item">
-              <p>Sistema actualizado a la versión 2.1.0</p>
-              <span className="activity-time">Ayer a las 14:30</span>
-            </div>
+            {tipo === 'mecanico' && mecanicoCompletados.length > 0 && (
+              <div className="activity-item">
+                <p>Último servicio completado: #{mecanicoCompletados[0].id}</p>
+                <span className="activity-time">
+                  {new Date(mecanicoCompletados[0].fechaActualizacion || mecanicoCompletados[0].fechaCreacion).toLocaleString()}
+                </span>
+              </div>
+            )}
+            {tipo === 'secretaria' && secAsignados.length > 0 && (
+              <div className="activity-item">
+                <p>Servicios asignados: {secAsignados.length}</p>
+                <span className="activity-time">Actualmente</span>
+              </div>
+            )}
+            {tipo === 'administrador' && (
+              <>
+                <div className="activity-item">
+                  <p>Total de empleados registrados: {empleados.length}</p>
+                  <span className="activity-time">Sistema</span>
+                </div>
+                <div className="activity-item">
+                  <p>Servicios activos: {servicios.filter(s => s.idEstado !== 4).length}</p>
+                  <span className="activity-time">Actualmente</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Modal para agregar repuestos a reparación */}
+      {showReparacionModal && selectedServicio && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Agregar Repuestos - Servicio #{selectedServicio.id}</h3>
+              <button className="modal-close" onClick={() => setShowReparacionModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Repuesto:</label>
+                <select 
+                  value={repuestoForm.idRepuesto}
+                  onChange={(e) => setRepuestoForm({...repuestoForm, idRepuesto: e.target.value})}
+                >
+                  <option value="">Seleccionar repuesto</option>
+                  {repuestos.map(repuesto => (
+                    <option key={repuesto.id} value={repuesto.id}>
+                      {repuesto.nombre} - ${repuesto.precio} (Stock: {repuesto.stock})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Cantidad:</label>
+                <input 
+                  type="number" 
+                  min="1" 
+                  value={repuestoForm.cantidad}
+                  onChange={(e) => setRepuestoForm({...repuestoForm, cantidad: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setShowReparacionModal(false)}>
+                Cancelar
+              </button>
+              <button 
+                className="btn-primary" 
+                onClick={handleAddRepuesto}
+                disabled={!repuestoForm.idRepuesto || repuestoForm.cantidad < 1}
+              >
+                Agregar Repuesto
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para detalles de revisión */}
+      {showRevisionModal && selectedServicio && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Detalles de Revisión - Servicio #{selectedServicio.id}</h3>
+              <button className="modal-close" onClick={() => setShowRevisionModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Detalles de la Revisión:</label>
+                <textarea 
+                  rows="6"
+                  value={revisionForm.detalles}
+                  onChange={(e) => setRevisionForm({...revisionForm, detalles: e.target.value})}
+                  placeholder="Describe los hallazgos de la revisión, problemas encontrados, recomendaciones, etc."
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setShowRevisionModal(false)}>
+                Cancelar
+              </button>
+              <button 
+                className="btn-primary" 
+                onClick={handleSaveRevision}
+                disabled={!revisionForm.detalles.trim()}
+              >
+                Guardar Detalles
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Taller_TIC1_Backend.Models.DTOs;
 using Taller_TIC1_Backend.Services.Interfaces;
+using System.Linq;
 
 namespace Taller_TIC1_Backend.Controllers
 {
@@ -45,8 +46,27 @@ namespace Taller_TIC1_Backend.Controllers
         [HttpPost]
         public async Task<ActionResult<VehiculoResponseDto>> Create(VehiculoCreateDto vehiculoCreateDto)
         {
+            // Logging temporal para debug
+            Console.WriteLine($"=== DEBUG VEHICULO CREATE ===");
+            Console.WriteLine($"Placa: {vehiculoCreateDto.Placa}");
+            Console.WriteLine($"Marca: {vehiculoCreateDto.Marca}");
+            Console.WriteLine($"Modelo: {vehiculoCreateDto.Modelo}");
+            Console.WriteLine($"Anio: {vehiculoCreateDto.Anio}");
+            Console.WriteLine($"IdCliente: {vehiculoCreateDto.IdCliente}");
+            Console.WriteLine($"Tipo: {vehiculoCreateDto.Tipo}");
+            Console.WriteLine($"Cilindraje: {vehiculoCreateDto.Cilindraje}");
+            Console.WriteLine($"CapacidadBateria: {vehiculoCreateDto.CapacidadBateria}");
+            Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
+            
             if (!ModelState.IsValid)
+            {
+                Console.WriteLine("=== MODEL STATE ERRORS ===");
+                foreach (var error in ModelState)
+                {
+                    Console.WriteLine($"{error.Key}: {string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage))}");
+                }
                 return BadRequest(ModelState);
+            }
 
             try
             {
@@ -55,6 +75,9 @@ namespace Taller_TIC1_Backend.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"=== EXCEPTION ===");
+                Console.WriteLine($"Message: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
                 return BadRequest($"Error al crear el vehículo: {ex.Message}");
             }
         }

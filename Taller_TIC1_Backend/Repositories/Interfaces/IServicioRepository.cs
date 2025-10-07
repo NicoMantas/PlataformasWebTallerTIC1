@@ -22,5 +22,7 @@ namespace Taller_TIC1_Backend.Repositories.Interfaces
         Task<DetalleRevision> CreateDetalleRevisionAsync(DetalleRevision detalleRevision);
         Task<DetalleReparacion> CreateDetalleReparacionAsync(DetalleReparacion detalleReparacion);
         Task<DetalleReparacionRepuesto> CreateDetalleReparacionRepuestoAsync(DetalleReparacionRepuesto detalleReparacionRepuesto);
+        Task<IEnumerable<Servicio>> GetServiciosByEmpleadoAndEstadosAsync(int empleadoId, IEnumerable<int> estadosIds);
+        Task<bool> UpdateServicioEstadoAsync(int servicioId, int estadoId);
     }
 }

@@ -5,7 +5,7 @@ import AuthForm from '../components/AuthForm';
 import '../styles/RegisterEmpresa.css';
 import { registerCliente } from '../services/authService';
 import { createCliente } from '../services/clientesService';
-import { createVehiculo } from '../services/vehiculosService';
+import { createVehiculo, updateVehiculo } from '../services/vehiculosService';
 
 const RegisterEmpresa = () => {
   const navigate = useNavigate();
@@ -22,15 +22,16 @@ const RegisterEmpresa = () => {
     setError('');
 
     try {
-      // Paso 1: Crear el vehículo primero
+      // Paso 1: Crear el vehículo primero (sin idCliente)
       let vehiculoId = null;
       if (formData.placa && formData.marca && formData.modelo && formData.anio) {
         const vehiculoData = {
-          placa: formData.placa,
-          marca: formData.marca,
-          modelo: formData.modelo,
-          anio: parseInt(formData.anio),
-          tipo: formData.tipoVehiculo || 'Gasolina'
+          Placa: formData.placa,
+          Marca: formData.marca,
+          Modelo: formData.modelo,
+          Anio: parseInt(formData.anio),
+          Tipo: formData.tipoVehiculo || 'Gasolina'
+          // No incluir IdCliente - será null por defecto
         };
         const vehiculoResponse = await createVehiculo(vehiculoData);
         vehiculoId = vehiculoResponse.id;
@@ -48,7 +49,18 @@ const RegisterEmpresa = () => {
       };
       const clienteResponse = await createCliente(clienteData);
 
-      // Paso 3: Registrar en el sistema de autenticación
+      // Paso 3: Actualizar el vehículo con el idCliente si se creó uno
+      if (vehiculoId) {
+        await updateVehiculo(vehiculoId, {
+          Placa: formData.placa,
+          Marca: formData.marca,
+          Modelo: formData.modelo,
+          Anio: parseInt(formData.anio),
+          IdCliente: clienteResponse.id
+        });
+      }
+
+      // Paso 4: Registrar en el sistema de autenticación
       await registerCliente({
         email: formData.email,
         password: formData.password,

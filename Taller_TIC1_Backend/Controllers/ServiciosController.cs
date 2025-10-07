@@ -118,5 +118,35 @@ namespace Taller_TIC1_Backend.Controllers
             if (!ok) return NotFound();
             return Ok();
         }
+
+        // Mecánico: listar servicios asignados
+        [HttpGet("mecanico/{empleadoId}/asignados")]
+        public async Task<ActionResult<IEnumerable<ServicioDTO>>> MecanicoAsignados(int empleadoId)
+        {
+            var items = await _servicioService.GetServiciosByMecanicoAsync(empleadoId);
+            return Ok(items);
+        }
+
+        // Mecánico: listar servicios completados
+        [HttpGet("mecanico/{empleadoId}/completados")]
+        public async Task<ActionResult<IEnumerable<ServicioDTO>>> MecanicoCompletados(int empleadoId)
+        {
+            var items = await _servicioService.GetServiciosCompletadosByMecanicoAsync(empleadoId);
+            return Ok(items);
+        }
+
+        // Actualizar estado de servicio
+        [HttpPut("{servicioId}/estado")]
+        public async Task<IActionResult> UpdateEstado(int servicioId, [FromBody] UpdateEstadoDto dto)
+        {
+            var ok = await _servicioService.UpdateServicioEstadoAsync(servicioId, dto.IdEstado);
+            if (!ok) return NotFound();
+            return Ok();
+        }
     }
+}
+
+public class UpdateEstadoDto
+{
+    public int IdEstado { get; set; }
 }

@@ -10,7 +10,7 @@ namespace Taller_TIC1_Backend.Models.DTOs
         public string TipoVehiculo { get; set; } = string.Empty;
         public int? Cilindraje { get; set; }
         public int? CapacidadBateria { get; set; }
-        public int IdCliente { get; set; }
+        public int? IdCliente { get; set; }
 
     }
 }
