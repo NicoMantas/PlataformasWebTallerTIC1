@@ -230,7 +230,7 @@ namespace Taller_TIC1_Backend.Data
             {
                 e.ToTable("Servicio");
                 e.HasKey(x => x.Id);
-                e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
+                e.Property(x => x.Id).HasColumnName("id"); // Removido UseIdentityColumn() para manejo manual
                 e.Property(x => x.IdCliente).HasColumnName("idCliente");
                 e.Property(x => x.IdEmpleado).HasColumnName("idEmpleado");
                 e.Property(x => x.IdEstado).HasColumnName("idEstado");

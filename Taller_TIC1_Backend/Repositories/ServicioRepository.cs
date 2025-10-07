@@ -34,8 +34,18 @@ namespace Taller_TIC1_Backend.Repositories
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 
+        public async Task<int> GetNextIdAsync()
+        {
+            var maxId = await _context.Servicios
+                .Select(s => (int?)s.Id)
+                .MaxAsync();
+            return (maxId ?? 0) + 1;
+        }
+
         public async Task<Servicio> CreateAsync(Servicio servicio)
         {
+            // Asignar el siguiente ID disponible
+            servicio.Id = await GetNextIdAsync();
             _context.Servicios.Add(servicio);
             await _context.SaveChangesAsync();
             return servicio;
@@ -191,6 +201,22 @@ namespace Taller_TIC1_Backend.Repositories
             servicio.FechaActualizacion = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        // Métodos de debug
+        public async Task<IEnumerable<EstadoServicio>> GetAllEstadosAsync()
+        {
+            return await _context.EstadosServicio.ToListAsync();
+        }
+
+        public async Task<IEnumerable<Servicio>> GetAllServiciosByEmpleadoAsync(int empleadoId)
+        {
+            return await _context.Servicios
+                .Include(s => s.Cliente)
+                .Include(s => s.Empleado)
+                .Include(s => s.Estado)
+                .Where(s => s.IdEmpleado == empleadoId)
+                .ToListAsync();
         }
     }
 

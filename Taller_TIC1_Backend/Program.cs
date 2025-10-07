@@ -16,9 +16,11 @@ namespace Taller_TIC1_Backend
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddAuthorization();
 
             // Agregar despu�s de builder.Services.AddControllers();
             builder.Services.AddScoped<IServicioRepository, ServicioRepository>();

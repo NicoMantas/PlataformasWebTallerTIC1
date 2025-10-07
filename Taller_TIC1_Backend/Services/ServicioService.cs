@@ -82,22 +82,22 @@ namespace Taller_TIC1_Backend.Services
             return servicioDto;
         }
 
-        public async Task<ServicioDTO> CreateServicioAsync(ServicioCreateDTO servicioDto)
+        public async Task<ServicioDTO> CreateServicioAsync(ServicioCreateDTO servicioCreateDto)
         {
-            var servicio = _mapper.Map<Servicio>(servicioDto);
+            var servicio = _mapper.Map<Servicio>(servicioCreateDto);
             var servicioCreado = await _servicioRepository.CreateAsync(servicio);
 
             // Crear detalles específicos según el tipo de servicio
-            if (servicioDto.TipoServicio == "Revision" && !string.IsNullOrEmpty(servicioDto.DetallesRevision))
+            if (servicioCreateDto.TipoServicio == "Revision" && !string.IsNullOrEmpty(servicioCreateDto.DetallesRevision))
             {
-                var detalleRevision = new DetalleRevision
+                var detalleRevisionNuevo = new DetalleRevision
                 {
                     IdServicio = servicioCreado.Id,
-                    Detalles = servicioDto.DetallesRevision
+                    Detalles = servicioCreateDto.DetallesRevision
                 };
-                await _servicioRepository.CreateDetalleRevisionAsync(detalleRevision);
+                await _servicioRepository.CreateDetalleRevisionAsync(detalleRevisionNuevo);
             }
-            else if (servicioDto.TipoServicio == "Reparacion" && servicioDto.RepuestosReparacion != null && servicioDto.RepuestosReparacion.Count > 0)
+            else if (servicioCreateDto.TipoServicio == "Reparacion" && servicioCreateDto.RepuestosReparacion != null && servicioCreateDto.RepuestosReparacion.Count > 0)
             {
                 // Si ya existen repuestos, crear el contenedor y asociarlo
                 // NOTA: si se requiere guardar cada repuesto, aquí se debería iterar y persistirlos
@@ -112,7 +112,32 @@ namespace Taller_TIC1_Backend.Services
                 await _servicioRepository.CreateDetalleReparacionAsync(detalleReparacion);
             }
 
-            return _mapper.Map<ServicioDTO>(servicioCreado);
+            // Recargar el servicio con todas las relaciones incluidas para obtener los datos completos
+            var servicioCompleto = await _servicioRepository.GetByIdAsync(servicioCreado.Id);
+            if (servicioCompleto == null)
+                throw new InvalidOperationException("Error al recargar el servicio creado");
+
+            var servicioDto = _mapper.Map<ServicioDTO>(servicioCompleto);
+
+            // Cargar detalles específicos
+            var detalleRevision = await _servicioRepository.GetDetalleRevisionByServicioIdAsync(servicioCreado.Id);
+            if (detalleRevision != null)
+            {
+                servicioDto.TipoServicio = "Revision";
+                servicioDto.DetallesRevision = detalleRevision.Detalles;
+            }
+            else
+            {
+                var detalleReparacion = await _servicioRepository.GetDetalleReparacionByServicioIdAsync(servicioCreado.Id);
+                if (detalleReparacion != null)
+                {
+                    servicioDto.TipoServicio = "Reparacion";
+                    var repuestos = await _servicioRepository.GetRepuestosByDetalleReparacionAsync(detalleReparacion.IdDetalleReparacionRepuesto);
+                    servicioDto.RepuestosReparacion = _mapper.Map<List<RepuestoCantidadDTO>>(repuestos);
+                }
+            }
+
+            return servicioDto;
         }
 
         public async Task<ServicioDTO> UpdateServicioAsync(int id, ServicioDTO servicioDto)

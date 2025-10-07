@@ -19,5 +19,6 @@ namespace Taller_TIC1_Backend.Services.Interfaces
         Task<IEnumerable<ServicioDTO>> GetServiciosByMecanicoAsync(int empleadoId);
         Task<IEnumerable<ServicioDTO>> GetServiciosCompletadosByMecanicoAsync(int empleadoId);
         Task<bool> UpdateServicioEstadoAsync(int servicioId, int estadoId);
+        
     }
 }
