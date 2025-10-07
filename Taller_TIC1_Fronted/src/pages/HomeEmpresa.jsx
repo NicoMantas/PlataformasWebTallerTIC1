@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import '../styles/HomeEmpresa.css';
 import VehiculosManager from '../components/VehiculosManager';
 import { getCurrentUser } from '../services/authService';
+import { createServicio, listActivosByCliente, listHistorialByCliente, cancelarServicio, descargarReservaPdf } from '../services/serviciosService';
 
 const HomeEmpresa = () => {
   const navigate = useNavigate();
@@ -12,12 +13,60 @@ const HomeEmpresa = () => {
   const [selectedVehiculo, setSelectedVehiculo] = useState(null);
   const [showVehiculos, setShowVehiculos] = useState(false);
   const [showDetailsId, setShowDetailsId] = useState(null);
+  const [activos, setActivos] = useState([]);
+  const [historial, setHistorial] = useState([]);
+  const [tab, setTab] = useState('servicios');
 
   useEffect(() => {
     // Get current user information
     const currentUser = getCurrentUser();
     setUser(currentUser);
   }, []);
+
+  useEffect(() => {
+    if (user?.infoEspecifica?.id) refreshPedidos();
+  }, [user]);
+
+  const refreshPedidos = async () => {
+    const clienteId = user?.infoEspecifica?.id || user?.idCliente;
+    if (!clienteId) return;
+    const [a, h] = await Promise.all([
+      listActivosByCliente(clienteId),
+      listHistorialByCliente(clienteId)
+    ]);
+    setActivos(a || []);
+    setHistorial(h || []);
+  };
+
+  const handleReservar = async (tipo) => {
+    if (!selectedVehiculo) {
+      alert('Debes seleccionar un vehículo antes de reservar');
+      setShowVehiculos(true);
+      return;
+    }
+    const clienteId = user?.infoEspecifica?.id || user?.idCliente;
+    const servicio = await createServicio({
+      tipoServicio: tipo,
+      idCliente: clienteId,
+      idVehiculo: selectedVehiculo.id,
+      detallesRevision: tipo === 'revision' ? 'Revisión corporativa' : undefined
+    });
+    const blob = await descargarReservaPdf(servicio);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reserva_servicio_${servicio.id}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    await refreshPedidos();
+  };
+
+  const handleCancelar = async (id) => {
+    await cancelarServicio(id);
+    await refreshPedidos();
+  };
 
   const serviciosBasicos = [
     { id: 'revision', nombre: 'Revisión', costo: 0, descripcion: 'Inspección general del vehículo para evaluar su estado.' },
@@ -42,21 +91,13 @@ const HomeEmpresa = () => {
         
         <div className="empresa-dashboard">
           <div className="dashboard-tabs">
-            <button 
-              className={`tab-button ${!showVehiculos ? 'active' : ''}`}
-              onClick={() => setShowVehiculos(false)}
-            >
-              Servicios
-            </button>
-            <button 
-              className={`tab-button ${showVehiculos ? 'active' : ''}`}
-              onClick={() => setShowVehiculos(true)}
-            >
-              Flota de Vehículos
-            </button>
+            <button className={`tab-button ${tab === 'servicios' ? 'active' : ''}`} onClick={() => setTab('servicios')}>Servicios</button>
+            <button className={`tab-button ${tab === 'activos' ? 'active' : ''}`} onClick={() => setTab('activos')}>Pedidos Activos</button>
+            <button className={`tab-button ${tab === 'historial' ? 'active' : ''}`} onClick={() => setTab('historial')}>Historial</button>
+            <button className={`tab-button ${showVehiculos ? 'active' : ''}`} onClick={() => setShowVehiculos(true)}>Flota de Vehículos</button>
           </div>
 
-          {!showVehiculos ? (
+          {tab === 'servicios' && !showVehiculos ? (
             <div className="servicios-section">
               <h2>Servicios Disponibles</h2>
 
@@ -103,13 +144,64 @@ const HomeEmpresa = () => {
                       <button className="btn-secondary" onClick={() => setShowDetailsId(showDetailsId === s.id ? null : s.id)}>
                         {showDetailsId === s.id ? 'Ocultar Detalles' : 'Detalles'}
                       </button>
-                      <button className="btn-primary" onClick={() => {}}>
+                      <button className="btn-primary" onClick={() => handleReservar(s.id)}>
                         Reservar
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
+            </div>
+          ) : tab === 'activos' ? (
+            <div className="servicios-section">
+              <h2>Pedidos Activos</h2>
+              {activos.map((s) => (
+                <div key={s.id} className="card">
+                  <div className="card-header">
+                    <div className="card-title">{s.tipoServicio}</div>
+                    <div className="card-subtitle">Estado: {s.estadoDescripcion}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button className="btn-secondary" onClick={async () => {
+                      const blob = await descargarReservaPdf(s);
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `reserva_servicio_${s.id}.pdf`;
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                    }}>Descargar PDF</button>
+                    <button className="btn-danger" onClick={() => handleCancelar(s.id)}>Cancelar</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : tab === 'historial' ? (
+            <div className="servicios-section">
+              <h2>Historial</h2>
+              {historial.map((s) => (
+                <div key={s.id} className="card">
+                  <div className="card-header">
+                    <div className="card-title">{s.tipoServicio}</div>
+                    <div className="card-subtitle">Estado: {s.estadoDescripcion}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button className="btn-secondary" onClick={async () => {
+                      const blob = await descargarReservaPdf(s);
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `reserva_servicio_${s.id}.pdf`;
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                    }}>Descargar PDF</button>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <VehiculosManager 

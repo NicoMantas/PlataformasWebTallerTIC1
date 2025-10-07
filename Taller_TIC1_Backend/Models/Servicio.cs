@@ -6,7 +6,7 @@ namespace Taller_TIC1_Backend.Models
     {
         public int Id { get; set; }
         public int IdCliente { get; set; }
-        public int IdEmpleado { get; set; }
+        public int? IdEmpleado { get; set; }
         public int IdEstado { get; set; }
         public float Costo { get; set; }
         

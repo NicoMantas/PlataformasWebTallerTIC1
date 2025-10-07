@@ -9,5 +9,9 @@ namespace Taller_TIC1_Backend.Services.Interfaces
         Task<ServicioDTO> CreateServicioAsync(ServicioCreateDTO servicioDto);
         Task<ServicioDTO> UpdateServicioAsync(int id, ServicioDTO servicioDto);
         Task<bool> DeleteServicioAsync(int id);
+        Task<IEnumerable<ServicioDTO>> GetServiciosByClienteAsync(int clienteId);
+        Task<IEnumerable<ServicioDTO>> GetServiciosActivosByClienteAsync(int clienteId);
+        Task<IEnumerable<ServicioDTO>> GetServiciosHistorialByClienteAsync(int clienteId);
+        Task<bool> CancelarServicioAsync(int id);
     }
 }

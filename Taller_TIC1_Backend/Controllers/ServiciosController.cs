@@ -60,5 +60,38 @@ namespace Taller_TIC1_Backend.Controllers
             if (!result) return NotFound();
             return NoContent();
         }
+
+        // Listar servicios por cliente
+        [HttpGet("por-cliente/{clienteId}")]
+        public async Task<ActionResult<IEnumerable<ServicioDTO>>> GetByCliente(int clienteId)
+        {
+            var items = await _servicioService.GetServiciosByClienteAsync(clienteId);
+            return Ok(items);
+        }
+
+        // Activos: Pendiente/En proceso
+        [HttpGet("by-cliente/{clienteId}/activos")]
+        public async Task<ActionResult<IEnumerable<ServicioDTO>>> GetActivosByCliente(int clienteId)
+        {
+            var items = await _servicioService.GetServiciosActivosByClienteAsync(clienteId);
+            return Ok(items);
+        }
+
+        // Historial: Completado/Cancelado
+        [HttpGet("by-cliente/{clienteId}/historial")]
+        public async Task<ActionResult<IEnumerable<ServicioDTO>>> GetHistorialByCliente(int clienteId)
+        {
+            var items = await _servicioService.GetServiciosHistorialByClienteAsync(clienteId);
+            return Ok(items);
+        }
+
+        // Cancelar servicio
+        [HttpPost("{id}/cancelar")]
+        public async Task<IActionResult> CancelarServicio(int id)
+        {
+            var ok = await _servicioService.CancelarServicioAsync(id);
+            if (!ok) return NotFound();
+            return Ok();
+        }
     }
 }

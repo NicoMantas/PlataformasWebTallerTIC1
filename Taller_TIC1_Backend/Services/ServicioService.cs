@@ -97,12 +97,13 @@ namespace Taller_TIC1_Backend.Services
                 };
                 await _servicioRepository.CreateDetalleRevisionAsync(detalleRevision);
             }
-            else if (servicioDto.TipoServicio == "Reparacion" && servicioDto.RepuestosReparacion != null)
+            else if (servicioDto.TipoServicio == "Reparacion" && servicioDto.RepuestosReparacion != null && servicioDto.RepuestosReparacion.Count > 0)
             {
-                // Crear detalles de reparación con repuestos
+                // Si ya existen repuestos, crear el contenedor y asociarlo
+                // NOTA: si se requiere guardar cada repuesto, aquí se debería iterar y persistirlos
                 var detalleReparacionRepuesto = new DetalleReparacionRepuesto();
                 await _servicioRepository.CreateDetalleReparacionRepuestoAsync(detalleReparacionRepuesto);
-                
+
                 var detalleReparacion = new DetalleReparacion
                 {
                     IdServicio = servicioCreado.Id,
@@ -128,6 +129,78 @@ namespace Taller_TIC1_Backend.Services
         public async Task<bool> DeleteServicioAsync(int id)
         {
             return await _servicioRepository.DeleteAsync(id);
+        }
+
+        public async Task<IEnumerable<ServicioDTO>> GetServiciosByClienteAsync(int clienteId)
+        {
+            var servicios = await _servicioRepository.GetByClienteAsync(clienteId);
+            return await MapDetallesServicios(servicios);
+        }
+
+        public async Task<IEnumerable<ServicioDTO>> GetServiciosActivosByClienteAsync(int clienteId)
+        {
+            // Activos: Pendiente, En proceso
+            var pendienteId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Pendiente");
+            var enProcesoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("En proceso");
+            var ids = new List<int>();
+            if (pendienteId.HasValue) ids.Add(pendienteId.Value);
+            if (enProcesoId.HasValue) ids.Add(enProcesoId.Value);
+            var servicios = await _servicioRepository.GetByClienteAndEstadosAsync(clienteId, ids);
+            return await MapDetallesServicios(servicios);
+        }
+
+        public async Task<IEnumerable<ServicioDTO>> GetServiciosHistorialByClienteAsync(int clienteId)
+        {
+            // Historial: Completado, Cancelado
+            var completadoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Completado");
+            var canceladoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Cancelado");
+            var ids = new List<int>();
+            if (completadoId.HasValue) ids.Add(completadoId.Value);
+            if (canceladoId.HasValue) ids.Add(canceladoId.Value);
+            var servicios = await _servicioRepository.GetByClienteAndEstadosAsync(clienteId, ids);
+            return await MapDetallesServicios(servicios);
+        }
+
+        public async Task<bool> CancelarServicioAsync(int id)
+        {
+            var servicio = await _servicioRepository.GetByIdAsync(id);
+            if (servicio == null) return false;
+            var canceladoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Cancelado");
+            var ensureId = canceladoId ?? await _servicioRepository.EnsureEstadoAsync("Cancelado");
+            servicio.IdEstado = ensureId;
+            await _servicioRepository.UpdateAsync(servicio);
+            return true;
+        }
+
+        private async Task<IEnumerable<ServicioDTO>> MapDetallesServicios(IEnumerable<Servicio> servicios)
+        {
+            var result = new List<ServicioDTO>();
+            foreach (var servicio in servicios)
+            {
+                var dto = _mapper.Map<ServicioDTO>(servicio);
+                dto.EstadoDescripcion = servicio.Estado?.Descripcion ?? "";
+                dto.ClienteNombre = servicio.Cliente?.Nombre ?? "";
+                dto.EmpleadoNombre = servicio.Empleado?.Nombre ?? "";
+
+                var detalleRevision = await _servicioRepository.GetDetalleRevisionByServicioIdAsync(servicio.Id);
+                if (detalleRevision != null)
+                {
+                    dto.TipoServicio = "Revision";
+                    dto.DetallesRevision = detalleRevision.Detalles;
+                }
+                else
+                {
+                    var detalleReparacion = await _servicioRepository.GetDetalleReparacionByServicioIdAsync(servicio.Id);
+                    if (detalleReparacion != null)
+                    {
+                        dto.TipoServicio = "Reparacion";
+                        var repuestos = await _servicioRepository.GetRepuestosByDetalleReparacionAsync(detalleReparacion.IdDetalleReparacionRepuesto);
+                        dto.RepuestosReparacion = _mapper.Map<List<RepuestoCantidadDTO>>(repuestos);
+                    }
+                }
+                result.Add(dto);
+            }
+            return result;
         }
     }
 }

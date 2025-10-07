@@ -9,6 +9,10 @@ namespace Taller_TIC1_Backend.Repositories.Interfaces
         Task<Servicio> CreateAsync(Servicio servicio);
         Task<Servicio> UpdateAsync(Servicio servicio);
         Task<bool> DeleteAsync(int id);
+        Task<IEnumerable<Servicio>> GetByClienteAsync(int clienteId);
+        Task<IEnumerable<Servicio>> GetByClienteAndEstadosAsync(int clienteId, IEnumerable<int> estadosIds);
+        Task<int?> GetEstadoIdByDescripcionAsync(string descripcion);
+        Task<int> EnsureEstadoAsync(string descripcion);
         Task<DetalleRevision?> GetDetalleRevisionByServicioIdAsync(int servicioId);
         Task<DetalleReparacion?> GetDetalleReparacionByServicioIdAsync(int servicioId);
         Task<IEnumerable<DetalleReparacionRepuesto>> GetRepuestosByDetalleReparacionAsync(int idDetalleReparacionRepuesto);

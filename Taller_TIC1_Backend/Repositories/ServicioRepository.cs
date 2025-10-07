@@ -56,6 +56,45 @@ namespace Taller_TIC1_Backend.Repositories
             return true;
         }
 
+        public async Task<IEnumerable<Servicio>> GetByClienteAsync(int clienteId)
+        {
+            return await _context.Servicios
+                .Include(s => s.Cliente)
+                .Include(s => s.Empleado)
+                .Include(s => s.Estado)
+                .Where(s => s.IdCliente == clienteId)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Servicio>> GetByClienteAndEstadosAsync(int clienteId, IEnumerable<int> estadosIds)
+        {
+            var estados = estadosIds.ToList();
+            return await _context.Servicios
+                .Include(s => s.Cliente)
+                .Include(s => s.Empleado)
+                .Include(s => s.Estado)
+                .Where(s => s.IdCliente == clienteId && estados.Contains(s.IdEstado))
+                .ToListAsync();
+        }
+
+        public async Task<int?> GetEstadoIdByDescripcionAsync(string descripcion)
+        {
+            var estado = await _context.EstadosServicio.FirstOrDefaultAsync(e => e.Descripcion == descripcion);
+            return estado?.Id;
+        }
+
+        public async Task<int> EnsureEstadoAsync(string descripcion)
+        {
+            var existing = await _context.EstadosServicio.FirstOrDefaultAsync(e => e.Descripcion == descripcion);
+            if (existing != null) return existing.Id;
+            // Algunos entornos pueden no tener identidad creada para esta tabla; generamos Id manualmente
+            var maxId = await _context.EstadosServicio.Select(e => (int?)e.Id).MaxAsync() ?? 0;
+            var nuevo = new EstadoServicio { Id = maxId + 1, Descripcion = descripcion };
+            _context.EstadosServicio.Add(nuevo);
+            await _context.SaveChangesAsync();
+            return nuevo.Id;
+        }
+
         public async Task<DetalleRevision?> GetDetalleRevisionByServicioIdAsync(int servicioId)
         {
             return await _context.DetallesRevision
