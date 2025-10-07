@@ -151,12 +151,10 @@ namespace Taller_TIC1_Backend.Services
 
         public async Task<IEnumerable<ServicioDTO>> GetServiciosHistorialByClienteAsync(int clienteId)
         {
-            // Historial: Completado, Cancelado
+            // Historial: solo Completado
             var completadoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Completado");
-            var canceladoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Cancelado");
             var ids = new List<int>();
             if (completadoId.HasValue) ids.Add(completadoId.Value);
-            if (canceladoId.HasValue) ids.Add(canceladoId.Value);
             var servicios = await _servicioRepository.GetByClienteAndEstadosAsync(clienteId, ids);
             return await MapDetallesServicios(servicios);
         }
@@ -201,6 +199,33 @@ namespace Taller_TIC1_Backend.Services
                 result.Add(dto);
             }
             return result;
+        }
+
+        public async Task<IEnumerable<ServicioDTO>> SecretariaListPendientesAsync()
+        {
+            var pendienteId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Pendiente");
+            var enProcesoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("En proceso");
+            var ids = new List<int>();
+            if (pendienteId.HasValue) ids.Add(pendienteId.Value);
+            if (enProcesoId.HasValue) ids.Add(enProcesoId.Value);
+            var servicios = await _servicioRepository.GetActivosPendientesAsync(ids);
+            return await MapDetallesServicios(servicios);
+        }
+
+        public async Task<IEnumerable<ServicioDTO>> SecretariaListAsignadosAsync()
+        {
+            var pendienteId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Pendiente");
+            var enProcesoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("En proceso");
+            var ids = new List<int>();
+            if (pendienteId.HasValue) ids.Add(pendienteId.Value);
+            if (enProcesoId.HasValue) ids.Add(enProcesoId.Value);
+            var servicios = await _servicioRepository.GetActivosAsignadosAsync(ids);
+            return await MapDetallesServicios(servicios);
+        }
+
+        public async Task<bool> SecretariaAsignarMecanicoAsync(int servicioId, int empleadoId)
+        {
+            return await _servicioRepository.AssignEmpleadoAsync(servicioId, empleadoId);
         }
     }
 }

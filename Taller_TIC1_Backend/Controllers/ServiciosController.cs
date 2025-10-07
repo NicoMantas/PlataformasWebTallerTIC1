@@ -93,5 +93,30 @@ namespace Taller_TIC1_Backend.Controllers
             if (!ok) return NotFound();
             return Ok();
         }
+
+        // Secretaría: listar pendientes (activos sin mecánico)
+        [HttpGet("secretaria/pendientes")]
+        public async Task<ActionResult<IEnumerable<ServicioDTO>>> SecretariaPendientes()
+        {
+            var items = await _servicioService.SecretariaListPendientesAsync();
+            return Ok(items);
+        }
+
+        // Secretaría: listar asignados (activos con mecánico)
+        [HttpGet("secretaria/asignados")]
+        public async Task<ActionResult<IEnumerable<ServicioDTO>>> SecretariaAsignados()
+        {
+            var items = await _servicioService.SecretariaListAsignadosAsync();
+            return Ok(items);
+        }
+
+        // Secretaría: asignar mecánico
+        [HttpPost("secretaria/{servicioId}/asignar/{empleadoId}")]
+        public async Task<IActionResult> SecretariaAsignar(int servicioId, int empleadoId)
+        {
+            var ok = await _servicioService.SecretariaAsignarMecanicoAsync(servicioId, empleadoId);
+            if (!ok) return NotFound();
+            return Ok();
+        }
     }
 }

@@ -13,6 +13,9 @@ namespace Taller_TIC1_Backend.Repositories.Interfaces
         Task<IEnumerable<Servicio>> GetByClienteAndEstadosAsync(int clienteId, IEnumerable<int> estadosIds);
         Task<int?> GetEstadoIdByDescripcionAsync(string descripcion);
         Task<int> EnsureEstadoAsync(string descripcion);
+        Task<IEnumerable<Servicio>> GetActivosPendientesAsync(IEnumerable<int> estadosActivosIds);
+        Task<IEnumerable<Servicio>> GetActivosAsignadosAsync(IEnumerable<int> estadosActivosIds);
+        Task<bool> AssignEmpleadoAsync(int servicioId, int empleadoId);
         Task<DetalleRevision?> GetDetalleRevisionByServicioIdAsync(int servicioId);
         Task<DetalleReparacion?> GetDetalleReparacionByServicioIdAsync(int servicioId);
         Task<IEnumerable<DetalleReparacionRepuesto>> GetRepuestosByDetalleReparacionAsync(int idDetalleReparacionRepuesto);

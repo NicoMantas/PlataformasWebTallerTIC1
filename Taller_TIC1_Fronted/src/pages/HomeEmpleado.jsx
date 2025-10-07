@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import '../styles/HomeEmpleado.css';
 import { listOrdenes, updateOrden } from '../services/ordenesService';
-import { listServicios } from '../services/serviciosService';
+import { listServicios, secretariaListPendientes, secretariaListAsignados, secretariaAsignarMecanico } from '../services/serviciosService';
 import { listFacturas } from '../services/facturasService';
 import { getCurrentUser, registerEmpleado } from '../services/authService';
 import { createEmpleado, listEmpleados } from '../services/empleadosService';
@@ -18,6 +18,9 @@ const HomeEmpleado = () => {
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
   const [empleados, setEmpleados] = useState([]);
+  const [secPendientes, setSecPendientes] = useState([]);
+  const [secAsignados, setSecAsignados] = useState([]);
+  const [secTab, setSecTab] = useState('pendientes');
   const [creating, setCreating] = useState(false);
   const [empleadoForm, setEmpleadoForm] = useState({
     nombre: '',
@@ -50,6 +53,15 @@ const HomeEmpleado = () => {
       setServicios(serviciosData || []);
       setFacturas(facturasData || []);
       setEmpleados(empleadosData || []);
+      // cargar datos secretaría si aplica
+      if (tipo === 'secretaria') {
+        const [p, a] = await Promise.all([
+          secretariaListPendientes().catch(() => []),
+          secretariaListAsignados().catch(() => [])
+        ]);
+        setSecPendientes(p || []);
+        setSecAsignados(a || []);
+      }
     } catch (e) {
       setError(e?.message || 'Error al cargar datos');
     } finally {
@@ -117,46 +129,52 @@ const HomeEmpleado = () => {
           title: 'Panel de Secretaría',
           subtitle: 'Gestiona citas, clientes y administración',
           features: [
-            { title: 'Órdenes Pendientes', count: ordenes.filter(o => o.idTipoEstadoOrden === 1).length },
-            { title: 'Servicios Disponibles', count: servicios.length },
-            { title: 'Facturas Pendientes', count: facturas.filter(f => f.estado === 'Pendiente').length }
+            { title: 'Trabajos Pendientes', count: secPendientes.length },
+            { title: 'Trabajos Asignados', count: secAsignados.length },
+            { title: 'Servicios Activos', count: (secPendientes.length + secAsignados.length) }
           ],
           content: (
             <div className="secretaria-content">
-              <h3>Gestión de Órdenes</h3>
+              <div className="dashboard-tabs" style={{ marginBottom: '1rem' }}>
+                <button className={`tab-button ${secTab==='pendientes'?'active':''}`} onClick={()=>setSecTab('pendientes')}>Trabajos Pendientes</button>
+                <button className={`tab-button ${secTab==='asignados'?'active':''}`} onClick={()=>setSecTab('asignados')}>Trabajos Asignados</button>
+              </div>
               {loading ? <p>Cargando...</p> : (
-                <div className="ordenes-list">
-                  {ordenes.filter(o => o.idTipoEstadoOrden === 1).map(orden => (
-                    <div key={orden.id} className="orden-card">
-                      <div className="orden-info">
-                        <h4>Orden #{orden.id}</h4>
-                        <p>Cliente: {orden.clienteNombre}</p>
-                        <p>Vehículo: {orden.vehiculoPlaca}</p>
-                        <p>Servicios: {orden.serviciosIds.length}</p>
-                        <p>Fecha: {new Date(orden.fechaCreacion).toLocaleDateString()}</p>
+                secTab === 'pendientes' ? (
+                  <div className="ordenes-list">
+                    {secPendientes.map(s => (
+                      <div key={s.id} className="orden-card">
+                        <div className="orden-info">
+                          <h4>Servicio #{s.id} · {(s.tipoServicio==='Revision'?'Revisión':s.tipoServicio==='Reparacion'?'Reparación':(s.detallesRevision?'Revisión':'Reparación'))}</h4>
+                          <p>Cliente: {s.clienteNombre || 'N/D'}</p>
+                          <p>Estado: {s.estadoDescripcion}</p>
+                          {s.detallesRevision && <p>Detalles: {s.detallesRevision}</p>}
+                        </div>
+                        <div className="orden-actions">
+                          <select onChange={async (e)=>{ const empId = parseInt(e.target.value); if(!empId) return; await secretariaAsignarMecanico(s.id, empId); await loadData(); e.target.value=''; }} defaultValue="">
+                            <option value="" disabled>Asignar mecánico</option>
+                            {empleados.map(emp => (
+                              <option key={emp.id} value={emp.id}>{emp.nombre} {emp.apellido || ''}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
-                      <div className="orden-actions">
-                        <button 
-                          className="btn-primary"
-                          onClick={async () => {
-                            try {
-                              await updateOrden(orden.id, {
-                                ...orden,
-                                idTipoEstadoOrden: 2 // Asignada
-                              });
-                              loadData();
-                              alert('Orden asignada a mecánico');
-                            } catch (err) {
-                              alert('Error al asignar orden');
-                            }
-                          }}
-                        >
-                          Asignar a Mecánico
-                        </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="ordenes-list">
+                    {secAsignados.map(s => (
+                      <div key={s.id} className="orden-card">
+                        <div className="orden-info">
+                          <h4>Servicio #{s.id} · {(s.tipoServicio==='Revision'?'Revisión':s.tipoServicio==='Reparacion'?'Reparación':(s.detallesRevision?'Revisión':'Reparación'))}</h4>
+                          <p>Cliente: {s.clienteNombre || 'N/D'}</p>
+                          <p>Estado: {s.estadoDescripcion}</p>
+                          <p>Mecánico: {s.empleadoNombre || 'Asignado'}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )
               )}
             </div>
           )

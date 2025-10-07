@@ -95,6 +95,37 @@ namespace Taller_TIC1_Backend.Repositories
             return nuevo.Id;
         }
 
+        public async Task<IEnumerable<Servicio>> GetActivosPendientesAsync(IEnumerable<int> estadosActivosIds)
+        {
+            var estados = estadosActivosIds.ToList();
+            return await _context.Servicios
+                .Include(s => s.Cliente)
+                .Include(s => s.Empleado)
+                .Include(s => s.Estado)
+                .Where(s => estados.Contains(s.IdEstado) && s.IdEmpleado == null)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Servicio>> GetActivosAsignadosAsync(IEnumerable<int> estadosActivosIds)
+        {
+            var estados = estadosActivosIds.ToList();
+            return await _context.Servicios
+                .Include(s => s.Cliente)
+                .Include(s => s.Empleado)
+                .Include(s => s.Estado)
+                .Where(s => estados.Contains(s.IdEstado) && s.IdEmpleado != null)
+                .ToListAsync();
+        }
+
+        public async Task<bool> AssignEmpleadoAsync(int servicioId, int empleadoId)
+        {
+            var servicio = await _context.Servicios.FindAsync(servicioId);
+            if (servicio == null) return false;
+            servicio.IdEmpleado = empleadoId;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<DetalleRevision?> GetDetalleRevisionByServicioIdAsync(int servicioId)
         {
             return await _context.DetallesRevision

@@ -37,8 +37,10 @@ const HomeCliente = () => {
         listActivosByCliente(clienteId),
         listHistorialByCliente(clienteId)
       ]);
-      setActivos(a || []);
-      setHistorial(h || []);
+      const activosList = (a || []);
+      const historialList = (h || []).filter(x => (x.estadoDescripcion || '').toLowerCase() === 'completado');
+      setActivos(activosList);
+      setHistorial(historialList);
     } catch (e) {
       // no-op
     }
@@ -75,6 +77,7 @@ const HomeCliente = () => {
   };
 
   const handleCancelar = async (servicioId) => {
+    if (!window.confirm('¿Deseas cancelar este servicio?')) return;
     try {
       await cancelarServicio(servicioId);
       await refreshPedidos();
@@ -167,13 +170,22 @@ const HomeCliente = () => {
           ) : tab === 'activos' ? (
             <div className="servicios-section">
               <h2>Pedidos Activos</h2>
-              {activos.map((s) => (
+              {activos.map((s) => {
+                const tipoRaw = s.tipoServicio || (s.detallesRevision ? 'Revision' : 'Reparacion');
+                const tipoPretty = tipoRaw === 'Revision' ? 'Revisión' : 'Reparación';
+                return (
                 <div key={s.id} className="card">
                   <div className="card-header">
-                    <div className="card-title">{s.tipoServicio}</div>
+                    <div className="card-title">{tipoPretty}</div>
                     <div className="card-subtitle">Estado: {s.estadoDescripcion}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div className="servicio-info">
+                    <p><strong>Cliente:</strong> {s.clienteNombre || 'N/D'}</p>
+                    {(tipoRaw === 'Revision') && s.detallesRevision && (
+                      <p><strong>Detalles:</strong> {s.detallesRevision}</p>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '8px' }}>
                     <button className="btn-secondary" onClick={async () => {
                       const blob = await descargarReservaPdf(s);
                       const url = URL.createObjectURL(blob);
@@ -188,7 +200,7 @@ const HomeCliente = () => {
                     <button className="btn-danger" onClick={() => handleCancelar(s.id)}>Cancelar</button>
                   </div>
                 </div>
-              ))}
+              );})}
             </div>
           ) : tab === 'historial' ? (
             <div className="servicios-section">

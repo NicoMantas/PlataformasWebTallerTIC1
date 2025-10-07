@@ -45,16 +45,100 @@ export async function crearOrden(payload) {
   return data;
 }
 
+export async function secretariaListPendientes() {
+  const { data } = await api.get('/Servicios/secretaria/pendientes');
+  return data;
+}
+
+export async function secretariaListAsignados() {
+  const { data } = await api.get('/Servicios/secretaria/asignados');
+  return data;
+}
+
+export async function secretariaAsignarMecanico(servicioId, empleadoId) {
+  const { data } = await api.post(`/Servicios/secretaria/${servicioId}/asignar/${empleadoId}`);
+  return data;
+}
+
+export async function listEmpleados() {
+  const { data } = await api.get('/Empleado');
+  return data;
+}
+
 export async function descargarReservaPdf(servicio) {
-  const doc = new jsPDF();
-  const line = (y, text) => doc.text(String(text ?? ''), 14, y);
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+  const primary = '#0ea5e9';
+  const textMuted = '#6b7280';
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  // Determinar tipo legible aunque no venga del backend
+  const tipoRaw = servicio?.tipoServicio || (servicio?.detallesRevision ? 'Revision' : 'Reparacion');
+  const tipoPretty = tipoRaw === 'Revision' ? 'Revisión' : 'Reparación';
+
+  // Header band
+  doc.setFillColor(primary);
+  doc.rect(0, 0, pageWidth, 80, 'F');
+  doc.setTextColor('#ffffff');
+  doc.setFontSize(20);
+  doc.text('Comprobante de Reserva', 40, 50);
+
+  // Card container
+  const cardX = 40;
+  const cardY = 110;
+  const cardW = pageWidth - 80;
+  const cardH = 360;
+  doc.setDrawColor('#e5e7eb');
+  doc.setFillColor('#ffffff');
+  doc.roundedRect(cardX, cardY, cardW, cardH, 8, 8, 'FD');
+
+  // Title
+  doc.setTextColor('#111827');
   doc.setFontSize(16);
-  line(20, 'Comprobante de Reserva');
+  doc.text(`Reserva #${servicio.id ?? ''}`, cardX + 16, cardY + 28);
+  doc.setFontSize(11);
+  doc.setTextColor(textMuted);
+  doc.text(`Fecha: ${new Date().toLocaleString()}`, cardX + 16, cardY + 46);
+
+  // Info grid
+  const label = (x, y, t) => { doc.setTextColor(textMuted); doc.text(t, x, y); };
+  const value = (x, y, t) => { doc.setTextColor('#111827'); doc.text(String(t ?? ''), x, y); };
+
+  let y = cardY + 80;
+  label(cardX + 16, y, 'Tipo de servicio');
+  value(cardX + 180, y, tipoPretty);
+  y += 20;
+  label(cardX + 16, y, 'Estado');
+  value(cardX + 180, y, servicio.estadoDescripcion ?? '');
+  y += 20;
+  label(cardX + 16, y, 'Cliente');
+  value(cardX + 180, y, servicio.clienteNombre ?? '');
+
+  // Divider
+  y += 24;
+  doc.setDrawColor('#e5e7eb');
+  doc.line(cardX + 16, y, cardX + cardW - 16, y);
+  y += 24;
+
+  // Notes
+  doc.setTextColor('#111827');
   doc.setFontSize(12);
-  line(30, `ID Servicio: ${servicio.id ?? ''}`);
-  line(38, `Tipo: ${servicio.tipoServicio ?? ''}`);
-  line(46, `Estado: ${servicio.estadoDescripcion ?? ''}`);
-  line(54, `Cliente: ${servicio.clienteNombre ?? ''}`);
-  line(62, `Fecha: ${new Date().toLocaleString()}`);
+  doc.text('Notas', cardX + 16, y);
+  doc.setFontSize(11);
+  doc.setTextColor(textMuted);
+  y += 18;
+  const notes = servicio.tipoServicio === 'Revision'
+    ? (servicio.detallesRevision || 'Inspección general del vehículo. Sujeto a diagnóstico del mecánico.')
+    : 'El detalle de repuestos se agregará una vez el mecánico evalúe y registre la reparación.';
+  const split = doc.splitTextToSize(notes, cardW - 32);
+  doc.text(split, cardX + 16, y);
+
+  // Footer signature area
+  const footY = cardY + cardH - 60;
+  doc.setDrawColor('#e5e7eb');
+  doc.line(cardX + 16, footY, cardX + 200, footY);
+  doc.setTextColor(textMuted);
+  doc.text('Firma cliente', cardX + 16, footY + 16);
+
   return doc.output('blob');
 }
