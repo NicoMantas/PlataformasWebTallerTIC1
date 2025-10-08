@@ -8,6 +8,6 @@ namespace B_TallerAutomoviles.Interfaces
 {
     public interface IRevision
     {
-        void RealizarDiagnostico();
+        string RealizarRevision();
     }
 }

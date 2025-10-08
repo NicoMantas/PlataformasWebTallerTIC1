@@ -3,67 +3,38 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using B_TallerAutomoviles.Interfaces;
 
 namespace B_TallerAutomoviles.Clases
 {
-    public class Repuesto : IRepuesto
+    public class Repuesto
     {
-        private long id;
+        private int id;
         private string nombre;
-        private long numeroDeParte;
-        private string descripcion;
-        private double costoCompra;
-        private double costoVenta;
-        private int cantidadStock;
-        private Proveedor proveedor;
+        private long numero_serie;
+        private float precio;
+        private int stock;
+        private List<Proveedor> proveedores;
 
-        protected readonly IValidarRepuesto validarRepuesto;
+        public Repuesto()
+        {
+            proveedores = new List<Proveedor>();
+        }
 
-        public long Id { get => id; set => id = value; }
-        public string Nombre { get => nombre; set => nombre = value; }
-        public long NumeroDeParte { get => numeroDeParte; set => numeroDeParte = value; }
-        public string Descripcion { get => descripcion; set => descripcion = value; }
-        public double CostoCompra { get => costoCompra; set => costoCompra = value; }
-        public double CostoVenta { get => costoVenta; set => costoVenta = value; }
-        public int CantidadStock { get => cantidadStock; set => cantidadStock = value; }
-        internal Proveedor Proveedor { get => proveedor; set => proveedor = value; }
-
-        public Repuesto(long id, string nombre, long numeroDeParte, string descripcion, double costoCompra, double costoVenta, int cantidadStock, Proveedor proveedor, IValidarRepuesto validarRepuesto)
+        public Repuesto(int id, string nombre, long numero_serie, float precio, int stock, List<Proveedor> proveedores)
         {
             this.Id = id;
             this.Nombre = nombre;
-            this.NumeroDeParte = numeroDeParte;
-            this.Descripcion = descripcion;
-            this.CostoCompra = costoCompra;
-            this.CostoVenta = costoVenta;
-            this.CantidadStock = cantidadStock;
-            this.Proveedor = proveedor;
-            this.validarRepuesto = validarRepuesto;
-            
-            // Validar después de asignar los valores
-            if (!validarRepuesto.ValidarRepuesto(this))
-                throw new ArgumentException("Datos del repuesto inválidos");
+            this.Numero_serie = numero_serie;
+            this.Precio = precio;
+            this.Stock = stock;
+            this.Proveedores = proveedores;
         }
 
-        public void ActualizarCantidad(long id, int cantidad)
-        {
-            if (id <= 0) throw new ArgumentException("ID de repuesto inválido");
-            
-            // Si la cantidad es negativa, verificar que haya suficiente stock
-            if (cantidad < 0 && Math.Abs(cantidad) > this.CantidadStock)
-            {
-                throw new InvalidOperationException("No hay suficiente stock disponible");
-            }
-            
-            // Actualizar la cantidad
-            this.CantidadStock += cantidad;
-            
-            // Verificar que no quede stock negativo
-            if (this.CantidadStock < 0)
-            {
-                this.CantidadStock = 0;
-            }
-        }
+        public int Id { get => id; set => id = value; }
+        public string Nombre { get => nombre; set => nombre = value; }
+        public long Numero_serie { get => numero_serie; set => numero_serie = value; }
+        public float Precio { get => precio; set => precio = value; }
+        public int Stock { get => stock; set => stock = value; }
+        public List<Proveedor> Proveedores { get => proveedores; set => proveedores = value; }
     }
 }

@@ -1,6 +1,170 @@
-	
-Response body
-Download
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI2OGFjZGY3NWQ5NDkwZWI0ZTUyODVlM2MiLCJlbWFpbCI6Im5pY29AZXhhbXBsZSIsInJvbGUiOiJlbXByZXNhIiwibmJmIjoxNzU2MTU5ODYyLCJleHAiOjE3NTYyNDYyNjIsImlhdCI6MTc1NjE1OTg2MiwiaXNzIjoiRmFybWVyc01hcmtldEFQSSIsImF1ZCI6IkZhcm1lcnNNYXJrZXRVc2VycyJ9.nsTMvC4eOHaqY9JyKR7dEaq2wrnU35JAE2KCJKMWOVw"
+Table Repuesto {
+  id int [pk]
+  nombre varchar
+  numero_serie bigint
+  precio float
+  stock int
 }
+
+Table Proveedor {
+  id int [pk]
+  nombre varchar
+  contacto varchar
+}
+
+Table RepuestoProveedor {
+  idRepuesto int [pk]
+  idProveedor int [pk]
+}
+
+Table Servicio {
+  id int [pk]
+  idCliente int
+  idEmpleado int
+  idEstado int
+  costo float
+}
+
+Table Empleado {
+  id int [pk]
+  nombre varchar
+  apellido varchar
+  cedula long
+  salario double
+  fechaContratacion date
+  idTipoEmpleado int
+}
+
+Table TipoEmpleado {
+  id int [pk]
+  descripcion varchar [note: '"Administrador", "Secretaria", "Mecanico"']
+}
+
+Table DetalleRevision {
+  idServicio int [pk]
+  detalles varchar
+}
+
+Table DetalleReparacion {
+  idServicio int [pk]
+  idDetalleReparacionRepuesto int
+}
+
+Table DetalleReparacionRepuesto {
+  id int [pk]
+  idRepuesto int 
+  cantidad int
+}
+
+Table EstadoServicio {
+  id int [pk]
+  descripcion varchar [note: '"Pendiente", "En proceso", "Completado"']
+}
+
+Table Cliente {
+  id int [pk]
+  nombre varchar
+  email varchar
+  telefono long
+  idCarro int
+}
+
+Table CNatural {
+  idCliente int [pk]
+  cedula long
+  apellido varchar
+}
+
+Table CEmpresa {
+  idCliente int [pk]
+  nit long
+  representante varchar
+}
+
+Table Vehiculo {
+  id int [pk]
+  placa varchar
+  marca varchar
+  modelo varchar
+  año int
+}
+
+Table VGasolina {
+  idVehiculo int [pk]
+  cilindraje int  
+}
+
+Table VElectrico {
+  idVehiculo int [pk]
+  capacidadBateria int
+}
+
+Table VHibrido {
+  idVehiculo int [pk]
+  capacidadBateria int
+  cilindraje int
+}
+
+
+Table Taller {
+  id int [pk]
+  nombre varchar
+  direccion varchar
+}
+
+Table UsuariosEmpleadoTaller {
+  id int [pk]
+  email varchar
+  contraseña varchar
+  idTaller int
+  idEmpleado int
+}
+
+Table UsuariosClienteTaller {
+  id int [pk]
+  email varchar
+  contraseña varchar
+  idTaller int
+  idCliente int
+}
+
+Table OrdenTrabajo {
+  id int [pk]
+  fechaCreacion date
+  idTipoEstadoOrden int
+}
+
+Table DetalleServicioOrden {
+  idOrdenTrabajo int [pk]
+  idServicio int [pk]
+}
+
+Table TipoEstadoOrden {
+  id int [pk]
+  descripcion varchar  [note: '"En Progreso", "Completada", "Cancelada"']
+}
+
+
+Ref: DetalleServicioOrden.idServicio - Servicio.id
+Ref: DetalleServicioOrden.idOrdenTrabajo - OrdenTrabajo.id
+Ref: OrdenTrabajo.idTipoEstadoOrden - TipoEstadoOrden.id
+Ref: UsuariosEmpleadoTaller.idEmpleado - Empleado.id
+Ref: UsuariosClienteTaller.idCliente - Cliente.id
+Ref: UsuariosEmpleadoTaller.idTaller - Taller.id
+Ref: UsuariosClienteTaller.idTaller - Taller.id
+Ref: Servicio.idCliente - Cliente.id
+Ref: VHibrido.idVehiculo - Vehiculo.id
+Ref: VElectrico.idVehiculo - Vehiculo.id
+Ref: VGasolina.idVehiculo - Vehiculo.id
+Ref: Cliente.idCarro - Vehiculo.id
+Ref: CEmpresa.idCliente - Cliente.id
+Ref: CNatural.idCliente - Cliente.id
+Ref: Servicio.idEmpleado - Empleado.id
+Ref: Empleado.idTipoEmpleado - TipoEmpleado.id
+Ref: DetalleRevision.idServicio - Servicio.id
+Ref: DetalleReparacion.idServicio - Servicio.id
+Ref: DetalleReparacion.idDetalleReparacionRepuesto - DetalleReparacionRepuesto.id
+Ref: DetalleReparacionRepuesto.idRepuesto - Repuesto.id
+Ref: Servicio.idEstado - EstadoServicio.id
+Ref: Repuesto.id - RepuestoProveedor.idRepuesto
+Ref: Proveedor.id - RepuestoProveedor.idProveedor

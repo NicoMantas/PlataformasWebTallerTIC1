@@ -1,0 +1,350 @@
+/* src/pages/HomeCliente.css */
+.home-cliente-page {
+    min-height: 100vh;
+    background-color: var(--background-light);
+  }
+  
+  .cliente-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .cliente-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .cliente-header h1 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+  }
+  
+  .cliente-header p {
+    color: var(--text-light);
+    font-size: 1.1rem;
+  }
+
+  .taller-info {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+  }
+  
+  .cliente-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .dashboard-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .tab-button {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s;
+  }
+
+  .tab-button.active {
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+    font-weight: bold;
+  }
+
+  .vehiculo-selection {
+    background: var(--background-light);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    margin: 20px 0;
+  }
+
+  .selected-vehiculo {
+    background: #e0f2fe;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .servicio-info {
+    flex: 1;
+  }
+
+  .servicio-info h3 {
+    margin: 0 0 5px 0;
+    color: var(--text-color);
+  }
+
+  .servicio-info p {
+    margin: 5px 0;
+    color: var(--text-light);
+  }
+  
+  .vehiculos-section, .servicios-section, .quick-actions {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .vehiculos-section h2, .servicios-section h2, .quick-actions h2 {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+  }
+  
+  .vehiculos-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .vehiculo-card {
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+  }
+  
+  .vehiculo-card h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+  }
+  
+  .vehiculo-card p {
+    margin-bottom: 0.5rem;
+    color: var(--text-light);
+  }
+  
+  .servicios-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .servicios-categoria {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f0f0f0;
+  }
+
+  .servicios-categoria h3 {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+    font-size: 1.3rem;
+    border-bottom: 2px solid #e0f2fe;
+    padding-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .servicio-card {
+    margin-bottom: 1.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1.5rem;
+    background: #fafafa;
+    transition: all 0.3s ease;
+  }
+
+  .servicio-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color);
+  }
+
+  .servicio-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .servicio-descripcion {
+    color: var(--text-light);
+    margin: 0.5rem 0 1rem 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .servicio-detalles {
+    background: white;
+    padding: 1rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+    border-left: 4px solid var(--primary-color);
+  }
+
+  .detalle-item {
+    margin-bottom: 1rem;
+  }
+
+  .detalle-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .detalle-item strong {
+    color: var(--primary-color);
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .incluye-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0 0;
+  }
+
+  .incluye-lista li {
+    padding: 0.25rem 0;
+    color: var(--text-color);
+    position: relative;
+    padding-left: 1.5rem;
+  }
+
+  .incluye-lista li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #10b981;
+    font-weight: bold;
+  }
+
+  .servicio-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .servicio-actions button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+  }
+
+  .servicio-actions .btn-secondary {
+    background: #f3f4f6;
+    color: var(--text-color);
+    border: 1px solid #d1d5db;
+  }
+
+  .servicio-actions .btn-secondary:hover {
+    background: #e5e7eb;
+  }
+
+  .servicio-actions .btn-primary {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  .servicio-actions .btn-primary:hover {
+    background: #0284c7;
+    transform: translateY(-1px);
+  }
+  
+  .servicio-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--background-light);
+    border-radius: 4px;
+  }
+  
+  .servicio-status {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+  }
+  
+  .servicio-status.completed {
+    background-color: #ecfdf5;
+    color: var(--success-color);
+  }
+  
+  .servicio-status.in-progress {
+    background-color: #eef2ff;
+    color: var(--primary-color);
+  }
+  
+  .servicio-date {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  
+  .action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  
+  @media (max-width: 768px) {
+    .cliente-container {
+      padding: 1rem;
+    }
+    
+    .vehiculos-list {
+      grid-template-columns: 1fr;
+    }
+    
+    .servicio-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    
+    .action-buttons {
+      grid-template-columns: 1fr;
+    }
+
+    .servicios-categoria {
+      padding: 1rem;
+    }
+
+    .servicios-categoria h3 {
+      font-size: 1.1rem;
+    }
+
+    .servicio-card {
+      padding: 1rem;
+    }
+
+    .servicio-actions {
+      flex-direction: column;
+    }
+
+    .servicio-actions button {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .servicio-detalles {
+      padding: 0.75rem;
+    }
+
+    .incluye-lista li {
+      font-size: 0.9rem;
+    }
+  }
