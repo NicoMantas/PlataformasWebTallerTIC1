@@ -102,6 +102,9 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.Salario).HasColumnName("salario").HasColumnType("double precision");
                 e.Property(x => x.FechaContratacion).HasColumnName("fechaContratacion").HasColumnType("date");
                 e.Property(x => x.IdTipoEmpleado).HasColumnName("idTipoEmpleado");
+                e.Property(x => x.Activo).HasColumnName("activo").HasDefaultValue(true);
+                e.Property(x => x.DetallesDesactivacion).HasColumnName("detallesDesactivacion").HasMaxLength(500).IsRequired(false);
+                e.Property(x => x.FechaDesactivacion).HasColumnName("fechaDesactivacion").HasColumnType("timestamp").IsRequired(false);
 
                 e.HasOne(emp => emp.TipoEmpleado)
                  .WithMany(te => te.Empleados) //te.Empleados para la navegación inversa
@@ -187,6 +190,7 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.Email).HasColumnName("email").HasMaxLength(255);
                 e.Property(x => x.Telefono).HasColumnName("telefono").HasColumnType("bigint");
                 e.Property(x => x.IdVehiculo).HasColumnName("idVehiculo");
+                e.Property(x => x.Activo).HasColumnName("activo").HasDefaultValue(true);
 
 
                 e.HasOne(c => c.Vehiculo)
@@ -232,6 +236,7 @@ namespace Taller_TIC1_Backend.Data
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).HasColumnName("id"); // Removido UseIdentityColumn() para manejo manual
                 e.Property(x => x.IdCliente).HasColumnName("idCliente");
+                e.Property(x => x.IdVehiculo).HasColumnName("idVehiculo");
                 e.Property(x => x.IdEmpleado).HasColumnName("idEmpleado");
                 e.Property(x => x.IdEstado).HasColumnName("idEstado");
                 e.Property(x => x.Costo).HasColumnName("costo").HasColumnType("real");
@@ -241,6 +246,11 @@ namespace Taller_TIC1_Backend.Data
                 e.HasOne(s => s.Cliente) //correción se usa la porpiedad de navegación s.Cliente en vez de s.IdCliente
                  .WithMany()
                  .HasForeignKey(s => s.IdCliente)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(s => s.Vehiculo)
+                 .WithMany()
+                 .HasForeignKey(s => s.IdVehiculo)
                  .OnDelete(DeleteBehavior.Restrict);
 
                 e.HasOne(s => s.Empleado)

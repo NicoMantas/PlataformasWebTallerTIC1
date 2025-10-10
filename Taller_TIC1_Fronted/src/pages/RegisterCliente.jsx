@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import AuthForm from '../components/AuthForm';
+import VehiculoFormSection from '../components/VehiculoFormSection';
 import '../styles/RegisterCliente.css';
 import { registerCliente } from '../services/authService';
 import { createCliente } from '../services/clientesService';
@@ -85,20 +86,17 @@ const RegisterCliente = () => {
     { name: 'telefono', type: 'tel', label: 'Teléfono', required: true },
     { name: 'email', type: 'email', label: 'Correo Electrónico', required: true },
     
-    // Información del vehículo (opcional)
-    { name: 'placa', type: 'text', label: 'Placa del Vehículo', required: false },
-    { name: 'marca', type: 'text', label: 'Marca del Vehículo', required: false },
-    { name: 'modelo', type: 'text', label: 'Modelo del Vehículo', required: false },
-    { name: 'anio', type: 'number', label: 'Año del Vehículo', required: false },
-    { name: 'tipoVehiculo', type: 'select', label: 'Tipo de Vehículo', required: false, options: [
-      { value: 'Gasolina', label: 'Gasolina' },
-      { value: 'Electrico', label: 'Eléctrico' },
-      { value: 'Hibrido', label: 'Híbrido' }
-    ]},
-    
     // Credenciales
     { name: 'password', type: 'password', label: 'Contraseña', required: true },
     { name: 'confirmPassword', type: 'password', label: 'Confirmar Contraseña', required: true }
+  ];
+
+  // Sección personalizada para el vehículo (se inserta después del campo email - índice 4)
+  const customSections = [
+    {
+      afterFieldIndex: 4, // Después del campo email
+      component: <VehiculoFormSection />
+    }
   ];
 
   return (
@@ -119,6 +117,7 @@ const RegisterCliente = () => {
             onSubmit={handleRegister}
             submitText={loading ? "Registrando..." : "Registrarse"}
             disabled={loading}
+            customSections={customSections}
           />
           
           <div className="auth-links">

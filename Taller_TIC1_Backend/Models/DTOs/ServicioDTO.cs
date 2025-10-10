@@ -5,6 +5,7 @@
         public int Id { get; set; }
         public float Costo { get; set; }
         public int IdCliente { get; set; }
+        public int IdVehiculo { get; set; }
         public int? IdEmpleado { get; set; }
         public int IdEstado { get; set; }
         public string? TipoServicio { get; set; } // "Revision" o "Reparacion"
@@ -16,6 +17,7 @@
         public string? VehiculoPlaca { get; set; }
         public string? VehiculoMarca { get; set; }
         public string? VehiculoModelo { get; set; }
+        public string? VehiculoInfo { get; set; }
         public DateTime? FechaCreacion { get; set; }
         public DateTime? FechaActualizacion { get; set; }
     }

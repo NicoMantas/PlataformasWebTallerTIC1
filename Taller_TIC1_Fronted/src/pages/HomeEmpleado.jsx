@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
+import EmpleadosManager from '../components/EmpleadosManager';
 import '../styles/HomeEmpleado.css';
+import '../styles/EmpleadoForm.css';
 import { listOrdenes, updateOrden } from '../services/ordenesService';
-import { listServicios, secretariaListPendientes, secretariaListAsignados, secretariaAsignarMecanico, getServicioById, updateServicioEstado, mecanicoListAsignados, mecanicoListCompletados } from '../services/serviciosService';
+import { listServicios, secretariaListPendientes, secretariaListAsignados, secretariaAsignarMecanico, getServicioById, updateServicioEstado, desasignarEmpleado, mecanicoListAsignados, mecanicoListCompletados } from '../services/serviciosService';
 import { listFacturas } from '../services/facturasService';
 import { getCurrentUser, registerEmpleado } from '../services/authService';
 import { createEmpleado, listEmpleados } from '../services/empleadosService';
@@ -194,7 +196,8 @@ const HomeEmpleado = () => {
               <option value={1}>Pendiente</option>
               <option value={2}>En Proceso</option>
               <option value={3}>Completado</option>
-              <option value={4}>Cancelado</option>
+              {tipo !== 'mecanico' && <option value={4}>Cancelado</option>}
+              {tipo === 'mecanico' && <option value={1}>Devolver a Secretaria</option>}
             </select>
             {servicio.tipoServicio === 'Reparacion' && (
               <button 
@@ -223,7 +226,13 @@ const HomeEmpleado = () => {
   // Mechanic specific functions
   const handleServicioEstadoChange = async (servicioId, nuevoEstado) => {
     try {
-      await updateServicioEstado(servicioId, nuevoEstado);
+      if (tipo === 'mecanico' && nuevoEstado === 1) {
+        // Cuando el mecánico devuelve a secretaria, también desasignar el empleado
+        await updateServicioEstado(servicioId, nuevoEstado);
+        await desasignarEmpleado(servicioId);
+      } else {
+        await updateServicioEstado(servicioId, nuevoEstado);
+      }
       await loadData();
     } catch (err) {
       alert('Error al actualizar estado del servicio');
@@ -284,6 +293,25 @@ const HomeEmpleado = () => {
   };
 
   // Contenido específico para cada tipo de empleado
+  // Función para obtener el nombre del tipo de empleado
+  const getTipoEmpleadoNombre = (idTipoEmpleado) => {
+    const tipos = {
+      1: 'Administrador',
+      2: 'Secretaria',
+      3: 'Mecánico'
+    };
+    return tipos[idTipoEmpleado] || 'Empleado';
+  };
+
+  // Función helper para filtrar solo mecánicos
+  const filtrarMecanicos = (empleadosList) => {
+    return empleadosList.filter(emp => {
+      // Múltiples opciones para el tipo de empleado
+      const tipo = emp.idTipoEmpleado || emp.tipoEmpleado || emp.idTipo || emp.tipoEmpleadoId || emp.tipo;
+      return tipo === 3 || tipo === '3' || tipo === 'Mecánico' || tipo === 'mecanico';
+    });
+  };
+
   const getEmpleadoContent = () => {
     switch(tipo) {
       case 'mecanico':
@@ -360,7 +388,7 @@ const HomeEmpleado = () => {
                         <div className="orden-actions">
                           <select onChange={async (e)=>{ const empId = parseInt(e.target.value); if(!empId) return; await secretariaAsignarMecanico(s.id, empId); await loadData(); e.target.value=''; }} defaultValue="">
                             <option value="" disabled>Asignar mecánico</option>
-                            {empleados.map(emp => (
+                            {filtrarMecanicos(empleados).map(emp => (
                               <option key={emp.id} value={emp.id}>{emp.nombre} {emp.apellido || ''}</option>
                             ))}
                           </select>
@@ -458,10 +486,14 @@ const HomeEmpleado = () => {
                   </div>
                 </div>
               </div>
-              <div className="dashboard-card" style={{ marginTop: '1.5rem' }}>
-                <h3>Registro de Empleados</h3>
-                <p>Tipos: 1 Administrador, 2 Secretaria, 3 Mecánico</p>
+              <div className="empleado-form-container">
+                <div className="empleado-form-header">
+                  <h3>Registro de Empleados</h3>
+                  <p>Gestiona el personal del taller con información completa</p>
+                </div>
+                
                 <form
+                  className="empleado-form"
                   onSubmit={async (e) => {
                     e.preventDefault();
                     try {
@@ -497,40 +529,157 @@ const HomeEmpleado = () => {
                       setCreating(false);
                     }
                   }}
-                  className="form-container"
                 >
-                  {error && <div className="error-message">{error}</div>}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '1rem' }}>
-                    <input placeholder="Nombre" required value={empleadoForm.nombre} onChange={(e) => setEmpleadoForm({ ...empleadoForm, nombre: e.target.value })} />
-                    <input placeholder="Apellido" required value={empleadoForm.apellido} onChange={(e) => setEmpleadoForm({ ...empleadoForm, apellido: e.target.value })} />
-                    <input placeholder="Cédula" required type="number" value={empleadoForm.cedula} onChange={(e) => setEmpleadoForm({ ...empleadoForm, cedula: e.target.value })} />
-                    <input placeholder="Salario" required type="number" step="0.01" value={empleadoForm.salario} onChange={(e) => setEmpleadoForm({ ...empleadoForm, salario: e.target.value })} />
-                    <select value={empleadoForm.idTipoEmpleado} onChange={(e) => setEmpleadoForm({ ...empleadoForm, idTipoEmpleado: e.target.value })}>
-                      <option value={1}>Administrador</option>
-                      <option value={2}>Secretaria</option>
-                      <option value={3}>Mecánico</option>
-                    </select>
-                    <input placeholder="Email" required type="email" value={empleadoForm.email} onChange={(e) => setEmpleadoForm({ ...empleadoForm, email: e.target.value })} />
-                    <input placeholder="Password" required type="password" value={empleadoForm.password} onChange={(e) => setEmpleadoForm({ ...empleadoForm, password: e.target.value })} />
-                    <input placeholder="Id Taller" type="number" value={empleadoForm.idTaller} onChange={(e) => setEmpleadoForm({ ...empleadoForm, idTaller: e.target.value })} />
+                  {error && <div className="empleado-form-error">{error}</div>}
+                  
+                  <div className="empleado-form-grid">
+                    <div className="empleado-form-group">
+                      <label htmlFor="nombre">Nombre</label>
+                      <input 
+                        id="nombre"
+                        className="empleado-form-input"
+                        placeholder="Ingresa el nombre del empleado" 
+                        required 
+                        value={empleadoForm.nombre} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, nombre: e.target.value })} 
+                      />
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="apellido">Apellido</label>
+                      <input 
+                        id="apellido"
+                        className="empleado-form-input"
+                        placeholder="Ingresa el apellido del empleado" 
+                        required 
+                        value={empleadoForm.apellido} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, apellido: e.target.value })} 
+                      />
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="cedula">Cédula</label>
+                      <input 
+                        id="cedula"
+                        className="empleado-form-input"
+                        placeholder="Número de cédula" 
+                        required 
+                        type="number" 
+                        value={empleadoForm.cedula} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, cedula: e.target.value })} 
+                      />
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="salario">Salario</label>
+                      <input 
+                        id="salario"
+                        className="empleado-form-input"
+                        placeholder="Salario mensual" 
+                        required 
+                        type="number" 
+                        step="0.01" 
+                        value={empleadoForm.salario} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, salario: e.target.value })} 
+                      />
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="tipo">Tipo de Empleado</label>
+                      <select 
+                        id="tipo"
+                        className="empleado-form-select"
+                        value={empleadoForm.idTipoEmpleado} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, idTipoEmpleado: e.target.value })}
+                      >
+                        <option value={1}>Administrador</option>
+                        <option value={2}>Secretaria</option>
+                        <option value={3}>Mecánico</option>
+                      </select>
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="email">Email</label>
+                      <input 
+                        id="email"
+                        className="empleado-form-input"
+                        placeholder="correo@ejemplo.com" 
+                        required 
+                        type="email" 
+                        value={empleadoForm.email} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, email: e.target.value })} 
+                      />
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="password">Contraseña</label>
+                      <input 
+                        id="password"
+                        className="empleado-form-input"
+                        placeholder="Contraseña de acceso" 
+                        required 
+                        type="password" 
+                        value={empleadoForm.password} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, password: e.target.value })} 
+                      />
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="idTaller">ID del Taller</label>
+                      <input 
+                        id="idTaller"
+                        className="empleado-form-input"
+                        placeholder="Identificador del taller" 
+                        type="number" 
+                        value={empleadoForm.idTaller} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, idTaller: e.target.value })} 
+                      />
+                    </div>
                   </div>
-                  <div style={{ marginTop: '1rem', display: 'flex', gap: '.75rem' }}>
-                    <button className="btn-primary" type="submit" disabled={creating}>{creating ? 'Creando...' : 'Crear y Registrar'}</button>
-                    <button className="btn-secondary" type="button" onClick={() => setEmpleadoForm({ nombre: '', apellido: '', cedula: '', salario: '', idTipoEmpleado: 1, email: '', password: '', idTaller: '' })}>Limpiar</button>
+                  
+                  <div className="empleado-form-actions">
+                    <button 
+                      className="empleado-form-btn empleado-form-btn-primary" 
+                      type="submit" 
+                      disabled={creating}
+                    >
+                      {creating ? 'Creando...' : 'Crear y Registrar'}
+                    </button>
+                    <button 
+                      className="empleado-form-btn empleado-form-btn-secondary" 
+                      type="button" 
+                      onClick={() => setEmpleadoForm({ nombre: '', apellido: '', cedula: '', salario: '', idTipoEmpleado: 1, email: '', password: '', idTaller: '' })}
+                    >
+                      Limpiar Formulario
+                    </button>
                   </div>
                 </form>
-                <div className="card" style={{ marginTop: '1rem' }}>
-                  <h4>Empleados actuales</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '1rem' }}>
+                
+                <div className="empleados-actuales">
+                  <h4>Empleados Actuales</h4>
+                  <div className="empleados-grid">
                     {empleados.map((emp) => (
-                      <div key={emp.id} className="card" style={{ padding: '1rem' }}>
-                        <div className="card-title">{emp.nombre} {emp.apellido}</div>
-                        <div className="card-subtitle">Tipo: {emp.idTipoEmpleado}</div>
-                        <p className="mb-0">Cédula: {emp.cedula}</p>
+                      <div key={emp.id} className={`empleado-card ${!emp.activo ? 'inactivo' : ''}`}>
+                        <div className="empleado-card-title">{emp.nombre} {emp.apellido}</div>
+                        <div className="empleado-card-subtitle">{getTipoEmpleadoNombre(emp.idTipoEmpleado)}</div>
+                        <div className="empleado-card-info">
+                          <strong>Cédula:</strong> {emp.cedula}
+                        </div>
+                        <div className="empleado-card-info">
+                          <strong>Salario:</strong> ${emp.salario?.toLocaleString()}
+                        </div>
+                        <div className={`empleado-estado ${emp.activo ? 'activo' : 'inactivo'}`}>
+                          {emp.activo ? 'Activo' : 'Inactivo'}
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
+              </div>
+              
+              {/* Componente de gestión avanzada de empleados */}
+              <div style={{ marginTop: '2rem' }}>
+                <EmpleadosManager />
               </div>
             </div>
           )

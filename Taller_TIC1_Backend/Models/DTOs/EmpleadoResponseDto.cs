@@ -9,6 +9,9 @@ namespace Taller_TIC1_Backend.Models.DTOs
         public double Salario { get; set; }
         public DateTime FechaContratacion { get; set; }
         public int IdTipoEmpleado { get; set; }
+        public bool Activo { get; set; } = true;
+        public string? DetallesDesactivacion { get; set; }
+        public DateTime? FechaDesactivacion { get; set; }
         public string? TipoEmpleadoDescripcion { get; set; }
     }
 }

@@ -387,16 +387,24 @@ const HomeCliente = () => {
               {activos.map((s) => {
                 const tipoRaw = s.tipoServicio || (s.detallesRevision ? 'Revision' : 'Reparacion');
                 const tipoPretty = tipoRaw === 'Revision' ? 'Revisión' : 'Reparación';
+                const fechaCreacion = s.fechaCreacion ? new Date(s.fechaCreacion).toLocaleDateString() : 'N/D';
+                const vehiculoInfo = s.vehiculoInfo || 'N/D';
+                
                 return (
                 <div key={s.id} className="card">
                   <div className="card-header">
-                    <div className="card-title">{tipoPretty}</div>
+                    <div className="card-title">Servicio #{s.id} · {tipoPretty}</div>
                     <div className="card-subtitle">Estado: {s.estadoDescripcion}</div>
                   </div>
                   <div className="servicio-info">
                     <p><strong>Cliente:</strong> {s.clienteNombre || 'N/D'}</p>
+                    <p><strong>Vehículo:</strong> {vehiculoInfo}</p>
                     {(tipoRaw === 'Revision') && s.detallesRevision && (
                       <p><strong>Detalles:</strong> {s.detallesRevision}</p>
+                    )}
+                    <p><strong>Fecha Creación:</strong> {fechaCreacion}</p>
+                    {s.empleadoNombre && (
+                      <p><strong>Mecánico Asignado:</strong> {s.empleadoNombre}</p>
                     )}
                   </div>
                   <div style={{ display: 'flex', gap: '0.75rem', marginTop: '8px' }}>
@@ -419,11 +427,26 @@ const HomeCliente = () => {
           ) : tab === 'historial' ? (
             <div className="servicios-section">
               <h2>Historial</h2>
-              {historial.map((s) => (
+              {historial.map((s) => {
+                const tipoPretty = s.tipoServicio === 'Revision' ? 'Revisión' : 'Reparación';
+                const fechaCreacion = s.fechaCreacion ? new Date(s.fechaCreacion).toLocaleDateString() : 'N/D';
+                const vehiculoInfo = s.vehiculoInfo || 'N/D';
+                
+                return (
                 <div key={s.id} className="card">
                   <div className="card-header">
-                    <div className="card-title">{s.tipoServicio}</div>
+                    <div className="card-title">Servicio #{s.id} · {tipoPretty}</div>
                     <div className="card-subtitle">Estado: {s.estadoDescripcion}</div>
+                  </div>
+                  <div className="servicio-info">
+                    <p><strong>Vehículo:</strong> {vehiculoInfo}</p>
+                    {s.detallesRevision && (
+                      <p><strong>Detalles:</strong> {s.detallesRevision}</p>
+                    )}
+                    <p><strong>Fecha Creación:</strong> {fechaCreacion}</p>
+                    {s.empleadoNombre && (
+                      <p><strong>Mecánico:</strong> {s.empleadoNombre}</p>
+                    )}
                   </div>
                   <div style={{ display: 'flex', gap: '0.75rem' }}>
                     <button className="btn-secondary" onClick={async () => {
@@ -439,7 +462,8 @@ const HomeCliente = () => {
                     }}>Descargar PDF</button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <VehiculosManager 

@@ -135,11 +135,28 @@ namespace Taller_TIC1_Backend.Controllers
             return Ok(items);
         }
 
+        // Historial por vehículo
+        [HttpGet("by-vehiculo/{vehiculoId}/historial")]
+        public async Task<ActionResult<IEnumerable<ServicioDTO>>> GetHistorialByVehiculo(int vehiculoId)
+        {
+            var servicios = await _servicioService.GetHistorialByVehiculoAsync(vehiculoId);
+            return Ok(servicios);
+        }
+
         // Actualizar estado de servicio
         [HttpPut("{servicioId}/estado")]
         public async Task<IActionResult> UpdateEstado(int servicioId, [FromBody] UpdateEstadoDto dto)
         {
             var ok = await _servicioService.UpdateServicioEstadoAsync(servicioId, dto.IdEstado);
+            if (!ok) return NotFound();
+            return Ok();
+        }
+
+        // Desasignar empleado de servicio (para devolver a secretaria)
+        [HttpPut("{servicioId}/desasignar")]
+        public async Task<IActionResult> DesasignarEmpleado(int servicioId)
+        {
+            var ok = await _servicioService.DesasignarEmpleadoAsync(servicioId);
             if (!ok) return NotFound();
             return Ok();
         }

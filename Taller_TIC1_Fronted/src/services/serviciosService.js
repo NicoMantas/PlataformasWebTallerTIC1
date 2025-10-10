@@ -10,6 +10,7 @@ export async function createServicio({ tipoServicio, idCliente, idVehiculo, deta
   const payload = {
     costo: 0,
     idCliente,
+    idVehiculo,
     idEmpleado: null,
     idEstado: 1,
     tipoServicio: tipoServicio === 'revision' ? 'Revision' : 'Reparacion',
@@ -32,6 +33,11 @@ export async function listActivosByCliente(clienteId) {
 
 export async function listHistorialByCliente(clienteId) {
   const { data } = await api.get(`/Servicios/by-cliente/${clienteId}/historial`);
+  return data;
+}
+
+export async function listHistorialByVehiculo(vehiculoId) {
+  const { data } = await api.get(`/Servicios/by-vehiculo/${vehiculoId}/historial`);
   return data;
 }
 
@@ -72,6 +78,11 @@ export async function updateServicio(id, servicioData) {
 
 export async function updateServicioEstado(servicioId, estadoId) {
   const { data } = await api.put(`/Servicios/${servicioId}/estado`, { idEstado: estadoId });
+  return data;
+}
+
+export async function desasignarEmpleado(servicioId) {
+  const { data } = await api.put(`/Servicios/${servicioId}/desasignar`);
   return data;
 }
 

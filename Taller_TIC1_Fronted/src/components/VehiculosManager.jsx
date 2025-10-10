@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { listVehiculos, createVehiculo, updateVehiculo, deleteVehiculo } from '../services/vehiculosService.js';
 import { getCurrentUser } from '../services/authService';
+import HistorialVehiculo from './HistorialVehiculo';
 import '../styles/VehiculosManager.css';
 
 const VehiculosManager = ({ onVehiculoSelect }) => {
@@ -10,6 +11,8 @@ const VehiculosManager = ({ onVehiculoSelect }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingVehiculo, setEditingVehiculo] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [showHistorial, setShowHistorial] = useState(false);
+  const [selectedVehiculoForHistorial, setSelectedVehiculoForHistorial] = useState(null);
   const [formData, setFormData] = useState({
     placa: '',
     marca: '',
@@ -95,6 +98,16 @@ const VehiculosManager = ({ onVehiculoSelect }) => {
         setError(e?.message || 'Error al eliminar vehículo');
       }
     }
+  };
+
+  const handleShowHistorial = (vehiculo) => {
+    setSelectedVehiculoForHistorial(vehiculo);
+    setShowHistorial(true);
+  };
+
+  const handleCloseHistorial = () => {
+    setShowHistorial(false);
+    setSelectedVehiculoForHistorial(null);
   };
 
   const resetForm = () => {
@@ -253,6 +266,12 @@ const VehiculosManager = ({ onVehiculoSelect }) => {
                   Editar
                 </button>
                 <button 
+                  className="btn-info"
+                  onClick={() => handleShowHistorial(vehiculo)}
+                >
+                  Historial
+                </button>
+                <button 
                   className="btn-danger"
                   onClick={() => handleDelete(vehiculo.id)}
                 >
@@ -263,6 +282,13 @@ const VehiculosManager = ({ onVehiculoSelect }) => {
           ))
         )}
       </div>
+
+      {showHistorial && selectedVehiculoForHistorial && (
+        <HistorialVehiculo 
+          vehiculo={selectedVehiculoForHistorial}
+          onClose={handleCloseHistorial}
+        />
+      )}
     </div>
   );
 };

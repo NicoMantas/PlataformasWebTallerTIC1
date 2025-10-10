@@ -54,7 +54,8 @@ namespace Taller_TIC1_Backend.Services
                 Cedula = empleadoCreateDto.Cedula,
                 Salario = empleadoCreateDto.Salario,
                 FechaContratacion = DateTime.Now,
-                IdTipoEmpleado = empleadoCreateDto.IdTipoEmpleado
+                IdTipoEmpleado = empleadoCreateDto.IdTipoEmpleado,
+                Activo = true // Por defecto, los empleados nuevos están activos
             };
             _context.Empleados.Add(empleado);
             await _context.SaveChangesAsync();
@@ -80,7 +81,42 @@ namespace Taller_TIC1_Backend.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
-            return await _empleadoRepository.DeleteAsync(id);
+            // En lugar de eliminar físicamente, marcar como inactivo
+            var empleado = await _context.Empleados.FindAsync(id);
+            if (empleado == null)
+                return false;
+
+            empleado.Activo = false;
+            empleado.FechaDesactivacion = DateTime.Now;
+            // Los detalles se establecerán desde el controlador con el DTO
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DesactivarConDetallesAsync(int id, string detallesDesactivacion)
+        {
+            var empleado = await _context.Empleados.FindAsync(id);
+            if (empleado == null)
+                return false;
+
+            empleado.Activo = false;
+            empleado.DetallesDesactivacion = detallesDesactivacion;
+            empleado.FechaDesactivacion = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ActivateAsync(int id)
+        {
+            var empleado = await _context.Empleados.FindAsync(id);
+            if (empleado == null)
+                return false;
+
+            empleado.Activo = true;
+            empleado.DetallesDesactivacion = null; // Limpiar detalles al reactivar
+            empleado.FechaDesactivacion = null;
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<bool> ExistsAsync(int id)
@@ -105,6 +141,9 @@ namespace Taller_TIC1_Backend.Services
                 Salario = empleado.Salario,
                 FechaContratacion = empleado.FechaContratacion,
                 IdTipoEmpleado = empleado.IdTipoEmpleado,
+                Activo = empleado.Activo,
+                DetallesDesactivacion = empleado.DetallesDesactivacion,
+                FechaDesactivacion = empleado.FechaDesactivacion,
                 TipoEmpleadoDescripcion = empleado.TipoEmpleado?.Descripcion
             };
         }

@@ -204,9 +204,11 @@ namespace Taller_TIC1_Backend.Services
                 dto.EstadoDescripcion = servicio.Estado?.Descripcion ?? "";
                 dto.ClienteNombre = servicio.Cliente?.Nombre ?? "";
                 dto.EmpleadoNombre = servicio.Empleado?.Nombre ?? "";
-                dto.VehiculoPlaca = servicio.Cliente?.Vehiculo?.Placa ?? "";
-                dto.VehiculoMarca = servicio.Cliente?.Vehiculo?.Marca ?? "";
-                dto.VehiculoModelo = servicio.Cliente?.Vehiculo?.Modelo ?? "";
+                dto.IdVehiculo = servicio.IdVehiculo;
+                dto.VehiculoPlaca = servicio.Vehiculo?.Placa ?? "";
+                dto.VehiculoMarca = servicio.Vehiculo?.Marca ?? "";
+                dto.VehiculoModelo = servicio.Vehiculo?.Modelo ?? "";
+                dto.VehiculoInfo = $"{servicio.Vehiculo?.Marca} {servicio.Vehiculo?.Modelo} - {servicio.Vehiculo?.Placa}";
                 dto.FechaCreacion = servicio.FechaCreacion;
                 dto.FechaActualizacion = servicio.FechaActualizacion;
 
@@ -283,6 +285,17 @@ namespace Taller_TIC1_Backend.Services
         public async Task<bool> UpdateServicioEstadoAsync(int servicioId, int estadoId)
         {
             return await _servicioRepository.UpdateServicioEstadoAsync(servicioId, estadoId);
+        }
+
+        public async Task<bool> DesasignarEmpleadoAsync(int servicioId)
+        {
+            return await _servicioRepository.DesasignarEmpleadoAsync(servicioId);
+        }
+
+        public async Task<IEnumerable<ServicioDTO>> GetHistorialByVehiculoAsync(int vehiculoId)
+        {
+            var servicios = await _servicioRepository.GetByVehiculoAsync(vehiculoId);
+            return await MapDetallesServicios(servicios);
         }
     }
 }

@@ -26,4 +26,24 @@ export async function deleteEmpleado(id) {
   return true;
 }
 
+export async function desactivarEmpleado(id, detallesDesactivacion, adminId = null) {
+  const url = adminId 
+    ? `/Empleado/${id}/desactivar?adminId=${adminId}`
+    : `/Empleado/${id}/desactivar`;
+    
+  const { data } = await api.post(url, {
+    detallesDesactivacion
+  });
+  return data;
+}
+
+export async function activarEmpleado(id, adminId = null) {
+  const url = adminId 
+    ? `/Empleado/${id}/activate?adminId=${adminId}`
+    : `/Empleado/${id}/activate`;
+    
+  const { data } = await api.patch(url);
+  return data;
+}
+
 

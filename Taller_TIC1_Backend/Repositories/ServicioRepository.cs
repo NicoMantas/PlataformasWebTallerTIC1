@@ -203,6 +203,28 @@ namespace Taller_TIC1_Backend.Repositories
             return true;
         }
 
+        public async Task<bool> DesasignarEmpleadoAsync(int servicioId)
+        {
+            var servicio = await _context.Servicios.FindAsync(servicioId);
+            if (servicio == null) return false;
+            servicio.IdEmpleado = null;
+            servicio.FechaActualizacion = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<IEnumerable<Servicio>> GetByVehiculoAsync(int vehiculoId)
+        {
+            return await _context.Servicios
+                .Include(s => s.Cliente)
+                .Include(s => s.Vehiculo)
+                .Include(s => s.Empleado)
+                .Include(s => s.Estado)
+                .Where(s => s.IdVehiculo == vehiculoId)
+                .OrderByDescending(s => s.FechaCreacion)
+                .ToListAsync();
+        }
+
         // Métodos de debug
         public async Task<IEnumerable<EstadoServicio>> GetAllEstadosAsync()
         {

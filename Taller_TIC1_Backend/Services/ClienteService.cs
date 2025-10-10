@@ -37,14 +37,14 @@ namespace Taller_TIC1_Backend.Services
 
             try
             {
-                // Verificar que el vehículo existe
+                // Verificar que el vehï¿½culo existe
                 var vehiculo = await _context.Vehiculos.FindAsync(clienteCreateDto.IdVehiculo);
                 if (vehiculo == null)
                 {
-                    throw new Exception($"El vehículo con ID {clienteCreateDto.IdVehiculo} no existe");
+                    throw new Exception($"El vehï¿½culo con ID {clienteCreateDto.IdVehiculo} no existe");
                 }
 
-                // Obtener el próximo ID disponible
+                // Obtener el prï¿½ximo ID disponible
                 var nextId = await GetNextIdAsync();
 
                 // Crear el cliente base
@@ -54,13 +54,14 @@ namespace Taller_TIC1_Backend.Services
                     Nombre = clienteCreateDto.Nombre,
                     Email = clienteCreateDto.Email,
                     Telefono = clienteCreateDto.Telefono,
-                    IdVehiculo = clienteCreateDto.IdVehiculo
+                    IdVehiculo = clienteCreateDto.IdVehiculo,
+                    Activo = true // Por defecto, los clientes nuevos estÃ¡n activos
                 };
 
                 _context.Clientes.Add(cliente);
                 await _context.SaveChangesAsync();
 
-                // Crear subtipo según el tipo especificado
+                // Crear subtipo segï¿½n el tipo especificado
                 if (!string.IsNullOrEmpty(clienteCreateDto.Tipo))
                 {
                     switch (clienteCreateDto.Tipo.ToLower())
@@ -79,7 +80,7 @@ namespace Taller_TIC1_Backend.Services
                             break;
 
                         case "empresa":
-                            // Validar campos específicos para empresa
+                            // Validar campos especï¿½ficos para empresa
                             if (!clienteCreateDto.Nit.HasValue || clienteCreateDto.Nit.Value == 0)
                             {
                                 throw new Exception("El NIT es requerido y debe ser mayor a 0 para cliente empresa");
@@ -138,7 +139,25 @@ namespace Taller_TIC1_Backend.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
-            return await _clienteRepository.DeleteAsync(id);
+            // En lugar de eliminar fÃ­sicamente, marcar como inactivo
+            var cliente = await _context.Clientes.FindAsync(id);
+            if (cliente == null)
+                return false;
+
+            cliente.Activo = false;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ActivateAsync(int id)
+        {
+            var cliente = await _context.Clientes.FindAsync(id);
+            if (cliente == null)
+                return false;
+
+            cliente.Activo = true;
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<bool> ExistsAsync(int id)
@@ -155,13 +174,14 @@ namespace Taller_TIC1_Backend.Services
                 Email = cliente.Email,
                 Telefono = cliente.Telefono,
                 IdVehiculo = cliente.IdVehiculo,
+                Activo = cliente.Activo,
                 TipoCliente = cliente.TipoCliente,
                 VehiculoInfo = cliente.Vehiculo != null
                     ? $"{cliente.Vehiculo.Marca} {cliente.Vehiculo.Modelo} - {cliente.Vehiculo.Placa}"
                     : null
             };
 
-            // Agregar propiedades específicas según el tipo
+            // Agregar propiedades especï¿½ficas segï¿½n el tipo
             if (cliente.CNatural != null)
             {
                 response.Cedula = cliente.CNatural.Cedula;

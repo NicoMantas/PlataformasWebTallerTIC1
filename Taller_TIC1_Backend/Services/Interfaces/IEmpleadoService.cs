@@ -9,6 +9,8 @@ namespace Taller_TIC1_Backend.Services.Interfaces
         Task<EmpleadoResponseDto> CreateAsync(EmpleadoCreateDto empleadoCreateDto);
         Task<EmpleadoResponseDto?> UpdateAsync(int id, EmpleadoUpdateDto empleadoUpdateDto);
         Task<bool> DeleteAsync(int id);
+        Task<bool> DesactivarConDetallesAsync(int id, string detallesDesactivacion);
+        Task<bool> ActivateAsync(int id);
         Task<bool> ExistsAsync(int id);
         Task<EmpleadoResponseDto?> GetByCedulaAsync(long cedula);
     }

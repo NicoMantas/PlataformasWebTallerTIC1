@@ -10,6 +10,7 @@ namespace Taller_TIC1_Backend.Services.Interfaces
         Task<ClienteResponseDto> CreateAsync(ClienteCreateDto clienteCreateDto);
         Task<ClienteResponseDto?> UpdateAsync(int id, ClienteUpdateDto clienteUpdateDto);
         Task<bool> DeleteAsync(int id);
+        Task<bool> ActivateAsync(int id);
         Task<bool> ExistsAsync(int id);
     }
 }

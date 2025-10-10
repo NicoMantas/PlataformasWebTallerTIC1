@@ -1,0 +1,275 @@
+/* Estilos para el modal de historial de vehículo */
+.historial-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.historial-modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.historial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px 16px 0 0;
+}
+
+.historial-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.historial-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.historial-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.historial-vehiculo-info {
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.historial-vehiculo-info h4 {
+  margin: 0 0 0.5rem 0;
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.historial-vehiculo-info p {
+  margin: 0.25rem 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.historial-loading {
+  padding: 3rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 1.125rem;
+}
+
+.historial-error {
+  padding: 1.5rem;
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 8px;
+  margin: 1.5rem;
+  border: 1px solid #fecaca;
+}
+
+.historial-empty {
+  padding: 3rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.historial-empty p {
+  font-size: 1.125rem;
+  margin: 0;
+}
+
+.historial-list {
+  padding: 1.5rem;
+}
+
+.historial-item {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.historial-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.historial-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.historial-item-title {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1rem;
+}
+
+.historial-estado {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.estado-completado {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.estado-cancelado {
+  background: #fecaca;
+  color: #dc2626;
+}
+
+.estado-proceso {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.estado-pendiente {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.estado-default {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.historial-item-details {
+  padding: 1.5rem;
+}
+
+.historial-detail-row {
+  display: flex;
+  margin-bottom: 0.75rem;
+  align-items: flex-start;
+}
+
+.historial-detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.historial-detail-label {
+  font-weight: 600;
+  color: #374151;
+  min-width: 100px;
+  margin-right: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.historial-detail-value {
+  color: #6b7280;
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.historial-repuestos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.historial-repuesto {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .historial-modal-content {
+    margin: 1rem;
+    max-height: 95vh;
+  }
+  
+  .historial-header {
+    padding: 1rem;
+  }
+  
+  .historial-header h3 {
+    font-size: 1.25rem;
+  }
+  
+  .historial-vehiculo-info {
+    padding: 1rem;
+  }
+  
+  .historial-list {
+    padding: 1rem;
+  }
+  
+  .historial-item-header {
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .historial-item-details {
+    padding: 1rem;
+  }
+  
+  .historial-detail-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .historial-detail-label {
+    min-width: auto;
+    margin-right: 0;
+  }
+}

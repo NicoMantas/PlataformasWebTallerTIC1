@@ -42,7 +42,7 @@ namespace Taller_TIC1_Backend.Controllers
             {
                 // Intentar crear el cliente
                 var cliente = await _clienteService.CreateAsync(clienteCreateDto); // Crear el cliente
-                return CreatedAtAction(nameof(GetById), new { id = cliente.Id }, cliente); // Retornar 201 Created con la ubicación del nuevo recurso
+                return CreatedAtAction(nameof(GetById), new { id = cliente.Id }, cliente); // Retornar 201 Created con la ubicaciï¿½n del nuevo recurso
             }
             catch (Exception ex)
             {
@@ -70,7 +70,17 @@ namespace Taller_TIC1_Backend.Controllers
             if (!deleted)
                 return NotFound($"Cliente con ID {id} no encontrado");
 
-            return NoContent();
+            return Ok(new { message = "Cliente desactivado exitosamente" });
+        }
+
+        [HttpPatch("{id}/activate")]
+        public async Task<ActionResult> Activate(int id)
+        {
+            var activated = await _clienteService.ActivateAsync(id);
+            if (!activated)
+                return NotFound($"Cliente con ID {id} no encontrado");
+
+            return Ok(new { message = "Cliente activado exitosamente" });
         }
     }
 }
