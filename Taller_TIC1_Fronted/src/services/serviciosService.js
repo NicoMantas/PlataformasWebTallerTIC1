@@ -6,9 +6,15 @@ export async function listServicios() {
   return data;
 }
 
-export async function createServicio({ tipoServicio, idCliente, idVehiculo, detallesRevision, repuestosReparacion }) {
+export async function createServicio({ tipoServicio, idCliente, idVehiculo, detallesRevision, repuestosReparacion, costo }) {
+  // Si se proporciona un costo específico, usarlo; de lo contrario, usar costos base por defecto
+  const costosBase = {
+    'revision': 80000,  // $80,000 para revisión (por defecto)
+    'reparacion': 120000 // $120,000 para reparación (por defecto)
+  };
+  
   const payload = {
-    costo: 0,
+    costo: costo || costosBase[tipoServicio] || 0,
     idCliente,
     idVehiculo,
     idEmpleado: null,
@@ -58,6 +64,16 @@ export async function secretariaListPendientes() {
 
 export async function secretariaListAsignados() {
   const { data } = await api.get('/Servicios/secretaria/asignados');
+  return data;
+}
+
+export async function secretariaListCompletados() {
+  const { data } = await api.get('/Servicios/secretaria/completados');
+  return data;
+}
+
+export async function getCostoTotalServicio(servicioId) {
+  const { data } = await api.get(`/Servicios/${servicioId}/costo-total`);
   return data;
 }
 

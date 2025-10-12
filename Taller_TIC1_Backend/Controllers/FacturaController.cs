@@ -68,5 +68,13 @@ namespace Taller_TIC1_Backend.Controllers
             if (factura == null) return NotFound();
             return Ok(factura);
         }
+
+        [HttpGet("servicio/{servicioId}")]
+        public async Task<ActionResult<FacturaDTO>> GetFacturaByServicio(int servicioId)
+        {
+            var factura = await _facturaService.GetFacturaByServicioIdAsync(servicioId);
+            if (factura == null) return NotFound();
+            return Ok(factura);
+        }
     }
 }

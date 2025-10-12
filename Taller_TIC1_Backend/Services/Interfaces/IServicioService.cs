@@ -15,12 +15,14 @@ namespace Taller_TIC1_Backend.Services.Interfaces
         Task<bool> CancelarServicioAsync(int id);
         Task<IEnumerable<ServicioDTO>> SecretariaListPendientesAsync();
         Task<IEnumerable<ServicioDTO>> SecretariaListAsignadosAsync();
+        Task<IEnumerable<ServicioDTO>> SecretariaListCompletadosAsync();
         Task<bool> SecretariaAsignarMecanicoAsync(int servicioId, int empleadoId);
         Task<IEnumerable<ServicioDTO>> GetServiciosByMecanicoAsync(int empleadoId);
         Task<IEnumerable<ServicioDTO>> GetServiciosCompletadosByMecanicoAsync(int empleadoId);
         Task<bool> UpdateServicioEstadoAsync(int servicioId, int estadoId);
         Task<bool> DesasignarEmpleadoAsync(int servicioId);
         Task<IEnumerable<ServicioDTO>> GetHistorialByVehiculoAsync(int vehiculoId);
+        Task<decimal> CalcularCostoTotalReparacionAsync(int servicioId, decimal costoBase);
         
     }
 }

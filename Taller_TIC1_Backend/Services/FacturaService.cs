@@ -12,8 +12,7 @@ namespace Taller_TIC1_Backend.Services
     {
         private readonly IFacturaRepository _facturaRepository;
         private readonly IOrdenTrabajoRepository _ordenTrabajoRepository;
-        //private readonly IOrdenTrabajoRepository _ordenRepository; // Inyectar el repositorio de Orden para traer servicios de la orden
-        private readonly IServicioRepository _servicioRepository; // Inyectar el repositorio de Servicio Para inspeccionar detalles (revisi�n/reparaci�n)
+        private readonly IServicioRepository _servicioRepository;
         private readonly IMapper _mapper;
 
         public FacturaService(IFacturaRepository facturaRepository, IOrdenTrabajoRepository ordenTrabajoRepository, IServicioRepository servicioRepository, IMapper mapper)
@@ -48,8 +47,7 @@ namespace Taller_TIC1_Backend.Services
 
         public async Task<FacturaDTO> CreateFacturaAsync(FacturaCreateDTO facturaDto)
         {
-            // Reemplaza la línea problemática en CreateFacturaAsync:
-            var factura = _mapper.Map<Taller_TIC1_Backend.Models.Factura>(facturaDto); //esta linea por corregir 
+            var factura = _mapper.Map<Taller_TIC1_Backend.Models.Factura>(facturaDto);
             var facturaCreada = await _facturaRepository.CreateAsync(factura);
 
             var dto = _mapper.Map<FacturaDTO>(facturaCreada);
@@ -67,8 +65,6 @@ namespace Taller_TIC1_Backend.Services
 
                 _mapper.Map(facturaDto, facturaExistente);
                 var facturaActualizada = await _facturaRepository.UpdateAsync(facturaExistente);
-                return _mapper.Map<FacturaDTO>(facturaActualizada);
-
                 var dto = _mapper.Map<FacturaDTO>(facturaActualizada);
                 await EnrichFacturaDtoAsync(dto); 
                 return dto;
@@ -92,48 +88,76 @@ namespace Taller_TIC1_Backend.Services
             await EnrichFacturaDtoAsync(dto);
             return dto;
         }
-        //metodo para enriquecer la fatura: Trae servicios, infiere "servicio realizado" y rellena cliente/placa
+
+        public async Task<FacturaDTO?> GetFacturaByServicioIdAsync(int servicioId)
+        {
+            // First get the order associated with this service
+            var orden = await _servicioRepository.GetOrdenByServicioIdAsync(servicioId);
+            if (orden == null) return null;
+            
+            // Then get the invoice for that order
+            var factura = await _facturaRepository.GetByOrdenIdAsync(orden.Id);
+            if (factura == null) return null;
+            
+            var dto = _mapper.Map<FacturaDTO>(factura);
+            await EnrichFacturaDtoAsync(dto);
+            return dto;
+        }
+
+        //metodo para enriquecer la factura: Trae servicios, infiere "servicio realizado", rellena cliente/placa y calcula costo real
         private async Task EnrichFacturaDtoAsync(FacturaDTO dto) { 
 
-                var servicio = (await _ordenTrabajoRepository.GetServiciosByOrdenIdAsync(dto.IdOrdenTrabajo)).ToList();
-    var primero = servicio.FirstOrDefault();
+            var servicios = (await _ordenTrabajoRepository.GetServiciosByOrdenIdAsync(dto.IdOrdenTrabajo)).ToList();
+            var primero = servicios.FirstOrDefault();
 
-    if (primero != null) {
-        dto.ClienteNombre = primero.Cliente?.Nombre ?? "Sin cliente";
-        dto.VehiculoPlaca = primero.Cliente?.Vehiculo?.Placa ?? "Sin placa";
-    }
+            if (primero != null) {
+                dto.ClienteNombre = primero.Cliente?.Nombre ?? "Sin cliente";
+                dto.VehiculoPlaca = primero.Cliente?.Vehiculo?.Placa ?? "Sin placa";
+            }
+
             var descripciones = new List<string>();
-            foreach (var s in servicio)
+            decimal subtotalReal = 0;
+
+            foreach (var servicio in servicios)
             {
-                // �Es revisi�n?
-                var rev = await _servicioRepository.GetDetalleRevisionByServicioIdAsync(s.Id);
+                // ¿Es revisión? - Costo fijo
+                var rev = await _servicioRepository.GetDetalleRevisionByServicioIdAsync(servicio.Id);
                 if (rev != null)
                 {
-                    // Incluir detalles textuales de la revisi�n
-                    descripciones.Add($"Revision: {rev.Detalles}");
+                    var descripcionRevision = $"Revisión: {rev.Detalles}";
+                    if (!string.IsNullOrEmpty(rev.DetallesEncontrados))
+                    {
+                        descripcionRevision += $" | Hallazgos: {rev.DetallesEncontrados}";
+                    }
+                    descripciones.Add(descripcionRevision);
+                    subtotalReal += servicio.Costo; // Costo fijo para revisiones
                     continue;
                 }
 
-                // �Es reparaci�n?
-                var rep = await _servicioRepository.GetDetalleReparacionByServicioIdAsync(s.Id);
+                // ¿Es reparación? - Costo base + repuestos
+                var rep = await _servicioRepository.GetDetalleReparacionByServicioIdAsync(servicio.Id);
                 if (rep != null)
                 {
                     var repuestos = await _servicioRepository.GetRepuestosByDetalleReparacionAsync(rep.IdDetalleReparacionRepuesto);
-                    var count = repuestos.Count();
-                    descripciones.Add($"Reparacion: {count} repuesto(s)");
+                    var costoRepuestos = repuestos.Sum(r => r.Cantidad * r.Repuesto.Precio);
+                    var costoTotal = servicio.Costo + costoRepuestos; // Costo base + repuestos
+                    
+                    descripciones.Add($"Reparación: {repuestos.Count()} repuesto(s) - Total: ${costoTotal:N0}");
+                    subtotalReal += costoTotal;
                     continue;
                 }
 
-                // Si no hay detalle, dejar gen�rico
+                // Si no hay detalle, usar costo base
                 descripciones.Add("Servicio");
+                subtotalReal += servicio.Costo;
             }
 
             dto.ServiciosRealizados = descripciones;
+            
+            // Actualizar los valores de la factura con el costo real
+            dto.Subtotal = subtotalReal;
+            dto.Impuestos = subtotalReal * 0.19m; // 19% IVA
+            dto.Total = subtotalReal + dto.Impuestos;
         }
-
-
-
-
     }
 }
-

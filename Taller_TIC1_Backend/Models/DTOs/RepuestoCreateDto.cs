@@ -10,7 +10,7 @@ namespace Taller_TIC1_Backend.Models.DTOs
         public long? NumeroSerie { get; set; }
 
         [Required]
-        public float Precio { get; set; }
+        public decimal Precio { get; set; }
 
         [Required]
         public int Stock { get; set; }

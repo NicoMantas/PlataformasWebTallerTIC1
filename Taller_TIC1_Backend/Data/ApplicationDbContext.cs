@@ -271,6 +271,7 @@ namespace Taller_TIC1_Backend.Data
                 e.HasKey(x => x.IdServicio);
                 e.Property(x => x.IdServicio).HasColumnName("idServicio");
                 e.Property(x => x.Detalles).HasColumnName("detalles").HasMaxLength(255);
+                e.Property(x => x.DetallesEncontrados).HasColumnName("detallesEncontrados").HasColumnType("text");
 
                 e.HasOne<Servicio>()
                  .WithOne()

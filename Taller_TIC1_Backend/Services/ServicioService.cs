@@ -217,6 +217,7 @@ namespace Taller_TIC1_Backend.Services
                 {
                     dto.TipoServicio = "Revision";
                     dto.DetallesRevision = detalleRevision.Detalles;
+                    dto.DetallesEncontrados = detalleRevision.DetallesEncontrados;
                 }
                 else
                 {
@@ -253,6 +254,26 @@ namespace Taller_TIC1_Backend.Services
             if (enProcesoId.HasValue) ids.Add(enProcesoId.Value);
             var servicios = await _servicioRepository.GetActivosAsignadosAsync(ids);
             return await MapDetallesServicios(servicios);
+        }
+
+        public async Task<IEnumerable<ServicioDTO>> SecretariaListCompletadosAsync()
+        {
+            var completadoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Completado");
+            var ids = new List<int>();
+            if (completadoId.HasValue) ids.Add(completadoId.Value);
+            var servicios = await _servicioRepository.GetServiciosByEstadosAsync(ids);
+            var serviciosDto = await MapDetallesServicios(servicios);
+
+            // Calcular costo total para reparaciones (costo base + repuestos)
+            foreach (var servicioDto in serviciosDto)
+            {
+                if (servicioDto.TipoServicio == "Reparacion")
+                {
+                    servicioDto.Costo = await CalcularCostoTotalReparacionAsync(servicioDto.Id, servicioDto.Costo);
+                }
+            }
+
+            return serviciosDto;
         }
 
         public async Task<bool> SecretariaAsignarMecanicoAsync(int servicioId, int empleadoId)
@@ -296,6 +317,17 @@ namespace Taller_TIC1_Backend.Services
         {
             var servicios = await _servicioRepository.GetByVehiculoAsync(vehiculoId);
             return await MapDetallesServicios(servicios);
+        }
+
+        public async Task<decimal> CalcularCostoTotalReparacionAsync(int servicioId, decimal costoBase)
+        {
+            var detalleReparacion = await _servicioRepository.GetDetalleReparacionByServicioIdAsync(servicioId);
+            if (detalleReparacion == null) return costoBase;
+
+            var repuestos = await _servicioRepository.GetRepuestosByDetalleReparacionAsync(detalleReparacion.IdDetalleReparacionRepuesto);
+            var costoRepuestos = repuestos.Sum(r => r.Cantidad * r.Repuesto.Precio);
+
+            return costoBase + costoRepuestos;
         }
     }
 }

@@ -193,6 +193,18 @@ namespace Taller_TIC1_Backend.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Servicio>> GetServiciosByEstadosAsync(IEnumerable<int> estadosIds)
+        {
+            var estados = estadosIds.ToList();
+            return await _context.Servicios
+                .Include(s => s.Cliente)
+                    .ThenInclude(c => c.Vehiculo)
+                .Include(s => s.Empleado)
+                .Include(s => s.Estado)
+                .Where(s => estados.Contains(s.IdEstado))
+                .ToListAsync();
+        }
+
         public async Task<bool> UpdateServicioEstadoAsync(int servicioId, int estadoId)
         {
             var servicio = await _context.Servicios.FindAsync(servicioId);
@@ -239,6 +251,15 @@ namespace Taller_TIC1_Backend.Repositories
                 .Include(s => s.Estado)
                 .Where(s => s.IdEmpleado == empleadoId)
                 .ToListAsync();
+        }
+
+        public async Task<OrdenDeTrabajo?> GetOrdenByServicioIdAsync(int servicioId)
+        {
+            var detalle = await _context.DetallesServicioOrden
+                .Include(dso => dso.OrdenTrabajo)
+                .FirstOrDefaultAsync(dso => dso.IdServicio == servicioId);
+            
+            return detalle?.OrdenTrabajo;
         }
     }
 

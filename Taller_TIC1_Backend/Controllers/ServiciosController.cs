@@ -110,6 +110,14 @@ namespace Taller_TIC1_Backend.Controllers
             return Ok(items);
         }
 
+        // Secretaría: listar completados
+        [HttpGet("secretaria/completados")]
+        public async Task<ActionResult<IEnumerable<ServicioDTO>>> SecretariaCompletados()
+        {
+            var items = await _servicioService.SecretariaListCompletadosAsync();
+            return Ok(items);
+        }
+
         // Secretaría: asignar mecánico
         [HttpPost("secretaria/{servicioId}/asignar/{empleadoId}")]
         public async Task<IActionResult> SecretariaAsignar(int servicioId, int empleadoId)
@@ -159,6 +167,33 @@ namespace Taller_TIC1_Backend.Controllers
             var ok = await _servicioService.DesasignarEmpleadoAsync(servicioId);
             if (!ok) return NotFound();
             return Ok();
+        }
+
+        [HttpGet("{id}/costo-total")]
+        public async Task<ActionResult<object>> GetCostoTotal(int id)
+        {
+            var servicio = await _servicioService.GetServicioByIdAsync(id);
+            if (servicio == null) return NotFound();
+
+            decimal costoTotal = servicio.Costo;
+            string tipoCosto = "fijo";
+
+            if (servicio.TipoServicio == "Reparacion")
+            {
+                // Calcular costo total para reparaciones (costo base + repuestos)
+                costoTotal = await _servicioService.CalcularCostoTotalReparacionAsync(id, servicio.Costo);
+                tipoCosto = "variable";
+            }
+
+            return Ok(new
+            {
+                servicioId = id,
+                tipoServicio = servicio.TipoServicio,
+                costoBase = servicio.Costo,
+                costoTotal = costoTotal,
+                tipoCosto = tipoCosto,
+                costoRepuestos = costoTotal - servicio.Costo
+            });
         }
     }
 }

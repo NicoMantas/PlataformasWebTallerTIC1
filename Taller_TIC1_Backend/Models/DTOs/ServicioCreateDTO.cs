@@ -2,7 +2,7 @@
 {
     public class ServicioCreateDTO
     {
-        public float Costo { get; set; }
+        public decimal Costo { get; set; }
         public int IdCliente { get; set; }
         public int IdVehiculo { get; set; }
         public int? IdEmpleado { get; set; }

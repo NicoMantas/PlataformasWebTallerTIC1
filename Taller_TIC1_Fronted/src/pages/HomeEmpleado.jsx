@@ -5,8 +5,8 @@ import EmpleadosManager from '../components/EmpleadosManager';
 import '../styles/HomeEmpleado.css';
 import '../styles/EmpleadoForm.css';
 import { listOrdenes, updateOrden } from '../services/ordenesService';
-import { listServicios, secretariaListPendientes, secretariaListAsignados, secretariaAsignarMecanico, getServicioById, updateServicioEstado, desasignarEmpleado, mecanicoListAsignados, mecanicoListCompletados } from '../services/serviciosService';
-import { listFacturas } from '../services/facturasService';
+import { listServicios, secretariaListPendientes, secretariaListAsignados, secretariaListCompletados, secretariaAsignarMecanico, getServicioById, updateServicioEstado, desasignarEmpleado, mecanicoListAsignados, mecanicoListCompletados } from '../services/serviciosService';
+import { listFacturas, getFacturaByServicio, descargarFacturaPdf } from '../services/facturasService';
 import { getCurrentUser, registerEmpleado } from '../services/authService';
 import { createEmpleado, listEmpleados } from '../services/empleadosService';
 import { listRepuestos } from '../services/repuestosService';
@@ -24,6 +24,7 @@ const HomeEmpleado = () => {
   const [empleados, setEmpleados] = useState([]);
   const [secPendientes, setSecPendientes] = useState([]);
   const [secAsignados, setSecAsignados] = useState([]);
+  const [secCompletados, setSecCompletados] = useState([]);
   const [secTab, setSecTab] = useState('pendientes');
   const [creating, setCreating] = useState(false);
   const [empleadoForm, setEmpleadoForm] = useState({
@@ -66,6 +67,106 @@ const HomeEmpleado = () => {
     loadData();
   }, []);
 
+  const handleDescargarFactura = async (servicioId) => {
+    try {
+      console.log('Descargando factura para servicio:', servicioId); // Debug
+      const factura = await getFacturaByServicio(servicioId);
+      console.log('Factura obtenida:', factura); // Debug
+      
+      if (factura) {
+        console.log('Generando PDF...'); // Debug
+        const blob = await descargarFacturaPdf(factura);
+        console.log('PDF generado:', blob); // Debug
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `factura_servicio_${servicioId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        console.log('Descarga completada'); // Debug
+      } else {
+        console.log('No se encontró factura'); // Debug
+        alert('No se encontró factura para este servicio');
+      }
+    } catch (error) {
+      console.error('Error al descargar factura:', error);
+      console.error('Detalles del error:', error.message, error.stack); // Debug
+      
+      if (error.status === 404) {
+        // Si no hay factura, crear una temporal basada en el servicio
+        console.log('Creando factura temporal para servicio:', servicioId);
+        const servicioCompletado = secCompletados.find(s => s.id === servicioId);
+        
+        if (servicioCompletado) {
+          // Obtener costo total real del servicio
+          let costoTotal = servicioCompletado.costo || 0;
+          
+          // Si es reparación, calcular costo total (base + repuestos)
+          if (servicioCompletado.tipoServicio === 'Reparacion' && servicioCompletado.repuestosReparacion) {
+            const costoRepuestos = servicioCompletado.repuestosReparacion.reduce((total, rep) => 
+              total + (rep.cantidad * rep.precioUnitario), 0);
+            costoTotal += costoRepuestos;
+          }
+          
+          // Calcular IVA (19%)
+          const iva = costoTotal * 0.19;
+          const totalConIva = costoTotal + iva;
+          
+          // Construir servicios realizados con más detalles
+          const serviciosRealizados = [];
+          
+          if (servicioCompletado.tipoServicio === 'Revision') {
+            serviciosRealizados.push('Revisión técnica');
+            if (servicioCompletado.detallesRevision) {
+              serviciosRealizados.push(`Detalles: ${servicioCompletado.detallesRevision}`);
+            }
+            if (servicioCompletado.detallesEncontrados) {
+              serviciosRealizados.push(`Hallazgos: ${servicioCompletado.detallesEncontrados}`);
+            }
+          } else if (servicioCompletado.tipoServicio === 'Reparacion') {
+            serviciosRealizados.push('Reparación');
+            if (servicioCompletado.repuestosReparacion && servicioCompletado.repuestosReparacion.length > 0) {
+              serviciosRealizados.push(`Repuestos utilizados: ${servicioCompletado.repuestosReparacion.length}`);
+              servicioCompletado.repuestosReparacion.forEach(rep => {
+                serviciosRealizados.push(`- ${rep.nombre} (${rep.cantidad}x $${rep.precioUnitario})`);
+              });
+            }
+          }
+          
+          const facturaTemporal = {
+            id: servicioId,
+            clienteNombre: servicioCompletado.clienteNombre || 'Cliente',
+            vehiculoPlaca: servicioCompletado.vehiculoInfo || 'N/D',
+            subtotal: costoTotal,
+            impuestos: iva,
+            total: totalConIva,
+            serviciosRealizados: serviciosRealizados
+          };
+          
+          console.log('Generando PDF con factura temporal:', facturaTemporal);
+          const blob = await descargarFacturaPdf(facturaTemporal);
+          
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `factura_temporal_servicio_${servicioId}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          console.log('Descarga de factura temporal completada');
+        } else {
+          alert('No se pudo generar la factura temporal. Servicio no encontrado.');
+        }
+      } else {
+        alert(`Error al descargar la factura: ${error.message}`);
+      }
+    }
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -81,12 +182,14 @@ const HomeEmpleado = () => {
       setEmpleados(empleadosData || []);
       // cargar datos específicos según el tipo de empleado
       if (tipo === 'secretaria') {
-        const [p, a] = await Promise.all([
+        const [p, a, c] = await Promise.all([
           secretariaListPendientes().catch(() => []),
-          secretariaListAsignados().catch(() => [])
+          secretariaListAsignados().catch(() => []),
+          secretariaListCompletados().catch(() => [])
         ]);
         setSecPendientes(p || []);
         setSecAsignados(a || []);
+        setSecCompletados(c || []);
       } else if (tipo === 'mecanico') {
         // Debug: mostrar información del usuario
         console.log('Usuario mecánico:', user);
@@ -249,9 +352,15 @@ const HomeEmpleado = () => {
     setSelectedServicio(servicio);
     try {
       const detalle = await getDetalleRevision(servicio.id);
-      setRevisionForm({ detalles: detalle?.detalles || '' });
+      setRevisionForm({ 
+        detalles: detalle?.detalles || '',
+        detallesEncontrados: detalle?.detallesEncontrados || ''
+      });
     } catch (err) {
-      setRevisionForm({ detalles: '' });
+      setRevisionForm({ 
+        detalles: '',
+        detallesEncontrados: ''
+      });
     }
     setShowRevisionModal(true);
   };
@@ -276,12 +385,14 @@ const HomeEmpleado = () => {
       if (selectedServicio.detallesRevision) {
         await updateDetalleRevision(selectedServicio.id, {
           idServicio: selectedServicio.id,
-          detalles: revisionForm.detalles
+          detalles: revisionForm.detalles,
+          detallesEncontrados: revisionForm.detallesEncontrados
         });
       } else {
         await createDetalleRevision({
           idServicio: selectedServicio.id,
-          detalles: revisionForm.detalles
+          detalles: revisionForm.detalles,
+          detallesEncontrados: revisionForm.detallesEncontrados
         });
       }
       alert('Detalles de revisión guardados');
@@ -366,6 +477,7 @@ const HomeEmpleado = () => {
           features: [
             { title: 'Trabajos Pendientes', count: secPendientes.length },
             { title: 'Trabajos Asignados', count: secAsignados.length },
+            { title: 'Trabajos Completados', count: secCompletados.length },
             { title: 'Servicios Activos', count: (secPendientes.length + secAsignados.length) }
           ],
           content: (
@@ -373,6 +485,7 @@ const HomeEmpleado = () => {
               <div className="dashboard-tabs" style={{ marginBottom: '1rem' }}>
                 <button className={`tab-button ${secTab==='pendientes'?'active':''}`} onClick={()=>setSecTab('pendientes')}>Trabajos Pendientes</button>
                 <button className={`tab-button ${secTab==='asignados'?'active':''}`} onClick={()=>setSecTab('asignados')}>Trabajos Asignados</button>
+                <button className={`tab-button ${secTab==='completados'?'active':''}`} onClick={()=>setSecTab('completados')}>Trabajos Completados</button>
               </div>
               {loading ? <p>Cargando...</p> : (
                 secTab === 'pendientes' ? (
@@ -396,7 +509,7 @@ const HomeEmpleado = () => {
                       </div>
                     ))}
                   </div>
-                ) : (
+                ) : secTab === 'asignados' ? (
                   <div className="ordenes-list">
                     {secAsignados.map(s => (
                       <div key={s.id} className="orden-card">
@@ -409,7 +522,25 @@ const HomeEmpleado = () => {
                       </div>
                     ))}
                   </div>
-                )
+                ) : secTab === 'completados' ? (
+                  <div className="ordenes-list">
+                    {secCompletados.map(s => (
+                      <div key={s.id} className="orden-card">
+                        <div className="orden-info">
+                          <h4>Servicio #{s.id} · {(s.tipoServicio==='Revision'?'Revisión':s.tipoServicio==='Reparacion'?'Reparación':(s.detallesRevision?'Revisión':'Reparación'))}</h4>
+                          <p>Cliente: {s.clienteNombre || 'N/D'}</p>
+                          <p>Estado: {s.estadoDescripcion}</p>
+                          <p>Mecánico: {s.empleadoNombre || 'Completado'}</p>
+                        </div>
+                        <div className="orden-actions">
+                          <button className="btn-primary" onClick={() => handleDescargarFactura(s.id)}>
+                            📄 Descargar Factura
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null
               )}
             </div>
           )
@@ -830,11 +961,20 @@ const HomeEmpleado = () => {
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label>Detalles de la Revisión:</label>
+                <label>Descripción del Servicio:</label>
                 <textarea 
-                  rows="6"
+                  rows="4"
                   value={revisionForm.detalles}
                   onChange={(e) => setRevisionForm({...revisionForm, detalles: e.target.value})}
+                  placeholder="Describe el tipo de revisión a realizar..."
+                />
+              </div>
+              <div className="form-group">
+                <label>Detalles Encontrados (Completar después de la revisión):</label>
+                <textarea 
+                  rows="6"
+                  value={revisionForm.detallesEncontrados}
+                  onChange={(e) => setRevisionForm({...revisionForm, detallesEncontrados: e.target.value})}
                   placeholder="Describe los hallazgos de la revisión, problemas encontrados, recomendaciones, etc."
                 />
               </div>
@@ -846,7 +986,7 @@ const HomeEmpleado = () => {
               <button 
                 className="btn-primary" 
                 onClick={handleSaveRevision}
-                disabled={!revisionForm.detalles.trim()}
+                disabled={!revisionForm.detalles.trim() && !revisionForm.detallesEncontrados.trim()}
               >
                 Guardar Detalles
               </button>

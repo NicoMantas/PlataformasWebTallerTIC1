@@ -67,7 +67,8 @@ const HomeCliente = () => {
         tipoServicio: tipoServicio,
         idCliente: clienteId,
         idVehiculo: selectedVehiculo.id,
-        detallesRevision: esRevision ? `${servicio.nombre}: ${servicio.descripcion}` : undefined
+        detallesRevision: esRevision ? `${servicio.nombre}: ${servicio.descripcion}` : undefined,
+        costo: servicio.costo
       });
       
       const blob = await descargarReservaPdf(servicioData);
@@ -166,7 +167,7 @@ const HomeCliente = () => {
         'Verificación de correas y tensores',
         'Limpieza de sistemas de escape'
       ],
-      notas: 'Costo base sin incluir repuestos necesarios'
+      notas: 'Costo base sin incluir repuestos necesarios. Repuestos adicionales se cobrarán por separado.'
     },
     {
       id: 'reparacion-frenos',
@@ -182,7 +183,7 @@ const HomeCliente = () => {
         'Verificación de sistema ABS',
         'Prueba de funcionamiento'
       ],
-      notas: 'Incluye mano de obra, repuestos por separado'
+      notas: 'Incluye mano de obra. Repuestos adicionales se cobrarán por separado.'
     },
     {
       id: 'reparacion-suspension',
@@ -198,7 +199,7 @@ const HomeCliente = () => {
         'Verificación de geometría',
         'Alineación básica incluida'
       ],
-      notas: 'Incluye alineación si no requiere repuestos mayores'
+      notas: 'Incluye alineación si no requiere repuestos mayores. Repuestos adicionales se cobrarán por separado.'
     },
     {
       id: 'reparacion-electrica',
@@ -214,7 +215,7 @@ const HomeCliente = () => {
         'Verificación de fusibles y relés',
         'Prueba de sistemas computarizados'
       ],
-      notas: 'Diagnóstico completo incluido'
+      notas: 'Diagnóstico completo incluido. Repuestos adicionales se cobrarán por separado.'
     },
     {
       id: 'reparacion-climatizacion',
@@ -230,7 +231,7 @@ const HomeCliente = () => {
         'Verificación de controles y sensores',
         'Limpieza del sistema'
       ],
-      notas: 'Incluye recarga de gas estándar'
+      notas: 'Incluye recarga de gas estándar. Repuestos adicionales se cobrarán por separado.'
     }
   ];
 
