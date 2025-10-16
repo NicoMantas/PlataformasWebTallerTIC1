@@ -7,7 +7,8 @@ namespace Taller_TIC1_Backend.Models.DTOs
         [StringLength(255)]
         public string Nombre { get; set; } = string.Empty;
 
-        public long? NumeroSerie { get; set; }
+        [Required]
+        public long NumeroSerie { get; set; }
 
         [Required]
         public decimal Precio { get; set; }

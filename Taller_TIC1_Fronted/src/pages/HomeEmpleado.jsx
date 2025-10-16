@@ -4,6 +4,9 @@ import Header from '../components/Header';
 import EmpleadosManager from '../components/EmpleadosManager';
 import DashboardAdmin from '../components/DashboardAdmin';
 import BusquedaServicios from '../components/BusquedaServicios';
+import ProveedorManagement from './ProveedorManagement';
+import RepuestoManagement from './RepuestoManagement';
+import RepuestoProveedorManagement from './RepuestoProveedorManagement';
 import '../styles/HomeEmpleado.css';
 import '../styles/EmpleadoForm.css';
 import { listOrdenes, updateOrden } from '../services/ordenesService';
@@ -12,6 +15,7 @@ import { listFacturas, getFacturaByServicio, descargarFacturaPdf } from '../serv
 import { getCurrentUser, registerEmpleado } from '../services/authService';
 import { createEmpleado, listEmpleados } from '../services/empleadosService';
 import { listRepuestos } from '../services/repuestosService';
+import { listProveedores } from '../services/proveedoresService';
 import { getDetalleRevision, createDetalleRevision, updateDetalleRevision, getDetalleReparacion, getRepuestosByDetalleReparacion, addRepuestoToReparacion } from '../services/detallesService';
 
 const HomeEmpleado = () => {
@@ -31,6 +35,9 @@ const HomeEmpleado = () => {
   const [creating, setCreating] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [showBusqueda, setShowBusqueda] = useState(false);
+  const [showProveedores, setShowProveedores] = useState(false);
+  const [showRepuestos, setShowRepuestos] = useState(false);
+  const [showRepuestoProveedor, setShowRepuestoProveedor] = useState(false);
   const [empleadoForm, setEmpleadoForm] = useState({
     nombre: '',
     apellido: '',
@@ -535,6 +542,8 @@ const HomeEmpleado = () => {
                 <button className={`tab-button ${secTab==='pendientes'?'active':''}`} onClick={()=>setSecTab('pendientes')}>Trabajos Pendientes</button>
                 <button className={`tab-button ${secTab==='asignados'?'active':''}`} onClick={()=>setSecTab('asignados')}>Trabajos Asignados</button>
                 <button className={`tab-button ${secTab==='completados'?'active':''}`} onClick={()=>setSecTab('completados')}>Trabajos Completados</button>
+                <button className={`tab-button ${secTab==='proveedores'?'active':''}`} onClick={()=>setSecTab('proveedores')}>Proveedores</button>
+                <button className={`tab-button ${secTab==='repuestos'?'active':''}`} onClick={()=>setSecTab('repuestos')}>Repuestos</button>
               </div>
               {loading ? <p>Cargando...</p> : (
                 secTab === 'pendientes' ? (
@@ -589,6 +598,10 @@ const HomeEmpleado = () => {
                       </div>
                     ))}
                   </div>
+                ) : secTab === 'proveedores' ? (
+                  <ProveedorManagement />
+                ) : secTab === 'repuestos' ? (
+                  <RepuestoManagement />
                 ) : null
               )}
 
@@ -884,8 +897,29 @@ const HomeEmpleado = () => {
                 <button 
                   className="btn-secondary"
                   onClick={() => setShowBusqueda(true)}
+                  style={{ marginRight: '1rem' }}
                 >
                   🔍 Búsqueda de Servicios
+                </button>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setShowProveedores(true)}
+                  style={{ marginRight: '1rem' }}
+                >
+                  🏢 Gestión de Proveedores
+                </button>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setShowRepuestos(true)}
+                  style={{ marginRight: '1rem' }}
+                >
+                  🔧 Gestión de Repuestos
+                </button>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setShowRepuestoProveedor(true)}
+                >
+                  🔗 Relaciones Repuesto-Proveedor
                 </button>
               </div>
             </div>
@@ -1091,6 +1125,51 @@ const HomeEmpleado = () => {
         <BusquedaServicios
           onClose={() => setShowBusqueda(false)}
         />
+      )}
+
+      {/* Modal de Gestión de Proveedores */}
+      {showProveedores && (
+        <div className="modal-overlay">
+          <div className="modal-content proveedor-modal">
+            <div className="modal-header">
+              <h3>Gestión de Proveedores</h3>
+              <button className="modal-close" onClick={() => setShowProveedores(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <ProveedorManagement />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Gestión de Repuestos */}
+      {showRepuestos && (
+        <div className="modal-overlay">
+          <div className="modal-content repuesto-modal">
+            <div className="modal-header">
+              <h3>Gestión de Repuestos</h3>
+              <button className="modal-close" onClick={() => setShowRepuestos(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <RepuestoManagement />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Gestión de Relaciones Repuesto-Proveedor */}
+      {showRepuestoProveedor && (
+        <div className="modal-overlay">
+          <div className="modal-content repuesto-proveedor-modal">
+            <div className="modal-header">
+              <h3>Gestión de Relaciones Repuesto-Proveedor</h3>
+              <button className="modal-close" onClick={() => setShowRepuestoProveedor(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <RepuestoProveedorManagement />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

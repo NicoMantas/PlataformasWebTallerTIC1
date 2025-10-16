@@ -53,7 +53,7 @@ namespace Taller_TIC1_Backend.Services
             {
                 Id = nextId,
                 Nombre = dto.Nombre,
-                Numero_serie = dto.NumeroSerie ?? 0,
+                Numero_serie = dto.NumeroSerie,
                 Precio = dto.Precio,
                 Stock = dto.Stock
             };
@@ -67,7 +67,7 @@ namespace Taller_TIC1_Backend.Services
             {
                 Id = dto.Id,
                 Nombre = dto.Nombre,
-                Numero_serie = dto.NumeroSerie ?? 0,
+                Numero_serie = dto.NumeroSerie,
                 Precio = dto.Precio,
                 Stock = dto.Stock
             };

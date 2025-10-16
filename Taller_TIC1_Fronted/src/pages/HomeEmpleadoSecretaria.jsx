@@ -26,7 +26,8 @@ const HomeEmpleadoSecretaria = () => {
         <div className="cliente-dashboard">
           <div className="dashboard-tabs">
             <Link className={`tab-button ${isActive('/home/empleado/secretaria/servicios') ? 'active' : ''}`} to="/home/empleado/secretaria/servicios">Servicios</Link>
-            {/* Más pestañas futuras se agregan aquí */}
+            <Link className={`tab-button ${isActive('/home/empleado/secretaria/proveedores') ? 'active' : ''}`} to="/home/empleado/secretaria/proveedores">Proveedores</Link>
+            <Link className={`tab-button ${isActive('/home/empleado/secretaria/repuestos') ? 'active' : ''}`} to="/home/empleado/secretaria/repuestos">Repuestos</Link>
           </div>
         </div>
       </div>
