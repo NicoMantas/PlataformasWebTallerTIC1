@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import EmpleadosManager from '../components/EmpleadosManager';
+import DashboardAdmin from '../components/DashboardAdmin';
+import BusquedaServicios from '../components/BusquedaServicios';
 import '../styles/HomeEmpleado.css';
 import '../styles/EmpleadoForm.css';
 import { listOrdenes, updateOrden } from '../services/ordenesService';
-import { listServicios, secretariaListPendientes, secretariaListAsignados, secretariaListCompletados, secretariaAsignarMecanico, getServicioById, updateServicioEstado, desasignarEmpleado, mecanicoListAsignados, mecanicoListCompletados } from '../services/serviciosService';
+import { listServicios, secretariaListPendientes, secretariaListAsignados, secretariaListCompletados, secretariaAsignarMecanico, getServicioById, updateServicioEstado, desasignarEmpleado, mecanicoListAsignados, mecanicoListCompletados, debugMecanicoCompletados } from '../services/serviciosService';
 import { listFacturas, getFacturaByServicio, descargarFacturaPdf } from '../services/facturasService';
 import { getCurrentUser, registerEmpleado } from '../services/authService';
 import { createEmpleado, listEmpleados } from '../services/empleadosService';
@@ -27,6 +29,8 @@ const HomeEmpleado = () => {
   const [secCompletados, setSecCompletados] = useState([]);
   const [secTab, setSecTab] = useState('pendientes');
   const [creating, setCreating] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [showBusqueda, setShowBusqueda] = useState(false);
   const [empleadoForm, setEmpleadoForm] = useState({
     nombre: '',
     apellido: '',
@@ -64,8 +68,14 @@ const HomeEmpleado = () => {
     const currentUser = getCurrentUser();
     console.log('Usuario obtenido:', currentUser);
     setUser(currentUser);
-    loadData();
   }, []);
+
+  // Cargar datos cuando el usuario esté disponible
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
 
   const handleDescargarFactura = async (servicioId) => {
     try {
@@ -194,14 +204,20 @@ const HomeEmpleado = () => {
         // Debug: mostrar información del usuario
         console.log('Usuario mecánico:', user);
         console.log('ID empleado:', user?.id);
+        console.log('Tipo de usuario:', user?.tipo);
+        console.log('Info específica:', user?.infoEspecifica);
         
         if (user?.id) {
+          // Usar el ID del empleado correcto (3 para Gustavo)
+          const empleadoId = user.infoEspecifica?.id || user.id || 3; // Fallback a ID 3
+          console.log('Usando ID de empleado:', empleadoId);
+          
           const [asignados, completados, repuestosData] = await Promise.all([
-            mecanicoListAsignados(user.id).catch((err) => {
+            mecanicoListAsignados(empleadoId).catch((err) => {
               console.error('Error cargando servicios asignados:', err);
               return [];
             }),
-            mecanicoListCompletados(user.id).catch((err) => {
+            mecanicoListCompletados(empleadoId).catch((err) => {
               console.error('Error cargando servicios completados:', err);
               return [];
             }),
@@ -210,6 +226,19 @@ const HomeEmpleado = () => {
               return [];
             })
           ]);
+          
+          console.log('Servicios asignados recibidos:', asignados);
+          console.log('Servicios completados recibidos:', completados);
+          console.log('Cantidad de servicios completados:', completados?.length || 0);
+          
+          // Debug: probar endpoint de debug
+          try {
+            const debugData = await debugMecanicoCompletados(empleadoId);
+            console.log('Debug data:', debugData);
+            console.log('Debug - Cantidad completados:', debugData?.Completados?.length || 0);
+          } catch (err) {
+            console.error('Error en debug:', err);
+          }
           
           // Combinar todos los servicios y organizarlos por estado
           const todosServicios = [...(asignados || []), ...(completados || [])];
@@ -252,10 +281,17 @@ const HomeEmpleado = () => {
 
   // Función para organizar servicios por estados
   const organizarServiciosPorEstado = (servicios) => {
+    console.log('Organizando servicios por estado:', servicios);
+    
     const pendientes = servicios.filter(s => s.idEstado === 1 || s.estadoDescripcion?.toLowerCase() === 'pendiente');
     const enProceso = servicios.filter(s => s.idEstado === 2 || s.estadoDescripcion?.toLowerCase() === 'en proceso');
     const completados = servicios.filter(s => s.idEstado === 3 || s.estadoDescripcion?.toLowerCase() === 'completado');
     const cancelados = servicios.filter(s => s.idEstado === 4 || s.estadoDescripcion?.toLowerCase() === 'cancelado');
+    
+    console.log('Servicios pendientes:', pendientes);
+    console.log('Servicios en proceso:', enProceso);
+    console.log('Servicios completados:', completados);
+    console.log('Servicios cancelados:', cancelados);
     
     setServiciosPendientes(pendientes);
     setServiciosAsignados([]); // No existe estado "Asignado" en la BD
@@ -463,7 +499,20 @@ const HomeEmpleado = () => {
                 <div className="ordenes-list">
                   {secTab === 'pendientes' && renderizarServicios(serviciosPendientes)}
                   {secTab === 'en-proceso' && renderizarServicios(serviciosEnProceso)}
-                  {secTab === 'completados' && renderizarServicios(serviciosCompletados, true)}
+                  {secTab === 'completados' && (
+                    <>
+                      {console.log('Renderizando completados, cantidad:', serviciosCompletados.length, 'servicios:', serviciosCompletados)}
+                      {serviciosCompletados.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                          <p>No hay servicios completados</p>
+                          <p><small>Los servicios completados aparecerán aquí</small></p>
+                          <p><small>Debug: serviciosCompletados.length = {serviciosCompletados.length}</small></p>
+                        </div>
+                      ) : (
+                        renderizarServicios(serviciosCompletados, true)
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -542,6 +591,16 @@ const HomeEmpleado = () => {
                   </div>
                 ) : null
               )}
+
+              {/* Búsqueda de servicios para secretaria */}
+              <div className="secretaria-actions" style={{ marginTop: '2rem' }}>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setShowBusqueda(true)}
+                >
+                  🔍 Búsqueda de Servicios
+                </button>
+              </div>
             </div>
           )
         };
@@ -812,6 +871,23 @@ const HomeEmpleado = () => {
               <div style={{ marginTop: '2rem' }}>
                 <EmpleadosManager />
               </div>
+
+              {/* Nuevas funcionalidades del admin */}
+              <div className="admin-actions" style={{ marginTop: '2rem' }}>
+                <button 
+                  className="btn-primary"
+                  onClick={() => setShowDashboard(true)}
+                  style={{ marginRight: '1rem' }}
+                >
+                  📊 Dashboard Avanzado
+                </button>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setShowBusqueda(true)}
+                >
+                  🔍 Búsqueda de Servicios
+                </button>
+              </div>
             </div>
           )
         };
@@ -993,6 +1069,28 @@ const HomeEmpleado = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal del Dashboard Admin */}
+      {showDashboard && (
+        <div className="modal-overlay">
+          <div className="modal-content dashboard-modal">
+            <div className="modal-header">
+              <h3>Dashboard Administrativo</h3>
+              <button className="modal-close" onClick={() => setShowDashboard(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <DashboardAdmin />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Búsqueda de Servicios */}
+      {showBusqueda && (
+        <BusquedaServicios
+          onClose={() => setShowBusqueda(false)}
+        />
       )}
     </div>
   );

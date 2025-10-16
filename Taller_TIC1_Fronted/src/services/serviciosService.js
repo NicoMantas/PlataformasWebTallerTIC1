@@ -112,8 +112,47 @@ export async function mecanicoListCompletados(empleadoId) {
   return data;
 }
 
+export async function debugMecanicoCompletados(empleadoId) {
+  const { data } = await api.get(`/Servicios/debug/mecanico/${empleadoId}/completados`);
+  return data;
+}
+
 export async function listEmpleados() {
   const { data } = await api.get('/Empleado');
+  return data;
+}
+
+// Nuevas funcionalidades implementadas
+
+// Capacidad del taller
+export async function getCapacidadTaller() {
+  const { data } = await api.get('/Servicios/capacidad-taller');
+  return data;
+}
+
+// Búsqueda para secretaria
+export async function buscarServiciosPorPlaca(placa) {
+  const { data } = await api.get(`/Servicios/secretaria/buscar/placa/${placa}`);
+  return data;
+}
+
+export async function buscarServiciosPorFecha(fechaInicio, fechaFin) {
+  const { data } = await api.get('/Servicios/secretaria/buscar/fecha', {
+    params: { fechaInicio, fechaFin }
+  });
+  return data;
+}
+
+export async function buscarServiciosPorPlacaYFecha(placa, fechaInicio, fechaFin) {
+  const { data } = await api.get('/Servicios/secretaria/buscar/placa-fecha', {
+    params: { placa, fechaInicio, fechaFin }
+  });
+  return data;
+}
+
+// Progreso del servicio para cliente
+export async function getProgresoServicio(servicioId) {
+  const { data } = await api.get(`/Servicios/${servicioId}/progreso`);
   return data;
 }
 

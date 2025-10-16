@@ -84,6 +84,9 @@ namespace Taller_TIC1_Backend.Services
 
         public async Task<ServicioDTO> CreateServicioAsync(ServicioCreateDTO servicioCreateDto)
         {
+            // Validar capacidad del taller antes de crear el servicio
+            await ValidarCapacidadTallerAsync();
+
             var servicio = _mapper.Map<Servicio>(servicioCreateDto);
             var servicioCreado = await _servicioRepository.CreateAsync(servicio);
 
@@ -164,22 +167,16 @@ namespace Taller_TIC1_Backend.Services
 
         public async Task<IEnumerable<ServicioDTO>> GetServiciosActivosByClienteAsync(int clienteId)
         {
-            // Activos: Pendiente, En proceso
-            var pendienteId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Pendiente");
-            var enProcesoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("En proceso");
-            var ids = new List<int>();
-            if (pendienteId.HasValue) ids.Add(pendienteId.Value);
-            if (enProcesoId.HasValue) ids.Add(enProcesoId.Value);
+            // Activos: Pendiente (1), En proceso (2)
+            var ids = new List<int> { 1, 2 };
             var servicios = await _servicioRepository.GetByClienteAndEstadosAsync(clienteId, ids);
             return await MapDetallesServicios(servicios);
         }
 
         public async Task<IEnumerable<ServicioDTO>> GetServiciosHistorialByClienteAsync(int clienteId)
         {
-            // Historial: solo Completado
-            var completadoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Completado");
-            var ids = new List<int>();
-            if (completadoId.HasValue) ids.Add(completadoId.Value);
+            // Historial: solo Completado (IdEstado == 3)
+            var ids = new List<int> { 3 };
             var servicios = await _servicioRepository.GetByClienteAndEstadosAsync(clienteId, ids);
             return await MapDetallesServicios(servicios);
         }
@@ -188,9 +185,8 @@ namespace Taller_TIC1_Backend.Services
         {
             var servicio = await _servicioRepository.GetByIdAsync(id);
             if (servicio == null) return false;
-            var canceladoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Cancelado");
-            var ensureId = canceladoId ?? await _servicioRepository.EnsureEstadoAsync("Cancelado");
-            servicio.IdEstado = ensureId;
+            // IdEstado == 4: Cancelado
+            servicio.IdEstado = 4;
             await _servicioRepository.UpdateAsync(servicio);
             return true;
         }
@@ -236,31 +232,24 @@ namespace Taller_TIC1_Backend.Services
 
         public async Task<IEnumerable<ServicioDTO>> SecretariaListPendientesAsync()
         {
-            var pendienteId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Pendiente");
-            var enProcesoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("En proceso");
-            var ids = new List<int>();
-            if (pendienteId.HasValue) ids.Add(pendienteId.Value);
-            if (enProcesoId.HasValue) ids.Add(enProcesoId.Value);
+            // Pendiente (1), En proceso (2)
+            var ids = new List<int> { 1, 2 };
             var servicios = await _servicioRepository.GetActivosPendientesAsync(ids);
             return await MapDetallesServicios(servicios);
         }
 
         public async Task<IEnumerable<ServicioDTO>> SecretariaListAsignadosAsync()
         {
-            var pendienteId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Pendiente");
-            var enProcesoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("En proceso");
-            var ids = new List<int>();
-            if (pendienteId.HasValue) ids.Add(pendienteId.Value);
-            if (enProcesoId.HasValue) ids.Add(enProcesoId.Value);
+            // Pendiente (1), En proceso (2)
+            var ids = new List<int> { 1, 2 };
             var servicios = await _servicioRepository.GetActivosAsignadosAsync(ids);
             return await MapDetallesServicios(servicios);
         }
 
         public async Task<IEnumerable<ServicioDTO>> SecretariaListCompletadosAsync()
         {
-            var completadoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Completado");
-            var ids = new List<int>();
-            if (completadoId.HasValue) ids.Add(completadoId.Value);
+            // Completado (IdEstado == 3)
+            var ids = new List<int> { 3 };
             var servicios = await _servicioRepository.GetServiciosByEstadosAsync(ids);
             var serviciosDto = await MapDetallesServicios(servicios);
 
@@ -284,21 +273,16 @@ namespace Taller_TIC1_Backend.Services
         public async Task<IEnumerable<ServicioDTO>> GetServiciosByMecanicoAsync(int empleadoId)
         {
             // Servicios asignados y en proceso (no completados)
-            var pendienteId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Pendiente");
-            var enProcesoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("En proceso");
-            var ids = new List<int>();
-            if (pendienteId.HasValue) ids.Add(pendienteId.Value);
-            if (enProcesoId.HasValue) ids.Add(enProcesoId.Value);
+            // IdEstado == 1: Pendiente, IdEstado == 2: En proceso
+            var ids = new List<int> { 1, 2 };
             var servicios = await _servicioRepository.GetServiciosByEmpleadoAndEstadosAsync(empleadoId, ids);
             return await MapDetallesServicios(servicios);
         }
 
         public async Task<IEnumerable<ServicioDTO>> GetServiciosCompletadosByMecanicoAsync(int empleadoId)
         {
-            // Servicios completados por el mecánico
-            var completadoId = await _servicioRepository.GetEstadoIdByDescripcionAsync("Completado");
-            var ids = new List<int>();
-            if (completadoId.HasValue) ids.Add(completadoId.Value);
+            // Servicios completados por el mecánico (IdEstado == 3)
+            var ids = new List<int> { 3 }; // Estado "Completado" es IdEstado == 3
             var servicios = await _servicioRepository.GetServiciosByEmpleadoAndEstadosAsync(empleadoId, ids);
             return await MapDetallesServicios(servicios);
         }
@@ -328,6 +312,165 @@ namespace Taller_TIC1_Backend.Services
             var costoRepuestos = repuestos.Sum(r => r.Cantidad * r.Repuesto.Precio);
 
             return costoBase + costoRepuestos;
+        }
+
+        public async Task<object> GetCapacidadTallerAsync()
+        {
+            const int CAPACIDAD_MAXIMA_TALLER = 15;
+            
+            // Obtener servicios pendientes (sin mecánico asignado)
+            var serviciosPendientes = await _servicioRepository.GetActivosPendientesAsync(new[] { 1 }); // Estado "Pendiente"
+            var serviciosAsignados = await _servicioRepository.GetActivosAsignadosAsync(new[] { 2 }); // Estado "En proceso"
+            
+            var totalPendientes = serviciosPendientes.Count();
+            var totalAsignados = serviciosAsignados.Count();
+            var totalActivos = totalPendientes + totalAsignados;
+            var espaciosDisponibles = CAPACIDAD_MAXIMA_TALLER - totalPendientes;
+            
+            return new
+            {
+                capacidadMaxima = CAPACIDAD_MAXIMA_TALLER,
+                serviciosPendientes = totalPendientes,
+                serviciosAsignados = totalAsignados,
+                totalActivos = totalActivos,
+                espaciosDisponibles = espaciosDisponibles,
+                capacidadDisponible = espaciosDisponibles > 0,
+                porcentajeOcupacion = Math.Round((double)totalPendientes / CAPACIDAD_MAXIMA_TALLER * 100, 2)
+            };
+        }
+
+        public async Task<IEnumerable<ServicioDTO>> GetServiciosByPlacaAsync(string placa)
+        {
+            var servicios = await _servicioRepository.GetServiciosByPlacaAsync(placa);
+            return await MapDetallesServicios(servicios);
+        }
+
+        public async Task<IEnumerable<ServicioDTO>> GetServiciosByFechaAsync(DateTime fechaInicio, DateTime fechaFin)
+        {
+            var servicios = await _servicioRepository.GetServiciosByFechaAsync(fechaInicio, fechaFin);
+            return await MapDetallesServicios(servicios);
+        }
+
+        public async Task<IEnumerable<ServicioDTO>> GetServiciosByPlacaAndFechaAsync(string placa, DateTime fechaInicio, DateTime fechaFin)
+        {
+            var servicios = await _servicioRepository.GetServiciosByPlacaAndFechaAsync(placa, fechaInicio, fechaFin);
+            return await MapDetallesServicios(servicios);
+        }
+
+        public async Task<ServicioProgresoDto?> GetProgresoServicioAsync(int servicioId)
+        {
+            var servicio = await _servicioRepository.GetByIdAsync(servicioId);
+            if (servicio == null) return null;
+
+            var progreso = new ServicioProgresoDto
+            {
+                Id = servicio.Id,
+                EstadoActual = servicio.Estado?.Descripcion ?? "Sin estado",
+                IdEstado = servicio.IdEstado,
+                ClienteNombre = servicio.Cliente?.Nombre ?? "Sin cliente",
+                VehiculoPlaca = servicio.Vehiculo?.Placa ?? "Sin placa",
+                VehiculoMarca = servicio.Vehiculo?.Marca ?? "Sin marca",
+                VehiculoModelo = servicio.Vehiculo?.Modelo ?? "Sin modelo",
+                MecanicoNombre = servicio.Empleado?.Nombre ?? null,
+                FechaCreacion = servicio.FechaCreacion,
+                FechaActualizacion = servicio.FechaActualizacion,
+                Costo = servicio.Costo
+            };
+
+            // Determinar tipo de servicio
+            var detalleRevision = await _servicioRepository.GetDetalleRevisionByServicioIdAsync(servicioId);
+            if (detalleRevision != null)
+            {
+                progreso.TipoServicio = "Revision";
+            }
+            else
+            {
+                var detalleReparacion = await _servicioRepository.GetDetalleReparacionByServicioIdAsync(servicioId);
+                if (detalleReparacion != null)
+                {
+                    progreso.TipoServicio = "Reparacion";
+                }
+            }
+
+            // Crear flujo de estados
+            progreso.FlujoEstados = await CrearFlujoEstadosAsync(servicioId, servicio.IdEstado);
+            progreso.PorcentajeCompletado = CalcularPorcentajeCompletado(servicio.IdEstado);
+            progreso.MensajeEstado = GenerarMensajeEstado(servicio.IdEstado, progreso.MecanicoNombre);
+
+            return progreso;
+        }
+
+        private async Task<List<EstadoProgresoDto>> CrearFlujoEstadosAsync(int servicioId, int estadoActualId)
+        {
+            var flujoEstados = new List<EstadoProgresoDto>();
+            var servicio = await _servicioRepository.GetByIdAsync(servicioId);
+
+            // Definir el flujo de estados
+            var estadosFlujo = new[]
+            {
+                new { Id = 1, Descripcion = "Pendiente", Icono = "⏳", Mensaje = "Servicio creado y esperando asignación de mecánico" },
+                new { Id = 2, Descripcion = "En proceso", Icono = "🔧", Mensaje = "Mecánico asignado, trabajo en progreso" },
+                new { Id = 3, Descripcion = "En revisión", Icono = "🔍", Mensaje = "Servicio completado, en proceso de revisión final" },
+                new { Id = 4, Descripcion = "Completado", Icono = "✅", Mensaje = "Servicio completado y listo para entrega" },
+                new { Id = 5, Descripcion = "Cancelado", Icono = "❌", Mensaje = "Servicio cancelado" }
+            };
+
+            foreach (var estado in estadosFlujo)
+            {
+                var estadoProgreso = new EstadoProgresoDto
+                {
+                    Id = estado.Id,
+                    Descripcion = estado.Descripcion,
+                    Icono = estado.Icono,
+                    Mensaje = estado.Mensaje,
+                    Actual = estado.Id == estadoActualId,
+                    Completado = estado.Id < estadoActualId || (estado.Id == estadoActualId && estado.Id == 4), // Completado si es menor al actual o si es "Completado"
+                    FechaCompletado = estado.Id < estadoActualId ? servicio?.FechaActualizacion : null
+                };
+
+                flujoEstados.Add(estadoProgreso);
+            }
+
+            return flujoEstados;
+        }
+
+        private static int CalcularPorcentajeCompletado(int estadoActualId)
+        {
+            return estadoActualId switch
+            {
+                1 => 25,   // Pendiente
+                2 => 50,   // En proceso
+                3 => 75,   // En revisión
+                4 => 100,  // Completado
+                5 => 0,    // Cancelado
+                _ => 0
+            };
+        }
+
+        private static string GenerarMensajeEstado(int estadoActualId, string? mecanicoNombre)
+        {
+            return estadoActualId switch
+            {
+                1 => "Tu servicio ha sido creado y está en la cola de espera. Pronto será asignado a un mecánico.",
+                2 => mecanicoNombre != null ? $"El mecánico {mecanicoNombre} está trabajando en tu vehículo." : "Un mecánico está trabajando en tu vehículo.",
+                3 => "El servicio está siendo revisado para asegurar la calidad del trabajo realizado.",
+                4 => "¡Tu servicio ha sido completado! Puedes pasar a recoger tu vehículo.",
+                5 => "El servicio ha sido cancelado.",
+                _ => "Estado desconocido"
+            };
+        }
+
+        private async Task ValidarCapacidadTallerAsync()
+        {
+            const int CAPACIDAD_MAXIMA_TALLER = 15;
+            
+            // Obtener servicios pendientes (sin mecánico asignado)
+            var serviciosPendientes = await _servicioRepository.GetActivosPendientesAsync(new[] { 1 }); // Estado "Pendiente"
+            
+            if (serviciosPendientes.Count() >= CAPACIDAD_MAXIMA_TALLER)
+            {
+                throw new InvalidOperationException($"La capacidad del taller está al límite. Actualmente hay {serviciosPendientes.Count()} servicios pendientes. La capacidad máxima es de {CAPACIDAD_MAXIMA_TALLER} servicios. Por favor, intente más tarde cuando se liberen espacios.");
+            }
         }
     }
 }

@@ -29,6 +29,9 @@ namespace Taller_TIC1_Backend.Repositories.Interfaces
         Task<bool> DesasignarEmpleadoAsync(int servicioId);
         Task<IEnumerable<Servicio>> GetByVehiculoAsync(int vehiculoId);
         Task<OrdenDeTrabajo?> GetOrdenByServicioIdAsync(int servicioId);
+        Task<IEnumerable<Servicio>> GetServiciosByPlacaAsync(string placa);
+        Task<IEnumerable<Servicio>> GetServiciosByFechaAsync(DateTime fechaInicio, DateTime fechaFin);
+        Task<IEnumerable<Servicio>> GetServiciosByPlacaAndFechaAsync(string placa, DateTime fechaInicio, DateTime fechaFin);
         
         // Métodos de debug
         Task<IEnumerable<EstadoServicio>> GetAllEstadosAsync();

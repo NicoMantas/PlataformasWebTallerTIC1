@@ -74,6 +74,7 @@ namespace Taller_TIC1_Backend.Repositories
                 .Include(s => s.Cliente)
                 .Include(s => s.Empleado)
                 .Include(s => s.Estado)
+                .Include(s => s.Vehiculo)
                 .Where(s => s.IdCliente == clienteId)
                 .ToListAsync();
         }
@@ -85,6 +86,7 @@ namespace Taller_TIC1_Backend.Repositories
                 .Include(s => s.Cliente)
                 .Include(s => s.Empleado)
                 .Include(s => s.Estado)
+                .Include(s => s.Vehiculo)
                 .Where(s => s.IdCliente == clienteId && estados.Contains(s.IdEstado))
                 .ToListAsync();
         }
@@ -260,6 +262,56 @@ namespace Taller_TIC1_Backend.Repositories
                 .FirstOrDefaultAsync(dso => dso.IdServicio == servicioId);
             
             return detalle?.OrdenTrabajo;
+        }
+
+        public async Task<IEnumerable<Servicio>> GetServiciosByPlacaAsync(string placa)
+        {
+            return await _context.Servicios
+                .Include(s => s.Cliente)
+                    .ThenInclude(c => c.Vehiculo)
+                .Include(s => s.Vehiculo)
+                .Include(s => s.Empleado)
+                .Include(s => s.Estado)
+                .Where(s => s.Vehiculo != null && s.Vehiculo.Placa.ToLower().Contains(placa.ToLower()))
+                .OrderByDescending(s => s.FechaCreacion)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Servicio>> GetServiciosByFechaAsync(DateTime fechaInicio, DateTime fechaFin)
+        {
+            // Convertir a UTC para PostgreSQL
+            var fechaInicioUtc = DateTime.SpecifyKind(fechaInicio.Date, DateTimeKind.Utc);
+            var fechaFinUtc = DateTime.SpecifyKind(fechaFin.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+            
+            return await _context.Servicios
+                .Include(s => s.Cliente)
+                    .ThenInclude(c => c.Vehiculo)
+                .Include(s => s.Vehiculo)
+                .Include(s => s.Empleado)
+                .Include(s => s.Estado)
+                .Where(s => s.FechaCreacion >= fechaInicioUtc && s.FechaCreacion <= fechaFinUtc)
+                .OrderByDescending(s => s.FechaCreacion)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Servicio>> GetServiciosByPlacaAndFechaAsync(string placa, DateTime fechaInicio, DateTime fechaFin)
+        {
+            // Convertir a UTC para PostgreSQL
+            var fechaInicioUtc = DateTime.SpecifyKind(fechaInicio.Date, DateTimeKind.Utc);
+            var fechaFinUtc = DateTime.SpecifyKind(fechaFin.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+            
+            return await _context.Servicios
+                .Include(s => s.Cliente)
+                    .ThenInclude(c => c.Vehiculo)
+                .Include(s => s.Vehiculo)
+                .Include(s => s.Empleado)
+                .Include(s => s.Estado)
+                .Where(s => s.Vehiculo != null && 
+                           s.Vehiculo.Placa.ToLower().Contains(placa.ToLower()) &&
+                           s.FechaCreacion >= fechaInicioUtc && 
+                           s.FechaCreacion <= fechaFinUtc)
+                .OrderByDescending(s => s.FechaCreacion)
+                .ToListAsync();
         }
     }
 

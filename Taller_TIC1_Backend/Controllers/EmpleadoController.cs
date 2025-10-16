@@ -110,15 +110,22 @@ namespace Taller_TIC1_Backend.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var desactivado = await _empleadoService.DesactivarConDetallesAsync(id, desactivarDto.DetallesDesactivacion);
-            if (!desactivado)
-                return NotFound($"Empleado con ID {id} no encontrado");
+            try
+            {
+                var desactivado = await _empleadoService.DesactivarConDetallesAsync(id, desactivarDto.DetallesDesactivacion, desactivarDto.FechaDesactivacion, desactivarDto.FechaActivacion);
+                if (!desactivado)
+                    return NotFound($"Empleado con ID {id} no encontrado");
 
-            return Ok(new { message = "Empleado desactivado exitosamente con detalles registrados" });
+                return Ok(new { message = "Empleado desactivado exitosamente con detalles registrados" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPatch("{id}/activate")]
-        public async Task<ActionResult> Activate(int id, [FromQuery] int? adminId = null)
+        public async Task<ActionResult> Activate(int id, EmpleadoActivarDto activarDto, [FromQuery] int? adminId = null)
         {
             // Verificación básica de autorización usando parámetro de query
             if (adminId.HasValue)
@@ -130,11 +137,18 @@ namespace Taller_TIC1_Backend.Controllers
                 }
             }
 
-            var activated = await _empleadoService.ActivateAsync(id);
-            if (!activated)
-                return NotFound($"Empleado con ID {id} no encontrado");
+            try
+            {
+                var activated = await _empleadoService.ActivateAsync(id, activarDto.FechaActivacion);
+                if (!activated)
+                    return NotFound($"Empleado con ID {id} no encontrado");
 
-            return Ok(new { message = "Empleado activado exitosamente" });
+                return Ok(new { message = "Empleado activado exitosamente" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

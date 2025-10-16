@@ -23,6 +23,11 @@ namespace Taller_TIC1_Backend.Services.Interfaces
         Task<bool> DesasignarEmpleadoAsync(int servicioId);
         Task<IEnumerable<ServicioDTO>> GetHistorialByVehiculoAsync(int vehiculoId);
         Task<decimal> CalcularCostoTotalReparacionAsync(int servicioId, decimal costoBase);
+        Task<object> GetCapacidadTallerAsync();
+        Task<IEnumerable<ServicioDTO>> GetServiciosByPlacaAsync(string placa);
+        Task<IEnumerable<ServicioDTO>> GetServiciosByFechaAsync(DateTime fechaInicio, DateTime fechaFin);
+        Task<IEnumerable<ServicioDTO>> GetServiciosByPlacaAndFechaAsync(string placa, DateTime fechaInicio, DateTime fechaFin);
+        Task<ServicioProgresoDto?> GetProgresoServicioAsync(int servicioId);
         
     }
 }

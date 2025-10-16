@@ -33,8 +33,15 @@ namespace Taller_TIC1_Backend.Controllers
         [HttpPost]
         public async Task<ActionResult<ServicioDTO>> CreateServicio(ServicioCreateDTO servicioDto)
         {
-            var servicio = await _servicioService.CreateServicioAsync(servicioDto);
-            return CreatedAtAction(nameof(GetServicio), new { id = servicio.Id }, servicio);
+            try
+            {
+                var servicio = await _servicioService.CreateServicioAsync(servicioDto);
+                return CreatedAtAction(nameof(GetServicio), new { id = servicio.Id }, servicio);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
@@ -143,6 +150,31 @@ namespace Taller_TIC1_Backend.Controllers
             return Ok(items);
         }
 
+        // Debug: verificar servicios completados para mecánico
+        [HttpGet("debug/mecanico/{empleadoId}/completados")]
+        public async Task<ActionResult<object>> DebugMecanicoCompletados(int empleadoId)
+        {
+            try
+            {
+                // Obtener todos los servicios del mecánico
+                var todosServicios = await _servicioService.GetServiciosByMecanicoAsync(empleadoId);
+                var completados = await _servicioService.GetServiciosCompletadosByMecanicoAsync(empleadoId);
+                
+                return Ok(new
+                {
+                    EmpleadoId = empleadoId,
+                    TodosServicios = todosServicios,
+                    Completados = completados,
+                    CantidadCompletados = completados.Count(),
+                    Mensaje = "Debug de servicios completados para mecánico"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
         // Historial por vehículo
         [HttpGet("by-vehiculo/{vehiculoId}/historial")]
         public async Task<ActionResult<IEnumerable<ServicioDTO>>> GetHistorialByVehiculo(int vehiculoId)
@@ -194,6 +226,53 @@ namespace Taller_TIC1_Backend.Controllers
                 tipoCosto = tipoCosto,
                 costoRepuestos = costoTotal - servicio.Costo
             });
+        }
+
+        [HttpGet("capacidad-taller")]
+        public async Task<ActionResult<object>> GetCapacidadTaller()
+        {
+            try
+            {
+                var capacidad = await _servicioService.GetCapacidadTallerAsync();
+                return Ok(capacidad);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // Secretaría: búsqueda por placa
+        [HttpGet("secretaria/buscar/placa/{placa}")]
+        public async Task<ActionResult<IEnumerable<ServicioDTO>>> BuscarPorPlaca(string placa)
+        {
+            var servicios = await _servicioService.GetServiciosByPlacaAsync(placa);
+            return Ok(servicios);
+        }
+
+        // Secretaría: búsqueda por rango de fechas
+        [HttpGet("secretaria/buscar/fecha")]
+        public async Task<ActionResult<IEnumerable<ServicioDTO>>> BuscarPorFecha([FromQuery] DateTime fechaInicio, [FromQuery] DateTime fechaFin)
+        {
+            var servicios = await _servicioService.GetServiciosByFechaAsync(fechaInicio, fechaFin);
+            return Ok(servicios);
+        }
+
+        // Secretaría: búsqueda por placa y rango de fechas
+        [HttpGet("secretaria/buscar/placa-fecha")]
+        public async Task<ActionResult<IEnumerable<ServicioDTO>>> BuscarPorPlacaYFecha([FromQuery] string placa, [FromQuery] DateTime fechaInicio, [FromQuery] DateTime fechaFin)
+        {
+            var servicios = await _servicioService.GetServiciosByPlacaAndFechaAsync(placa, fechaInicio, fechaFin);
+            return Ok(servicios);
+        }
+
+        // Cliente: obtener progreso del servicio
+        [HttpGet("{id}/progreso")]
+        public async Task<ActionResult<ServicioProgresoDto>> GetProgresoServicio(int id)
+        {
+            var progreso = await _servicioService.GetProgresoServicioAsync(id);
+            if (progreso == null) return NotFound();
+            return Ok(progreso);
         }
     }
 }

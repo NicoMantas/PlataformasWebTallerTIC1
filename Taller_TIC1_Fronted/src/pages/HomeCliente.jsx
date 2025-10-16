@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import VehiculosManager from '../components/VehiculosManager';
-import { createServicio, listActivosByCliente, listHistorialByCliente, cancelarServicio, descargarReservaPdf } from '../services/serviciosService';
+import ProgresoServicio from '../components/ProgresoServicio';
+import { createServicio, listActivosByCliente, listHistorialByCliente, cancelarServicio, descargarReservaPdf, getCapacidadTaller } from '../services/serviciosService';
 import '../styles/HomeCliente.css';
 import { getCurrentUser } from '../services/authService';
 
@@ -16,6 +17,9 @@ const HomeCliente = () => {
   const [activos, setActivos] = useState([]);
   const [historial, setHistorial] = useState([]);
   const [tab, setTab] = useState('servicios'); // servicios | activos | historial
+  const [showProgreso, setShowProgreso] = useState(false);
+  const [servicioProgreso, setServicioProgreso] = useState(null);
+  const [capacidadTaller, setCapacidadTaller] = useState(null);
 
   useEffect(() => {
     // Get current user information
@@ -26,6 +30,7 @@ const HomeCliente = () => {
   useEffect(() => {
     if (user?.infoEspecifica?.id) {
       refreshPedidos();
+      loadCapacidadTaller();
     }
   }, [user]);
 
@@ -46,6 +51,20 @@ const HomeCliente = () => {
     }
   };
 
+  const loadCapacidadTaller = async () => {
+    try {
+      const capacidad = await getCapacidadTaller();
+      setCapacidadTaller(capacidad);
+    } catch (e) {
+      console.error('Error al cargar capacidad del taller:', e);
+    }
+  };
+
+  const handleVerProgreso = (servicioId) => {
+    setServicioProgreso(servicioId);
+    setShowProgreso(true);
+  };
+
   const handleReservar = async (servicioId) => {
     if (!selectedVehiculo) {
       alert('Debes seleccionar un vehículo antes de reservar');
@@ -55,6 +74,12 @@ const HomeCliente = () => {
     
     const servicio = serviciosBasicos.find(s => s.id === servicioId);
     if (!servicio) return;
+    
+    // Validar capacidad del taller
+    if (capacidadTaller && !capacidadTaller.capacidadDisponible) {
+      alert(`La capacidad del taller está al límite. Actualmente hay ${capacidadTaller.serviciosPendientes} servicios pendientes. La capacidad máxima es de ${capacidadTaller.capacidadMaxima} servicios. Por favor, intente más tarde cuando se liberen espacios.`);
+      return;
+    }
     
     const clienteId = user?.infoEspecifica?.id || user?.idCliente;
     
@@ -81,6 +106,7 @@ const HomeCliente = () => {
       a.remove();
       URL.revokeObjectURL(url);
       await refreshPedidos();
+      await loadCapacidadTaller(); // Recargar capacidad después de crear servicio
       alert(`Reserva para ${servicio.nombre} creada con éxito`);
     } catch (e) {
       alert(e?.message || 'Error al reservar');
@@ -409,6 +435,7 @@ const HomeCliente = () => {
                     )}
                   </div>
                   <div style={{ display: 'flex', gap: '0.75rem', marginTop: '8px' }}>
+                    <button className="btn-secondary" onClick={() => handleVerProgreso(s.id)}>Ver Progreso</button>
                     <button className="btn-secondary" onClick={async () => {
                       const blob = await descargarReservaPdf(s);
                       const url = URL.createObjectURL(blob);
@@ -471,6 +498,38 @@ const HomeCliente = () => {
               onVehiculoSelect={(vehiculo) => {
                 setSelectedVehiculo(vehiculo);
                 setShowVehiculos(false);
+              }}
+            />
+          )}
+
+          {/* Indicador de capacidad del taller */}
+          {capacidadTaller && (
+            <div className="capacidad-indicator">
+              <div className="capacidad-info">
+                <span className="capacidad-label">Capacidad del Taller:</span>
+                <span className={`capacidad-status ${capacidadTaller.capacidadDisponible ? 'disponible' : 'lleno'}`}>
+                  {capacidadTaller.serviciosPendientes}/{capacidadTaller.capacidadMaxima} servicios
+                </span>
+              </div>
+              <div className="capacidad-bar">
+                <div 
+                  className="capacidad-fill" 
+                  style={{ 
+                    width: `${capacidadTaller.porcentajeOcupacion}%`,
+                    backgroundColor: capacidadTaller.porcentajeOcupacion > 80 ? '#ef4444' : capacidadTaller.porcentajeOcupacion > 60 ? '#f59e0b' : '#10b981'
+                  }}
+                ></div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal de progreso del servicio */}
+          {showProgreso && (
+            <ProgresoServicio
+              servicioId={servicioProgreso}
+              onClose={() => {
+                setShowProgreso(false);
+                setServicioProgreso(null);
               }}
             />
           )}

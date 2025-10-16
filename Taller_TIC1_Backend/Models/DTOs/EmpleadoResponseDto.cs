@@ -12,6 +12,7 @@ namespace Taller_TIC1_Backend.Models.DTOs
         public bool Activo { get; set; } = true;
         public string? DetallesDesactivacion { get; set; }
         public DateTime? FechaDesactivacion { get; set; }
+        public DateTime? FechaActivacion { get; set; }
         public string? TipoEmpleadoDescripcion { get; set; }
     }
 }

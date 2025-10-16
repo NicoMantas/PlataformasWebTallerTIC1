@@ -81,6 +81,9 @@ namespace Taller_TIC1_Backend
             builder.Services.AddScoped<IVehiculoService, VehiculoService>();
             builder.Services.AddScoped<AuthorizationService>();
 
+            // DI Estadísticas Admin
+            builder.Services.AddScoped<IEstadisticasAdminService, EstadisticasAdminService>();
+
             // Configurar CORS
             builder.Services.AddCors(options =>
             {

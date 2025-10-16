@@ -1,0 +1,317 @@
+.progreso-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.progreso-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.progreso-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.progreso-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.progreso-content {
+  padding: 24px;
+}
+
+.servicio-info {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  border-left: 4px solid #3b82f6;
+}
+
+.servicio-info h3 {
+  margin: 0 0 12px 0;
+  color: #1e293b;
+  font-size: 1.25rem;
+}
+
+.servicio-info p {
+  margin: 8px 0;
+  color: #64748b;
+}
+
+.estado-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.estado-1 { background: #fef3c7; color: #92400e; } /* Pendiente */
+.estado-2 { background: #dbeafe; color: #1e40af; } /* En proceso */
+.estado-3 { background: #e0e7ff; color: #3730a3; } /* En revisión */
+.estado-4 { background: #d1fae5; color: #065f46; } /* Completado */
+.estado-5 { background: #fee2e2; color: #991b1b; } /* Cancelado */
+
+.progress-section {
+  margin-bottom: 32px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.progress-header h4 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.125rem;
+}
+
+.progress-percentage {
+  font-weight: 600;
+  color: #3b82f6;
+  font-size: 1.125rem;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background-color: #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.estados-flujo {
+  margin-bottom: 32px;
+}
+
+.estados-flujo h4 {
+  margin: 0 0 20px 0;
+  color: #1e293b;
+  font-size: 1.125rem;
+}
+
+.estados-timeline {
+  position: relative;
+}
+
+.estado-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.estado-item.completado .estado-icon {
+  background: #10b981;
+  color: white;
+}
+
+.estado-item.actual .estado-icon {
+  background: #3b82f6;
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.estado-item:not(.completado):not(.actual) .estado-icon {
+  background: #e5e7eb;
+  color: #9ca3af;
+}
+
+.estado-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-right: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.estado-content {
+  flex: 1;
+  padding-top: 8px;
+}
+
+.estado-content h5 {
+  margin: 0 0 8px 0;
+  color: #1e293b;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.estado-content p {
+  margin: 0 0 8px 0;
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.estado-content small {
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+
+.estado-connector {
+  position: absolute;
+  left: 24px;
+  top: 48px;
+  width: 2px;
+  height: 24px;
+  background: #e5e7eb;
+  z-index: 1;
+}
+
+.estado-item.completado .estado-connector {
+  background: #10b981;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.estado-mensaje {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  border-left: 4px solid #0ea5e9;
+}
+
+.estado-mensaje h4 {
+  margin: 0 0 12px 0;
+  color: #0c4a6e;
+  font-size: 1rem;
+}
+
+.mensaje-texto {
+  margin: 0;
+  color: #0369a1;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.info-adicional {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.info-item {
+  margin-bottom: 12px;
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-item strong {
+  color: #334155;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 40px;
+  color: #64748b;
+}
+
+.error {
+  color: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .progreso-modal {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .progreso-header {
+    padding: 16px;
+  }
+  
+  .progreso-header h2 {
+    font-size: 1.25rem;
+  }
+  
+  .progreso-content {
+    padding: 16px;
+  }
+  
+  .estado-item {
+    margin-bottom: 20px;
+  }
+  
+  .estado-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+    margin-right: 12px;
+  }
+  
+  .estado-connector {
+    left: 20px;
+  }
+}

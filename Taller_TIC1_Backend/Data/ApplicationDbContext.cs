@@ -105,6 +105,7 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.Activo).HasColumnName("activo").HasDefaultValue(true);
                 e.Property(x => x.DetallesDesactivacion).HasColumnName("detallesDesactivacion").HasMaxLength(500).IsRequired(false);
                 e.Property(x => x.FechaDesactivacion).HasColumnName("fechaDesactivacion").HasColumnType("timestamp").IsRequired(false);
+                e.Property(x => x.FechaActivacion).HasColumnName("fechaActivacion").HasColumnType("timestamp").IsRequired(false);
 
                 e.HasOne(emp => emp.TipoEmpleado)
                  .WithMany(te => te.Empleados) //te.Empleados para la navegación inversa

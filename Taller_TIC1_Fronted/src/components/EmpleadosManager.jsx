@@ -10,6 +10,8 @@ const EmpleadosManager = () => {
   const [showDesactivarModal, setShowDesactivarModal] = useState(false);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
   const [detallesDesactivacion, setDetallesDesactivacion] = useState('');
+  const [fechaDesactivacion, setFechaDesactivacion] = useState('');
+  const [fechaActivacion, setFechaActivacion] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('todos'); // 'todos', 'activos', 'inactivos'
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -42,6 +44,8 @@ const EmpleadosManager = () => {
   const handleDesactivar = (empleado) => {
     setEmpleadoSeleccionado(empleado);
     setDetallesDesactivacion('');
+    setFechaDesactivacion('');
+    setFechaActivacion('');
     setShowDesactivarModal(true);
   };
 
@@ -54,23 +58,29 @@ const EmpleadosManager = () => {
     try {
       // Obtener el ID del empleado administrador desde el usuario actual
       const adminId = currentUser?.infoEspecifica?.id || currentUser?.id;
-      await desactivarEmpleado(empleadoSeleccionado.id, detallesDesactivacion, adminId);
+      const fechaDes = fechaDesactivacion ? new Date(fechaDesactivacion).toISOString() : null;
+      const fechaAct = fechaActivacion ? new Date(fechaActivacion).toISOString() : null;
+      await desactivarEmpleado(empleadoSeleccionado.id, detallesDesactivacion, fechaDes, fechaAct, adminId);
       await loadEmpleados();
       setShowDesactivarModal(false);
       setEmpleadoSeleccionado(null);
       setDetallesDesactivacion('');
+      setFechaDesactivacion('');
+      setFechaActivacion('');
     } catch (err) {
       setError(err?.message || 'Error al desactivar empleado');
     }
   };
 
   const handleActivar = async (id) => {
-    if (window.confirm('¿Está seguro de que desea reactivar este empleado?')) {
+    if (window.confirm('¿Está seguro de que desea reactivar este empleado inmediatamente?\n\nEsto activará al empleado ahora, sin importar si tenía programada una fecha de activación futura.')) {
       try {
         // Obtener el ID del empleado administrador desde el usuario actual
         const adminId = currentUser?.infoEspecifica?.id || currentUser?.id;
-        await activarEmpleado(id, adminId);
+        // Activar inmediatamente sin fecha personalizada (usa fecha actual)
+        await activarEmpleado(id, null, adminId);
         await loadEmpleados();
+        alert('Empleado reactivado exitosamente');
       } catch (err) {
         setError(err?.message || 'Error al activar empleado');
       }
@@ -132,11 +142,26 @@ const EmpleadosManager = () => {
               <p><strong>Salario:</strong> ${empleado.salario?.toLocaleString()}</p>
               <p><strong>Contratación:</strong> {new Date(empleado.fechaContratacion).toLocaleDateString()}</p>
               
-              {!empleado.activo && empleado.detallesDesactivacion && (
+              {!empleado.activo && (
                 <div className="detalles-desactivacion">
-                  <p><strong>Razón de desactivación:</strong></p>
-                  <p className="detalles-texto">{empleado.detallesDesactivacion}</p>
-                  <p><strong>Fecha:</strong> {new Date(empleado.fechaDesactivacion).toLocaleDateString()}</p>
+                  {empleado.detallesDesactivacion && (
+                    <>
+                      <p><strong>Razón de desactivación:</strong></p>
+                      <p className="detalles-texto">{empleado.detallesDesactivacion}</p>
+                    </>
+                  )}
+                  
+                  {empleado.fechaDesactivacion && (
+                    <p><strong>Fecha Desactivación:</strong> {new Date(empleado.fechaDesactivacion).toLocaleDateString()}</p>
+                  )}
+                  
+                  {empleado.fechaActivacion && (
+                    <p><strong>Fecha Activación:</strong> {new Date(empleado.fechaActivacion).toLocaleDateString()}</p>
+                  )}
+                  
+                  {!empleado.fechaActivacion && (
+                    <p><strong>Fecha Activación:</strong> <span className="sin-fecha">No programada</span></p>
+                  )}
                 </div>
               )}
             </div>
@@ -186,6 +211,30 @@ const EmpleadosManager = () => {
               className="detalles-textarea"
               required
             />
+            
+            <div className="form-group">
+              <label htmlFor="fechaDesactivacion">Fecha de Desactivación (Opcional):</label>
+              <input
+                type="datetime-local"
+                id="fechaDesactivacion"
+                value={fechaDesactivacion}
+                onChange={(e) => setFechaDesactivacion(e.target.value)}
+                className="form-input"
+              />
+              <small>Si no se especifica, se usará la fecha actual</small>
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="fechaActivacion">Fecha de Activación (Opcional):</label>
+              <input
+                type="datetime-local"
+                id="fechaActivacion"
+                value={fechaActivacion}
+                onChange={(e) => setFechaActivacion(e.target.value)}
+                className="form-input"
+              />
+              <small>Fecha futura cuando el empleado será reactivado (opcional)</small>
+            </div>
             
             <div className="modal-actions">
               <button 
