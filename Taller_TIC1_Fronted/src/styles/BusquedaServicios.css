@@ -29,15 +29,31 @@
   align-items: center;
   padding: 20px;
   border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-darker) 0%, var(--primary-darkest) 25%, var(--primary-dark) 50%, var(--secondary-color) 75%, var(--primary-color) 100%);
   color: white;
   border-radius: 12px 12px 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.busqueda-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
 }
 
 .busqueda-header h2 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
+  color: var(--title-color);
+  position: relative;
+  z-index: 1;
 }
 
 .close-btn {
@@ -54,6 +70,8 @@
   justify-content: center;
   border-radius: 50%;
   transition: background-color 0.2s;
+  position: relative;
+  z-index: 1;
 }
 
 .close-btn:hover {
@@ -65,11 +83,11 @@
 }
 
 .busqueda-form {
-  background: #f8fafc;
+  background: var(--background-light);
   padding: 24px;
-  border-radius: 8px;
+  border-radius: 16px;
   margin-bottom: 24px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
 }
 
 .form-row {
@@ -105,8 +123,8 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.1);
 }
 
 .form-actions {
@@ -116,19 +134,20 @@
 }
 
 .btn-buscar {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
   color: white;
   border: none;
   padding: 12px 24px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(82, 183, 136, 0.2);
 }
 
 .btn-buscar:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(82, 183, 136, 0.3);
 }
 
 .btn-buscar:disabled {
@@ -212,12 +231,12 @@
 }
 
 .servicio-detalles {
-  background: #f8fafc;
+  background: var(--background-light);
   padding: 12px;
-  border-radius: 6px;
-  border-left: 3px solid #3b82f6;
+  border-radius: 8px;
+  border-left: 3px solid var(--primary-color);
   font-size: 0.875rem;
-  color: #475569;
+  color: var(--text-light);
 }
 
 .no-results {

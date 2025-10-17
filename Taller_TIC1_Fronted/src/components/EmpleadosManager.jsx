@@ -197,11 +197,14 @@ const EmpleadosManager = () => {
       {showDesactivarModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Desactivar Empleado</h3>
-            <p>
-              <strong>{empleadoSeleccionado?.nombre} {empleadoSeleccionado?.apellido}</strong>
-            </p>
-            <p>Por favor, proporcione una razón para la desactivación:</p>
+            <div className="modal-header">
+              <h3>Desactivar Empleado</h3>
+              <p>
+                <strong>{empleadoSeleccionado?.nombre} {empleadoSeleccionado?.apellido}</strong>
+              </p>
+            </div>
+            <div className="modal-body">
+              <p>Por favor, proporcione una razón para la desactivación:</p>
             
             <textarea
               value={detallesDesactivacion}
@@ -236,19 +239,20 @@ const EmpleadosManager = () => {
               <small>Fecha futura cuando el empleado será reactivado (opcional)</small>
             </div>
             
-            <div className="modal-actions">
-              <button 
-                className="btn-secondary"
-                onClick={() => setShowDesactivarModal(false)}
-              >
-                Cancelar
-              </button>
-              <button 
-                className="btn-danger"
-                onClick={handleConfirmarDesactivacion}
-              >
-                Confirmar Desactivación
-              </button>
+              <div className="modal-actions">
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setShowDesactivarModal(false)}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  className="btn-danger"
+                  onClick={handleConfirmarDesactivacion}
+                >
+                  Confirmar Desactivación
+                </button>
+              </div>
             </div>
           </div>
         </div>

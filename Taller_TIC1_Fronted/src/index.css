@@ -12,21 +12,28 @@
   line-height: 1.6;
   font-weight: 400;
   
-  /* Colores principales - nueva gama (sky/violet/amber, tonos modernos) */
-  --primary-color: #0ea5e9; /* sky-500 */
-  --secondary-color: #7c3aed; /* violet-600 */
-  --accent-color: #7c3aed; /* amber-500 */
-  --text-color: #0f172a; /* slate-900 */
-  --text-light: #334155; /* slate-700 */
-  --text-muted: #64748b; /* slate-500 */
+  /* Colores principales - paleta verde profesional para taller automotriz */
+  --primary-color: #52b788; /* Verde principal */
+  --secondary-color: #40916c; /* Verde secundario */
+  --accent-color: #74c69d; /* Verde de acento */
+  --primary-dark: #2d6a4f; /* Verde oscuro */
+  --primary-light: #95d5b2; /* Verde claro */
+  --primary-lighter: #b7e4c7; /* Verde muy claro */
+  --primary-lightest: #d8f3dc; /* Verde más claro */
+  --primary-darkest: #1b4332; /* Verde muy oscuro */
+  --primary-darker: #081c15; /* Verde extremo oscuro */
+  --title-color: #55ae88; /* Verde para títulos */
+  --text-color: #1b4332; /* Texto principal */
+  --text-light: #2d6a4f; /* Texto secundario */
+  --text-muted: #40916c; /* Texto atenuado */
   --background-color: #ffffff;
-  --background-light: #f8fafc; /* slate-50 */
-  --border-color: #e2e8f0; /* slate-200 */
-  --border-light: #f1f5f9; /* slate-100 */
-  --success-color: #10b981; /* emerald-500 */
-  --warning-color: #f59e0b; /* amber-500 */
-  --error-color: #ef4444; /* red-500 */
-  --info-color: #06b6d4; /* cyan-500 */
+  --background-light: #f8fffe; /* Fondo muy claro con tinte verde */
+  --border-color: #b7e4c7; /* Borde claro */
+  --border-light: #d8f3dc; /* Borde muy claro */
+  --success-color: #52b788; /* Verde éxito */
+  --warning-color: #f59e0b; /* Ámbar advertencia */
+  --error-color: #ef4444; /* Rojo error */
+  --info-color: #40916c; /* Verde información */
   
   /* Sombras */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -143,12 +150,14 @@ button {
   padding: var(--spacing-md) var(--spacing-xl);
   border-radius: var(--border-radius-lg);
   font-weight: 600;
-  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.2);
+  box-shadow: 0 8px 20px rgba(82, 183, 136, 0.3);
+  transition: all var(--transition-normal);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 12px 25px rgba(82, 183, 136, 0.4);
+  background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-dark) 100%);
   text-decoration: none;
 }
 
@@ -159,13 +168,15 @@ button {
   padding: var(--spacing-md) var(--spacing-xl);
   border-radius: var(--border-radius-lg);
   font-weight: 600;
+  transition: all var(--transition-normal);
 }
 
 .btn-secondary:hover {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
   color: white;
+  border-color: var(--primary-color);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 8px 20px rgba(82, 183, 136, 0.3);
   text-decoration: none;
 }
 

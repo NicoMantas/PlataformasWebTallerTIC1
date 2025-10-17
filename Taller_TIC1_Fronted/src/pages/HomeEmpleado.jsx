@@ -577,28 +577,78 @@ const HomeEmpleado = () => {
                     </>
                   )}
                   {secTab === 'repuestos' && (
-                    <div className="repuestos-grid">
-                      <h3 style={{ marginBottom: '1rem', color: '#333' }}>Repuestos Disponibles</h3>
+                    <div className="repuestos-section">
+                      <div className="repuestos-header">
+                        <div className="repuestos-title">
+                          <h3>🔧 Repuestos Disponibles</h3>
+                          <p>Consulta el inventario de repuestos para tus reparaciones</p>
+                        </div>
+                        <div className="repuestos-stats">
+                          <div className="stat-item">
+                            <span className="stat-number">{repuestos.length}</span>
+                            <span className="stat-label">Total</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-number">{repuestos.filter(r => r.stock > 5).length}</span>
+                            <span className="stat-label">En Stock</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-number">{repuestos.filter(r => r.stock <= 5 && r.stock > 0).length}</span>
+                            <span className="stat-label">Bajo Stock</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-number">{repuestos.filter(r => r.stock === 0).length}</span>
+                            <span className="stat-label">Sin Stock</span>
+                          </div>
+                        </div>
+                      </div>
+                      
                       {repuestos.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
-                          <p>No hay repuestos disponibles</p>
+                        <div className="repuestos-empty">
+                          <div className="empty-icon">🔧</div>
+                          <h4>No hay repuestos disponibles</h4>
+                          <p>Contacta con la administración para agregar repuestos al inventario</p>
                         </div>
                       ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+                        <div className="repuestos-grid">
                           {repuestos.map(repuesto => (
-                            <div key={repuesto.id} className="repuesto-card" style={{
-                              border: '1px solid #ddd',
-                              borderRadius: '8px',
-                              padding: '1rem',
-                              backgroundColor: '#fff',
-                              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                            }}>
-                              <h4 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>{repuesto.nombre}</h4>
-                              <p style={{ margin: '0.25rem 0', color: '#666' }}><strong>N° Serie:</strong> {repuesto.numeroSerie}</p>
-                              <p style={{ margin: '0.25rem 0', color: '#666' }}><strong>Precio:</strong> ${repuesto.precio}</p>
-                              <p style={{ margin: '0.25rem 0', color: repuesto.stock > 5 ? '#28a745' : repuesto.stock > 0 ? '#ffc107' : '#dc3545' }}>
-                                <strong>Stock:</strong> {repuesto.stock} {repuesto.stock === 1 ? 'unidad' : 'unidades'}
-                              </p>
+                            <div key={repuesto.id} className={`repuesto-card ${repuesto.stock === 0 ? 'out-of-stock' : repuesto.stock <= 5 ? 'low-stock' : 'in-stock'}`}>
+                              <div className="repuesto-header">
+                                <div className="repuesto-icon">
+                                  {repuesto.stock === 0 ? '❌' : repuesto.stock <= 5 ? '⚠️' : '✅'}
+                                </div>
+                                <div className="stock-indicator">
+                                  <span className={`stock-badge ${repuesto.stock === 0 ? 'stock-zero' : repuesto.stock <= 5 ? 'stock-low' : 'stock-ok'}`}>
+                                    {repuesto.stock} {repuesto.stock === 1 ? 'unidad' : 'unidades'}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="repuesto-content">
+                                <h4 className="repuesto-name">{repuesto.nombre}</h4>
+                                <div className="repuesto-details">
+                                  <div className="detail-row">
+                                    <span className="detail-label">N° Serie:</span>
+                                    <span className="detail-value">{repuesto.numeroSerie}</span>
+                                  </div>
+                                  <div className="detail-row">
+                                    <span className="detail-label">Precio:</span>
+                                    <span className="detail-value price">${repuesto.precio}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="repuesto-footer">
+                                <div className="stock-status">
+                                  {repuesto.stock === 0 ? (
+                                    <span className="status-text error">Agotado</span>
+                                  ) : repuesto.stock <= 5 ? (
+                                    <span className="status-text warning">Stock Bajo</span>
+                                  ) : (
+                                    <span className="status-text success">Disponible</span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -708,72 +758,11 @@ const HomeEmpleado = () => {
           title: 'Panel de Administración',
           subtitle: 'Gestiona el taller completo',
           features: [
-            { title: 'Total Órdenes', count: ordenes.length },
             { title: 'Servicios Activos', count: servicios.filter(s => s.idEstado !== 4).length },
-            { title: 'Facturas Generadas', count: facturas.length },
             { title: 'Empleados Activos', count: empleados.length }
           ],
           content: (
             <div className="admin-content">
-              <div className="dashboard-grid">
-                <div className="dashboard-card">
-                  <h3>Resumen de Órdenes</h3>
-                  <div className="stats">
-                    <div className="stat">
-                      <span className="stat-label">Pendientes:</span>
-                      <span className="stat-value">{ordenes.filter(o => o.idTipoEstadoOrden === 1).length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">En Proceso:</span>
-                      <span className="stat-value">{ordenes.filter(o => o.idTipoEstadoOrden === 3).length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Completadas:</span>
-                      <span className="stat-value">{ordenes.filter(o => o.idTipoEstadoOrden === 4).length}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="dashboard-card">
-                  <h3>Estados de Servicios</h3>
-                  <div className="servicios-stats">
-                    <div className="stat">
-                      <span className="stat-label">Pendientes:</span>
-                      <span className="stat-value">{servicios.filter(s => s.idEstado === 1).length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Asignados:</span>
-                      <span className="stat-value">{servicios.filter(s => s.idEstado === 2).length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">En Proceso:</span>
-                      <span className="stat-value">{servicios.filter(s => s.idEstado === 3).length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Completados:</span>
-                      <span className="stat-value">{servicios.filter(s => s.idEstado === 4).length}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="dashboard-card">
-                  <h3>Facturación</h3>
-                  <div className="facturas-stats">
-                    <div className="stat">
-                      <span className="stat-label">Pendientes:</span>
-                      <span className="stat-value">{facturas.filter(f => f.estado === 'Pendiente').length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Pagadas:</span>
-                      <span className="stat-value">{facturas.filter(f => f.estado === 'Pagada').length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Total Facturado:</span>
-                      <span className="stat-value">${facturas.reduce((sum, f) => sum + f.total, 0).toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
               <div className="empleado-form-container">
                 <div className="empleado-form-header">
                   <h3>Registro de Empleados</h3>
