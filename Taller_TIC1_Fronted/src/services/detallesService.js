@@ -53,8 +53,8 @@ export async function addRepuestoToReparacion(servicioId, repuestoData) {
   return data;
 }
 
-export async function updateRepuestoInReparacion(servicioId, repuestoId, repuestoData) {
-  const { data } = await api.put(`/DetalleReparacion/${servicioId}/repuestos/${repuestoId}`, repuestoData);
+export async function updateRepuestoInReparacion(servicioId, repuestoData) {
+  const { data } = await api.put(`/DetalleReparacion/${servicioId}/repuestos`, repuestoData);
   return data;
 }
 

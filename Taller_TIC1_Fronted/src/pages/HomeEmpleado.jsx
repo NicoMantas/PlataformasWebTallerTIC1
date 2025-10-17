@@ -16,7 +16,7 @@ import { getCurrentUser, registerEmpleado } from '../services/authService';
 import { createEmpleado, listEmpleados } from '../services/empleadosService';
 import { listRepuestos } from '../services/repuestosService';
 import { listProveedores } from '../services/proveedoresService';
-import { getDetalleRevision, createDetalleRevision, updateDetalleRevision, getDetalleReparacion, getRepuestosByDetalleReparacion, addRepuestoToReparacion } from '../services/detallesService';
+import { getDetalleRevision, createDetalleRevision, updateDetalleRevision, getDetalleReparacion, getRepuestosByDetalleReparacion, addRepuestoToReparacion, updateRepuestoInReparacion } from '../services/detallesService';
 
 const HomeEmpleado = () => {
   const navigate = useNavigate();
@@ -62,6 +62,7 @@ const HomeEmpleado = () => {
   const [selectedServicio, setSelectedServicio] = useState(null);
   const [showReparacionModal, setShowReparacionModal] = useState(false);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
+  const [repuestosReparacion, setRepuestosReparacion] = useState([]);
   const [repuestoForm, setRepuestoForm] = useState({
     idRepuesto: '',
     cantidad: 1
@@ -118,15 +119,8 @@ const HomeEmpleado = () => {
         const servicioCompletado = secCompletados.find(s => s.id === servicioId);
         
         if (servicioCompletado) {
-          // Obtener costo total real del servicio
+          // El costo del servicio ya incluye los repuestos
           let costoTotal = servicioCompletado.costo || 0;
-          
-          // Si es reparación, calcular costo total (base + repuestos)
-          if (servicioCompletado.tipoServicio === 'Reparacion' && servicioCompletado.repuestosReparacion) {
-            const costoRepuestos = servicioCompletado.repuestosReparacion.reduce((total, rep) => 
-              total + (rep.cantidad * rep.precioUnitario), 0);
-            costoTotal += costoRepuestos;
-          }
           
           // Calcular IVA (19%)
           const iva = costoTotal * 0.19;
@@ -148,7 +142,9 @@ const HomeEmpleado = () => {
             if (servicioCompletado.repuestosReparacion && servicioCompletado.repuestosReparacion.length > 0) {
               serviciosRealizados.push(`Repuestos utilizados: ${servicioCompletado.repuestosReparacion.length}`);
               servicioCompletado.repuestosReparacion.forEach(rep => {
-                serviciosRealizados.push(`- ${rep.nombre} (${rep.cantidad}x $${rep.precioUnitario})`);
+                const precio = rep.precioUnitario || 0;
+                const nombre = rep.nombreRepuesto || 'Repuesto';
+                serviciosRealizados.push(`• ${nombre} (${rep.cantidad}x $${precio})`);
               });
             }
           }
@@ -317,7 +313,15 @@ const HomeEmpleado = () => {
       );
     }
 
-    return servicios.map(servicio => (
+    return servicios.map(servicio => {
+      // Debug: mostrar información del servicio
+      console.log(`Servicio #${servicio.id}:`, {
+        tipoServicio: servicio.tipoServicio,
+        esRevision: servicio.tipoServicio === 'Revision',
+        mostrarBotonRepuestos: servicio.tipoServicio !== 'Revision'
+      });
+      
+      return (
       <div key={servicio.id} className="orden-card">
         <div className="orden-info">
           <h4>Servicio #{servicio.id} · {(servicio.tipoServicio === 'Revision' ? 'Revisión' : 'Reparación')}</h4>
@@ -345,7 +349,7 @@ const HomeEmpleado = () => {
               {tipo !== 'mecanico' && <option value={4}>Cancelado</option>}
               {tipo === 'mecanico' && <option value={1}>Devolver a Secretaria</option>}
             </select>
-            {servicio.tipoServicio === 'Reparacion' && (
+            {servicio.tipoServicio !== 'Revision' && (
               <button 
                 className="btn-secondary" 
                 onClick={() => openReparacionModal(servicio)}
@@ -366,7 +370,8 @@ const HomeEmpleado = () => {
           </div>
         )}
       </div>
-    ));
+      );
+    });
   };
 
   // Mechanic specific functions
@@ -385,10 +390,30 @@ const HomeEmpleado = () => {
     }
   };
 
-  const openReparacionModal = (servicio) => {
+  const openReparacionModal = async (servicio) => {
     setSelectedServicio(servicio);
     setShowReparacionModal(true);
-    setRepuestoForm({ idRepuesto: '', cantidad: 1 });
+    
+    // Cargar repuestos ya utilizados en esta reparación
+    try {
+      const repuestosUtilizados = await getRepuestosByDetalleReparacion(servicio.id);
+      setRepuestosReparacion(repuestosUtilizados || []);
+      
+      // Si ya hay un repuesto, pre-cargar el formulario
+      if (repuestosUtilizados && repuestosUtilizados.length > 0) {
+        const repuestoExistente = repuestosUtilizados[0];
+        setRepuestoForm({ 
+          idRepuesto: repuestoExistente.idRepuesto.toString(), 
+          cantidad: repuestoExistente.cantidad 
+        });
+      } else {
+        setRepuestoForm({ idRepuesto: '', cantidad: 1 });
+      }
+    } catch (err) {
+      console.error('Error cargando repuestos de reparación:', err);
+      setRepuestosReparacion([]);
+      setRepuestoForm({ idRepuesto: '', cantidad: 1 });
+    }
   };
 
   const openRevisionModal = async (servicio) => {
@@ -410,16 +435,41 @@ const HomeEmpleado = () => {
 
   const handleAddRepuesto = async () => {
     try {
-      await addRepuestoToReparacion(selectedServicio.id, {
+      const repuestoData = {
         idRepuesto: parseInt(repuestoForm.idRepuesto),
         cantidad: parseInt(repuestoForm.cantidad)
-      });
-      alert('Repuesto agregado correctamente');
-      setShowReparacionModal(false);
+      };
+
+      let response;
+      // Si ya hay repuestos, intentar actualizar; si no, crear nuevo
+      if (repuestosReparacion.length > 0) {
+        response = await updateRepuestoInReparacion(selectedServicio.id, repuestoData);
+        alert('Repuesto actualizado correctamente');
+      } else {
+        response = await addRepuestoToReparacion(selectedServicio.id, repuestoData);
+        alert('Repuesto agregado correctamente');
+      }
+
+      // Actualizar el costo del servicio en el estado local
+      if (response && response.costoTotalServicio !== undefined) {
+        setSelectedServicio(prev => ({
+          ...prev,
+          costo: response.costoTotalServicio
+        }));
+      }
+      
+      // Recargar la lista de repuestos utilizados
+      const repuestosUtilizados = await getRepuestosByDetalleReparacion(selectedServicio.id);
+      setRepuestosReparacion(repuestosUtilizados || []);
+      
+      // Limpiar el formulario
+      setRepuestoForm({ idRepuesto: '', cantidad: 1 });
+      
       await loadData();
     } catch (err) {
-      console.error('Error al agregar repuesto:', err);
-      alert('Error al agregar repuesto: ' + (err.response?.data?.message || err.message));
+      console.error('Error al procesar repuesto:', err);
+      const errorMessage = err.response?.data?.message || err.response?.data || err.message || 'Error desconocido';
+      alert(`Error: ${errorMessage}`);
     }
   };
 
@@ -498,6 +548,12 @@ const HomeEmpleado = () => {
                 >
                   Completados ({serviciosCompletados.length})
                 </button>
+                <button 
+                  className={`tab-button ${secTab === 'repuestos' ? 'active' : ''}`} 
+                  onClick={() => setSecTab('repuestos')}
+                >
+                  Repuestos Disponibles ({repuestos.length})
+                </button>
               </div>
               
               {loading ? (
@@ -519,6 +575,35 @@ const HomeEmpleado = () => {
                         renderizarServicios(serviciosCompletados, true)
                       )}
                     </>
+                  )}
+                  {secTab === 'repuestos' && (
+                    <div className="repuestos-grid">
+                      <h3 style={{ marginBottom: '1rem', color: '#333' }}>Repuestos Disponibles</h3>
+                      {repuestos.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                          <p>No hay repuestos disponibles</p>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+                          {repuestos.map(repuesto => (
+                            <div key={repuesto.id} className="repuesto-card" style={{
+                              border: '1px solid #ddd',
+                              borderRadius: '8px',
+                              padding: '1rem',
+                              backgroundColor: '#fff',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            }}>
+                              <h4 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>{repuesto.nombre}</h4>
+                              <p style={{ margin: '0.25rem 0', color: '#666' }}><strong>N° Serie:</strong> {repuesto.numeroSerie}</p>
+                              <p style={{ margin: '0.25rem 0', color: '#666' }}><strong>Precio:</strong> ${repuesto.precio}</p>
+                              <p style={{ margin: '0.25rem 0', color: repuesto.stock > 5 ? '#28a745' : repuesto.stock > 0 ? '#ffc107' : '#dc3545' }}>
+                                <strong>Stock:</strong> {repuesto.stock} {repuesto.stock === 1 ? 'unidad' : 'unidades'}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
@@ -1017,10 +1102,61 @@ const HomeEmpleado = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h3>Agregar Repuestos - Servicio #{selectedServicio.id}</h3>
+              <h3>{repuestosReparacion.length > 0 ? 'Gestionar Repuesto' : 'Agregar Repuesto'} - Servicio #{selectedServicio.id}</h3>
+              <p style={{ margin: '0.5rem 0', color: '#666', fontSize: '0.9rem' }}>
+                <strong>Costo actual del servicio:</strong> ${selectedServicio.costo || 0}
+              </p>
               <button className="modal-close" onClick={() => setShowReparacionModal(false)}>×</button>
             </div>
             <div className="modal-body">
+              {/* Lista de repuestos ya utilizados */}
+              {repuestosReparacion.length > 0 && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h4 style={{ marginBottom: '1rem', color: '#333' }}>Repuestos Utilizados:</h4>
+                  <div style={{ 
+                    border: '1px solid #ddd', 
+                    borderRadius: '8px', 
+                    padding: '1rem',
+                    backgroundColor: '#f9f9f9',
+                    maxHeight: '200px',
+                    overflowY: 'auto'
+                  }}>
+                    {repuestosReparacion.map((item, index) => (
+                      <div key={index} style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '0.5rem 0',
+                        borderBottom: index < repuestosReparacion.length - 1 ? '1px solid #eee' : 'none'
+                      }}>
+                        <div>
+                          <strong>{item.nombreRepuesto || item.repuesto?.nombre || 'Repuesto'}</strong>
+                          <span style={{ marginLeft: '1rem', color: '#666' }}>
+                            Cantidad: {item.cantidad} | Precio: ${item.precioUnitario || item.repuesto?.precio || 0}
+                          </span>
+                        </div>
+                        <div style={{ color: '#666', fontSize: '0.9rem' }}>
+                          Total: ${item.subtotal || ((item.precioUnitario || item.repuesto?.precio || 0) * item.cantidad)}
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{
+                      marginTop: '1rem',
+                      paddingTop: '1rem',
+                      borderTop: '2px solid #ddd',
+                      fontWeight: 'bold',
+                      textAlign: 'right'
+                    }}>
+                      Total Reparación: ${repuestosReparacion.reduce((total, item) => 
+                        total + (item.subtotal || ((item.precioUnitario || item.repuesto?.precio || 0) * item.cantidad)), 0
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Formulario para agregar nuevo repuesto */}
+              <h4 style={{ marginBottom: '1rem', color: '#333' }}>Agregar Nuevo Repuesto:</h4>
               <div className="form-group">
                 <label>Repuesto:</label>
                 <select 
@@ -1028,7 +1164,7 @@ const HomeEmpleado = () => {
                   onChange={(e) => setRepuestoForm({...repuestoForm, idRepuesto: e.target.value})}
                 >
                   <option value="">Seleccionar repuesto</option>
-                  {repuestos.map(repuesto => (
+                  {repuestos.filter(repuesto => repuesto.stock > 0).map(repuesto => (
                     <option key={repuesto.id} value={repuesto.id}>
                       {repuesto.nombre} - ${repuesto.precio} (Stock: {repuesto.stock})
                     </option>
@@ -1040,6 +1176,7 @@ const HomeEmpleado = () => {
                 <input 
                   type="number" 
                   min="1" 
+                  max={repuestos.find(r => r.id === parseInt(repuestoForm.idRepuesto))?.stock || 1}
                   value={repuestoForm.cantidad}
                   onChange={(e) => setRepuestoForm({...repuestoForm, cantidad: e.target.value})}
                 />
@@ -1054,7 +1191,7 @@ const HomeEmpleado = () => {
                 onClick={handleAddRepuesto}
                 disabled={!repuestoForm.idRepuesto || repuestoForm.cantidad < 1}
               >
-                Agregar Repuesto
+                {repuestosReparacion.length > 0 ? 'Actualizar Repuesto' : 'Agregar Repuesto'}
               </button>
             </div>
           </div>

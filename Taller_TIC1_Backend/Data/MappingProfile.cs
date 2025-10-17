@@ -26,7 +26,10 @@ namespace Taller_TIC1_Backend.Data
             // Detalles mappings
             CreateMap<DetalleReparacionRepuesto, RepuestoCantidadDTO>()
                 .ForMember(dest => dest.IdRepuesto, opt => opt.MapFrom(src => src.IdRepuesto))
-                .ForMember(dest => dest.Cantidad, opt => opt.MapFrom(src => src.Cantidad));
+                .ForMember(dest => dest.Cantidad, opt => opt.MapFrom(src => src.Cantidad))
+                .ForMember(dest => dest.NombreRepuesto, opt => opt.MapFrom(src => src.Repuesto != null ? src.Repuesto.Nombre : "Repuesto"))
+                .ForMember(dest => dest.PrecioUnitario, opt => opt.MapFrom(src => src.Repuesto != null ? src.Repuesto.Precio : 0))
+                .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.Repuesto != null ? src.Repuesto.Precio * src.Cantidad : 0));
 
             // DetalleRevision mappings
             CreateMap<DetalleRevision, DetalleRevisionDTO>().ReverseMap();

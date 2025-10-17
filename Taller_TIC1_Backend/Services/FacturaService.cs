@@ -134,16 +134,21 @@ namespace Taller_TIC1_Backend.Services
                     continue;
                 }
 
-                // ¿Es reparación? - Costo base + repuestos
+                // ¿Es reparación? - El costo del servicio ya incluye los repuestos
                 var rep = await _servicioRepository.GetDetalleReparacionByServicioIdAsync(servicio.Id);
                 if (rep != null)
                 {
                     var repuestos = await _servicioRepository.GetRepuestosByDetalleReparacionAsync(rep.IdDetalleReparacionRepuesto);
-                    var costoRepuestos = repuestos.Sum(r => r.Cantidad * r.Repuesto.Precio);
-                    var costoTotal = servicio.Costo + costoRepuestos; // Costo base + repuestos
                     
-                    descripciones.Add($"Reparación: {repuestos.Count()} repuesto(s) - Total: ${costoTotal:N0}");
-                    subtotalReal += costoTotal;
+                    descripciones.Add($"Reparación - Total: ${servicio.Costo:N0}");
+                    
+                    // Agregar detalles de cada repuesto
+                    foreach (var repuesto in repuestos)
+                    {
+                        descripciones.Add($"• {repuesto.Repuesto.Nombre} ({repuesto.Cantidad}x ${repuesto.Repuesto.Precio:N0})");
+                    }
+                    
+                    subtotalReal += servicio.Costo; // El costo del servicio ya incluye los repuestos
                     continue;
                 }
 

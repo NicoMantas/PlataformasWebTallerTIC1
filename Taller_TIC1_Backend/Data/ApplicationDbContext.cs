@@ -285,7 +285,7 @@ namespace Taller_TIC1_Backend.Data
             {
                 e.ToTable("DetalleReparacionRepuesto");
                 e.HasKey(x => x.Id);
-                e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
+                e.Property(x => x.Id).HasColumnName("id"); // Removido UseIdentityColumn() para manejo manual
                 e.Property(x => x.IdRepuesto).HasColumnName("idRepuesto");
                 e.Property(x => x.Cantidad).HasColumnName("cantidad");
 

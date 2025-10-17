@@ -308,10 +308,8 @@ namespace Taller_TIC1_Backend.Services
             var detalleReparacion = await _servicioRepository.GetDetalleReparacionByServicioIdAsync(servicioId);
             if (detalleReparacion == null) return costoBase;
 
-            var repuestos = await _servicioRepository.GetRepuestosByDetalleReparacionAsync(detalleReparacion.IdDetalleReparacionRepuesto);
-            var costoRepuestos = repuestos.Sum(r => r.Cantidad * r.Repuesto.Precio);
-
-            return costoBase + costoRepuestos;
+            // El costo del servicio ya incluye los repuestos, no necesitamos sumarlos otra vez
+            return costoBase;
         }
 
         public async Task<object> GetCapacidadTallerAsync()
