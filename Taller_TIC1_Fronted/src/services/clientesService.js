@@ -1,8 +1,18 @@
 import api from './api';
 
 export async function createCliente(clienteData) {
-  const { data } = await api.post('/Cliente', clienteData);
-  return data;
+  console.log('📤 [clientesService] Enviando petición POST a /api/Cliente con datos:', clienteData);
+  try {
+    const { data } = await api.post('/Cliente', clienteData);
+    console.log('📥 [clientesService] Respuesta exitosa del servidor:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ [clientesService] Error en la petición:', error);
+    console.error('❌ [clientesService] Error response:', error.response);
+    console.error('❌ [clientesService] Error status:', error.response?.status);
+    console.error('❌ [clientesService] Error data:', error.response?.data);
+    throw error;
+  }
 }
 
 export async function getClienteById(id) {

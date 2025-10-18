@@ -133,6 +133,12 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.Modelo).HasColumnName("modelo").HasMaxLength(50);
                 e.Property(x => x.Anio).HasColumnName("anio");
                 e.Property(x => x.IdCliente).HasColumnName("idCliente").IsRequired(false);
+
+                // Relación con Cliente
+                e.HasOne<Cliente>()
+                 .WithMany()
+                 .HasForeignKey(x => x.IdCliente)
+                 .OnDelete(DeleteBehavior.SetNull);
             });
 
             // Configuración para VGasolina con relación explícita
@@ -191,7 +197,7 @@ namespace Taller_TIC1_Backend.Data
                 e.Property(x => x.Email).HasColumnName("email").HasMaxLength(255);
                 e.Property(x => x.Telefono).HasColumnName("telefono").HasColumnType("bigint");
                 e.Property(x => x.IdVehiculo).HasColumnName("idVehiculo");
-                e.Property(x => x.Activo).HasColumnName("activo").HasDefaultValue(true);
+                e.Property(x => x.Activo).HasColumnName("activo").HasDefaultValue(true).IsRequired();
 
 
                 e.HasOne(c => c.Vehiculo)

@@ -6,8 +6,18 @@ export async function listVehiculos() {
 }
 
 export async function createVehiculo(vehiculoData) {
-  const { data } = await api.post('/Vehiculo', vehiculoData);
-  return data;
+  console.log('📤 [vehiculosService] Enviando petición POST a /api/Vehiculo con datos:', vehiculoData);
+  try {
+    const { data } = await api.post('/Vehiculo', vehiculoData);
+    console.log('📥 [vehiculosService] Respuesta exitosa del servidor:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ [vehiculosService] Error en la petición:', error);
+    console.error('❌ [vehiculosService] Error response:', error.response);
+    console.error('❌ [vehiculosService] Error status:', error.response?.status);
+    console.error('❌ [vehiculosService] Error data:', error.response?.data);
+    throw error;
+  }
 }
 
 export async function updateVehiculo(id, vehiculoData) {

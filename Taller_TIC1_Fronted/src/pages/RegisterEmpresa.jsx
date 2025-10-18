@@ -24,42 +24,53 @@ const RegisterEmpresa = () => {
 
     try {
       // Paso 1: Crear el vehículo primero (sin idCliente)
-      let vehiculoId = null;
-      if (formData.placa && formData.marca && formData.modelo && formData.anio) {
-        const vehiculoData = {
-          Placa: formData.placa,
-          Marca: formData.marca,
-          Modelo: formData.modelo,
-          Anio: parseInt(formData.anio),
-          Tipo: formData.tipoVehiculo || 'Gasolina'
-          // No incluir IdCliente - será null por defecto
-        };
-        const vehiculoResponse = await createVehiculo(vehiculoData);
-        vehiculoId = vehiculoResponse.id;
+      if (!formData.placa || !formData.marca || !formData.modelo || !formData.anio) {
+        setError('Todos los campos del vehículo son obligatorios');
+        return;
       }
+
+      const vehiculoData = {
+        Placa: formData.placa,
+        Marca: formData.marca,
+        Modelo: formData.modelo,
+        Anio: parseInt(formData.anio),
+        Tipo: formData.tipoVehiculo || 'Gasolina'
+        // No incluir IdCliente - será null por defecto
+      };
+      const vehiculoResponse = await createVehiculo(vehiculoData);
+      const vehiculoId = vehiculoResponse.id;
 
       // Paso 2: Crear el cliente empresa
       const clienteData = {
-        nombre: formData.nombreEmpresa,
-        email: formData.email,
-        telefono: parseInt(formData.telefono),
-        idVehiculo: vehiculoId || 1, // Usar ID por defecto si no se creó vehículo
-        tipo: 'Empresa',
-        nit: parseInt(formData.nit),
-        representanteLegal: formData.representanteLegal
+        Nombre: formData.nombreEmpresa,
+        Email: formData.email,
+        Telefono: parseInt(formData.telefono),
+        IdVehiculo: vehiculoId,
+        Tipo: 'Empresa',
+        Nit: parseInt(formData.nit),
+        RepresentanteLegal: formData.representanteLegal
       };
       const clienteResponse = await createCliente(clienteData);
 
-      // Paso 3: Actualizar el vehículo con el idCliente si se creó uno
-      if (vehiculoId) {
-        await updateVehiculo(vehiculoId, {
-          Placa: formData.placa,
-          Marca: formData.marca,
-          Modelo: formData.modelo,
-          Anio: parseInt(formData.anio),
-          IdCliente: clienteResponse.id
-        });
+      // Verificar que el cliente se creó correctamente
+      if (!clienteResponse || !clienteResponse.id) {
+        throw new Error('Error al crear el cliente');
       }
+
+      // Pequeño delay para asegurar que la transacción se complete
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Paso 3: Actualizar el vehículo con el idCliente y subtipo
+      await updateVehiculo(vehiculoId, {
+        Placa: formData.placa,
+        Marca: formData.marca,
+        Modelo: formData.modelo,
+        Anio: parseInt(formData.anio),
+        IdCliente: clienteResponse.id,
+        Tipo: formData.tipoVehiculo || 'Gasolina',
+        Cilindraje: formData.tipoVehiculo === 'Gasolina' ? parseInt(formData.cilindraje) || null : null,
+        CapacidadBateria: formData.tipoVehiculo === 'Electrico' ? parseInt(formData.capacidadBateria) || null : null
+      });
 
       // Paso 4: Registrar en el sistema de autenticación
       await registerCliente({

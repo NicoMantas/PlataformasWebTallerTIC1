@@ -58,8 +58,15 @@ namespace Taller_TIC1_Backend.Services
                     Activo = true // Por defecto, los clientes nuevos están activos
                 };
 
+                // Asegurar que Activo esté explícitamente asignado
+                cliente.Activo = true;
+                
+                Console.WriteLine($"[ClienteService] Creando cliente con Activo = {cliente.Activo}");
+
                 _context.Clientes.Add(cliente);
                 await _context.SaveChangesAsync();
+                
+                Console.WriteLine($"[ClienteService] Cliente guardado con ID: {cliente.Id}, Activo: {cliente.Activo}");
 
                 // Crear subtipo seg�n el tipo especificado
                 if (!string.IsNullOrEmpty(clienteCreateDto.Tipo))
@@ -67,16 +74,24 @@ namespace Taller_TIC1_Backend.Services
                     switch (clienteCreateDto.Tipo.ToLower())
                     {
                         case "natural":
-                            if (clienteCreateDto.Cedula.HasValue && !string.IsNullOrEmpty(clienteCreateDto.Apellido))
+                            // Validar campos requeridos para cliente natural
+                            if (!clienteCreateDto.Cedula.HasValue)
                             {
-                                var cNatural = new CNatural
-                                {
-                                    IdCliente = cliente.Id,
-                                    Cedula = clienteCreateDto.Cedula.Value,
-                                    Apellido = clienteCreateDto.Apellido
-                                };
-                                _context.ClientesNaturales.Add(cNatural);
+                                throw new Exception("La cédula es requerida para cliente natural");
                             }
+                            
+                            if (string.IsNullOrEmpty(clienteCreateDto.Apellido))
+                            {
+                                throw new Exception("El apellido es requerido para cliente natural");
+                            }
+
+                            var cNatural = new CNatural
+                            {
+                                IdCliente = cliente.Id,
+                                Cedula = clienteCreateDto.Cedula.Value,
+                                Apellido = clienteCreateDto.Apellido
+                            };
+                            _context.ClientesNaturales.Add(cNatural);
                             break;
 
                         case "empresa":
