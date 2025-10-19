@@ -87,47 +87,241 @@ namespace Taller_TIC1_Backend.Controllers
         [HttpGet("{id:int}/repuestos")]
         public async Task<ActionResult<IEnumerable<DetalleReparacionRepuesto>>> GetRepuestosByReparacion(int id)
         {
+            // Buscar el detalle de reparación para este servicio
             var detalleReparacion = await _context.DetallesReparacion
-                .Include(dr => dr.DetalleReparacionRepuesto)
                 .FirstOrDefaultAsync(dr => dr.IdServicio == id);
             
-            if (detalleReparacion == null) return NotFound();
+            if (detalleReparacion == null)
+            {
+                // Si no existe detalle de reparación, devolver lista vacía
+                return Ok(new List<DetalleReparacionRepuesto>());
+            }
 
-            var repuestos = await _context.DetallesReparacionRepuesto
-                .Where(drr => drr.Id == detalleReparacion.IdDetalleReparacionRepuesto)
+            // Buscar el repuesto relacionado con este detalle de reparación
+            var repuesto = await _context.DetallesReparacionRepuesto
                 .Include(drr => drr.Repuesto)
-                .ToListAsync();
+                .FirstOrDefaultAsync(drr => drr.Id == detalleReparacion.IdDetalleReparacionRepuesto);
+
+            var repuestos = new List<DetalleReparacionRepuesto>();
+            if (repuesto != null)
+            {
+                repuestos.Add(repuesto);
+            }
 
             return Ok(repuestos);
         }
 
         // POST: api/DetalleReparacion/{id}/repuestos
         [HttpPost("{id:int}/repuestos")]
-        public async Task<ActionResult<DetalleReparacionRepuesto>> AddRepuestoToReparacion(int id, [FromBody] AddRepuestoDto dto)
+        public async Task<ActionResult<object>> AddRepuestoToReparacion(int id, [FromBody] AddRepuestoDto dto)
         {
-            var detalleReparacion = await _context.DetallesReparacion
+            try
+            {
+                // Verificar que el servicio existe
+                var servicio = await _context.Servicios.FindAsync(id);
+                if (servicio == null) return NotFound("Servicio no encontrado");
+
+                // Verificar que el repuesto existe y tiene stock suficiente
+                var repuesto = await _context.Repuestos.FindAsync(dto.IdRepuesto);
+                if (repuesto == null) return NotFound("Repuesto no encontrado");
+                if (repuesto.Stock < dto.Cantidad) return BadRequest($"Stock insuficiente. Disponible: {repuesto.Stock}, Solicitado: {dto.Cantidad}");
+
+                // Verificar si ya existe un detalle de reparación para este servicio
+                var detalleReparacionExistente = await _context.DetallesReparacion
                 .FirstOrDefaultAsync(dr => dr.IdServicio == id);
             
-            if (detalleReparacion == null) return NotFound();
+                DetalleReparacionRepuesto nuevoRepuesto;
+                decimal costoAnterior = 0;
 
-            // Crear o encontrar el contenedor de repuestos
-            var detalleReparacionRepuesto = new DetalleReparacionRepuesto
-            {
+                if (detalleReparacionExistente == null)
+                {
+                    // Obtener el siguiente ID disponible
+                    var maxId = await _context.DetallesReparacionRepuesto
+                        .MaxAsync(drr => (int?)drr.Id) ?? 0;
+                    var nuevoId = maxId + 1;
+
+                    // Crear nuevo repuesto
+                    nuevoRepuesto = new DetalleReparacionRepuesto
+                    {
+                        Id = nuevoId,
+                        IdRepuesto = dto.IdRepuesto,
+                        Cantidad = dto.Cantidad
+                    };
+
+                    _context.DetallesReparacionRepuesto.Add(nuevoRepuesto);
+                    await _context.SaveChangesAsync();
+
+                    // Crear detalle de reparación
+                    var nuevoDetalleReparacion = new DetalleReparacion
+                    {
+                        IdServicio = id,
+                        IdDetalleReparacionRepuesto = nuevoRepuesto.Id
+                    };
+
+                    _context.DetallesReparacion.Add(nuevoDetalleReparacion);
+                }
+                else
+                {
+                    // Buscar el repuesto existente
+                    var repuestoExistente = await _context.DetallesReparacionRepuesto
+                        .FirstOrDefaultAsync(drr => drr.Id == detalleReparacionExistente.IdDetalleReparacionRepuesto);
+
+                    if (repuestoExistente != null)
+                    {
+                        // Calcular costo anterior
+                        var repuestoAnterior = await _context.Repuestos.FindAsync(repuestoExistente.IdRepuesto);
+                        if (repuestoAnterior != null)
+                        {
+                            costoAnterior = repuestoAnterior.Precio * repuestoExistente.Cantidad;
+                        }
+
+                        // Si es el mismo repuesto, sumar cantidad
+                        if (repuestoExistente.IdRepuesto == dto.IdRepuesto)
+                        {
+                            repuestoExistente.Cantidad += dto.Cantidad;
+                            nuevoRepuesto = repuestoExistente;
+                        }
+                        else
+                        {
+                            return BadRequest("Esta reparación ya tiene un repuesto asignado. Solo se permite un repuesto por reparación.");
+                        }
+                    }
+                    else
+                    {
+                        // Obtener el siguiente ID disponible
+                        var maxId = await _context.DetallesReparacionRepuesto
+                            .MaxAsync(drr => (int?)drr.Id) ?? 0;
+                        var nuevoId = maxId + 1;
+
+                        // Crear nuevo repuesto para reparación existente
+                        nuevoRepuesto = new DetalleReparacionRepuesto
+                        {
+                            Id = nuevoId,
                 IdRepuesto = dto.IdRepuesto,
                 Cantidad = dto.Cantidad
             };
 
-            _context.DetallesReparacionRepuesto.Add(detalleReparacionRepuesto);
+                        _context.DetallesReparacionRepuesto.Add(nuevoRepuesto);
+                        await _context.SaveChangesAsync();
+
+                        detalleReparacionExistente.IdDetalleReparacionRepuesto = nuevoRepuesto.Id;
+                    }
+                }
+
+                // Calcular nuevo costo
+                decimal nuevoCosto = repuesto.Precio * dto.Cantidad;
+
+                // Actualizar costo del servicio
+                servicio.Costo = servicio.Costo - costoAnterior + nuevoCosto;
+
+                // Reducir stock
+                repuesto.Stock -= dto.Cantidad;
+
+                // Guardar cambios
             await _context.SaveChangesAsync();
 
-            // Actualizar la referencia en DetalleReparacion si es necesario
-            if (detalleReparacion.IdDetalleReparacionRepuesto == 0)
-            {
-                detalleReparacion.IdDetalleReparacionRepuesto = detalleReparacionRepuesto.Id;
-                await _context.SaveChangesAsync();
-            }
+                // Incluir repuesto en respuesta
+                nuevoRepuesto.Repuesto = repuesto;
 
-            return CreatedAtAction(nameof(GetRepuestosByReparacion), new { id }, detalleReparacionRepuesto);
+                var response = new
+                {
+                    detalleReparacionRepuesto = nuevoRepuesto,
+                    costoTotalServicio = servicio.Costo,
+                    stockActualizado = repuesto.Stock
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                // Log más detallado del error
+                var innerException = ex.InnerException?.Message ?? "Sin inner exception";
+                var stackTrace = ex.StackTrace ?? "Sin stack trace";
+                
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}\nInner Exception: {innerException}\nStackTrace: {stackTrace}");
+            }
+        }
+
+        // PUT: api/DetalleReparacion/{id}/repuestos
+        [HttpPut("{id:int}/repuestos")]
+        public async Task<ActionResult<object>> UpdateRepuestoInReparacion(int id, [FromBody] AddRepuestoDto dto)
+        {
+            try
+            {
+                // Verificar que el servicio existe
+                var servicio = await _context.Servicios.FindAsync(id);
+                if (servicio == null) return NotFound("Servicio no encontrado");
+
+                // Verificar que el repuesto existe y tiene stock suficiente
+                var repuesto = await _context.Repuestos.FindAsync(dto.IdRepuesto);
+                if (repuesto == null) return NotFound("Repuesto no encontrado");
+
+                // Buscar el detalle de reparación
+                var detalleReparacion = await _context.DetallesReparacion
+                    .FirstOrDefaultAsync(dr => dr.IdServicio == id);
+                
+                if (detalleReparacion == null) return NotFound("No se encontró detalle de reparación");
+
+                // Buscar el repuesto existente
+                var repuestoExistente = await _context.DetallesReparacionRepuesto
+                    .FirstOrDefaultAsync(drr => drr.Id == detalleReparacion.IdDetalleReparacionRepuesto);
+
+                if (repuestoExistente == null) return NotFound("No se encontró repuesto en esta reparación");
+
+                // Obtener el repuesto anterior para calcular costos
+                var repuestoAnterior = await _context.Repuestos.FindAsync(repuestoExistente.IdRepuesto);
+                decimal costoAnterior = 0;
+                if (repuestoAnterior != null)
+                {
+                    costoAnterior = repuestoAnterior.Precio * repuestoExistente.Cantidad;
+                }
+
+                // Calcular la diferencia de stock
+                var diferenciaStock = dto.Cantidad - repuestoExistente.Cantidad;
+                
+                // Verificar que hay suficiente stock disponible
+                if (repuesto.Stock < diferenciaStock) 
+                    return BadRequest($"Stock insuficiente. Disponible: {repuesto.Stock}, Necesario: {diferenciaStock}");
+
+                // Calcular el nuevo costo
+                decimal nuevoCosto = repuesto.Precio * dto.Cantidad;
+
+                // Actualizar el costo del servicio
+                servicio.Costo = servicio.Costo - costoAnterior + nuevoCosto;
+
+                // Actualizar la cantidad y repuesto
+                repuestoExistente.Cantidad = dto.Cantidad;
+                repuestoExistente.IdRepuesto = dto.IdRepuesto;
+
+                // Actualizar el stock del repuesto anterior (devolver stock)
+                if (repuestoAnterior != null && repuestoAnterior.Id != repuesto.Id)
+                {
+                    repuestoAnterior.Stock += repuestoExistente.Cantidad;
+                }
+
+                // Actualizar el stock del nuevo repuesto
+                repuesto.Stock -= diferenciaStock;
+
+                // Guardar todos los cambios de una vez
+                await _context.SaveChangesAsync();
+
+                // Incluir el repuesto en la respuesta
+                repuestoExistente.Repuesto = repuesto;
+
+                // Crear respuesta con información adicional
+                var response = new
+                {
+                    detalleReparacionRepuesto = repuestoExistente,
+                    costoTotalServicio = servicio.Costo,
+                    stockActualizado = repuesto.Stock
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
         }
     }
 }

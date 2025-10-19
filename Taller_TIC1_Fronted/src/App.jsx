@@ -9,8 +9,6 @@ import RegisterEmpresa from './pages/RegisterEmpresa';
 import HomeCliente from './pages/HomeCliente';
 import HomeEmpresa from './pages/HomeEmpresa';
 import HomeEmpleado from './pages/HomeEmpleado';
-import HomeEmpleadoSecretaria from './pages/HomeEmpleadoSecretaria';
-import SecretariaServicios from './pages/SecretariaServicios';
 import './App.css';
 import { getCurrentUser } from './services/authService';
 
@@ -43,8 +41,6 @@ function App() {
           <Route path="/home/empresa" element={<PrivateRoute element={<HomeEmpresa />} allowed={(u)=>u.tipoUsuario==='cliente'} />} />
           <Route path="/home/empleado/:tipo" element={<PrivateRoute element={<HomeEmpleado />} allowed={(u)=>u.tipoUsuario==='empleado'} />} />
 
-          {/* Contenedor Secretaría con subrutas */}
-          <Route path="/home/empleado/secretaria/servicios" element={<PrivateRoute element={<SecretariaServicios />} allowed={(u)=>u.tipoUsuario==='empleado' && (u.infoEspecifica?.tipoEmpleado==='Secretaria' || u.infoEspecifica?.tipoEmpleado==='Administrador')} />} />
           
           {/* Ruta de fallback - redirigir a la página principal */}
           <Route path="*" element={<Navigate to="/" replace />} />

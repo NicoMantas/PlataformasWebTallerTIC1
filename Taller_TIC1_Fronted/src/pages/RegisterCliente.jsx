@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import AuthForm from '../components/AuthForm';
+import VehiculoFormSection from '../components/VehiculoFormSection';
 import '../styles/RegisterCliente.css';
 import { registerCliente } from '../services/authService';
 import { createCliente } from '../services/clientesService';
@@ -22,55 +23,90 @@ const RegisterCliente = () => {
     setError('');
 
     try {
+      console.log('🚀 [RegisterCliente] Iniciando registro con datos:', formData);
+      
       // Paso 1: Crear el vehículo primero (sin idCliente)
-      let vehiculoId = null;
-      if (formData.placa && formData.marca && formData.modelo && formData.anio) {
-        const vehiculoData = {
-          Placa: formData.placa,
-          Marca: formData.marca,
-          Modelo: formData.modelo,
-          Anio: parseInt(formData.anio),
-          Tipo: formData.tipoVehiculo || 'Gasolina'
-          // No incluir IdCliente - será null por defecto
-        };
-        const vehiculoResponse = await createVehiculo(vehiculoData);
-        vehiculoId = vehiculoResponse.id;
+      if (!formData.placa || !formData.marca || !formData.modelo || !formData.anio) {
+        setError('Todos los campos del vehículo son obligatorios');
+        return;
       }
+
+      const vehiculoData = {
+        Placa: formData.placa,
+        Marca: formData.marca,
+        Modelo: formData.modelo,
+        Anio: parseInt(formData.anio),
+        Tipo: formData.tipoVehiculo || 'Gasolina',
+        Cilindraje: formData.tipoVehiculo === 'Gasolina' ? parseInt(formData.cilindraje) || null : null,
+        CapacidadBateria: formData.tipoVehiculo === 'Electrico' ? parseInt(formData.capacidadBateria) || null : null
+        // No incluir IdCliente - será null por defecto
+      };
+      
+      console.log('🚗 [RegisterCliente] Creando vehículo con datos:', vehiculoData);
+      const vehiculoResponse = await createVehiculo(vehiculoData);
+      console.log('✅ [RegisterCliente] Vehículo creado exitosamente:', vehiculoResponse);
+      const vehiculoId = vehiculoResponse.id;
 
       // Paso 2: Crear el cliente natural
       const clienteData = {
-        nombre: formData.nombre,
-        email: formData.email,
-        telefono: parseInt(formData.telefono),
-        idVehiculo: vehiculoId || 1, // Usar ID por defecto si no se creó vehículo
-        tipo: 'Natural',
-        cedula: parseInt(formData.cedula),
-        apellido: formData.apellido
+        Nombre: formData.nombre,
+        Email: formData.email,
+        Telefono: parseInt(formData.telefono),
+        IdVehiculo: vehiculoId,
+        Tipo: 'Natural',
+        Cedula: parseInt(formData.cedula),
+        Apellido: formData.apellido
       };
+      
+      console.log('👤 [RegisterCliente] Creando cliente con datos:', clienteData);
       const clienteResponse = await createCliente(clienteData);
+      console.log('✅ [RegisterCliente] Cliente creado exitosamente:', clienteResponse);
 
-      // Paso 3: Actualizar el vehículo con el idCliente si se creó uno
-      if (vehiculoId) {
-        await updateVehiculo(vehiculoId, {
-          Placa: formData.placa,
-          Marca: formData.marca,
-          Modelo: formData.modelo,
-          Anio: parseInt(formData.anio),
-          IdCliente: clienteResponse.id
-        });
+      // Verificar que el cliente se creó correctamente
+      if (!clienteResponse || !clienteResponse.id) {
+        console.error('❌ [RegisterCliente] Error: Cliente no se creó correctamente:', clienteResponse);
+        throw new Error('Error al crear el cliente');
       }
 
+      // Pequeño delay para asegurar que la transacción se complete
+      console.log('⏳ [RegisterCliente] Esperando 200ms para completar transacción...');
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Paso 3: Actualizar el vehículo con el idCliente y subtipo
+      const vehiculoUpdateData = {
+        Placa: formData.placa,
+        Marca: formData.marca,
+        Modelo: formData.modelo,
+        Anio: parseInt(formData.anio),
+        IdCliente: clienteResponse.id,
+        Tipo: formData.tipoVehiculo || 'Gasolina',
+        Cilindraje: formData.tipoVehiculo === 'Gasolina' ? parseInt(formData.cilindraje) || null : null,
+        CapacidadBateria: formData.tipoVehiculo === 'Electrico' ? parseInt(formData.capacidadBateria) || null : null
+      };
+      
+      console.log('🔄 [RegisterCliente] Actualizando vehículo con datos:', vehiculoUpdateData);
+      await updateVehiculo(vehiculoId, vehiculoUpdateData);
+      console.log('✅ [RegisterCliente] Vehículo actualizado exitosamente');
+
       // Paso 4: Registrar en el sistema de autenticación
-      await registerCliente({
+      const authData = {
         email: formData.email,
         password: formData.password,
         idTaller: Number(import.meta.env.VITE_ID_TALLER) || 1,
         idCliente: clienteResponse.id
-      });
+      };
+      
+      console.log('🔐 [RegisterCliente] Registrando usuario con datos:', authData);
+      await registerCliente(authData);
+      console.log('✅ [RegisterCliente] Usuario registrado exitosamente');
 
       // Redirigir al Home del cliente
+      console.log('🏠 [RegisterCliente] Redirigiendo al home del cliente');
       navigate('/home/cliente');
     } catch (e) {
+      console.error('❌ [RegisterCliente] Error completo:', e);
+      console.error('❌ [RegisterCliente] Error message:', e?.message);
+      console.error('❌ [RegisterCliente] Error stack:', e?.stack);
       setError(e?.message || 'Error al registrar cliente');
     } finally {
       setLoading(false);
@@ -85,20 +121,17 @@ const RegisterCliente = () => {
     { name: 'telefono', type: 'tel', label: 'Teléfono', required: true },
     { name: 'email', type: 'email', label: 'Correo Electrónico', required: true },
     
-    // Información del vehículo (opcional)
-    { name: 'placa', type: 'text', label: 'Placa del Vehículo', required: false },
-    { name: 'marca', type: 'text', label: 'Marca del Vehículo', required: false },
-    { name: 'modelo', type: 'text', label: 'Modelo del Vehículo', required: false },
-    { name: 'anio', type: 'number', label: 'Año del Vehículo', required: false },
-    { name: 'tipoVehiculo', type: 'select', label: 'Tipo de Vehículo', required: false, options: [
-      { value: 'Gasolina', label: 'Gasolina' },
-      { value: 'Electrico', label: 'Eléctrico' },
-      { value: 'Hibrido', label: 'Híbrido' }
-    ]},
-    
     // Credenciales
     { name: 'password', type: 'password', label: 'Contraseña', required: true },
     { name: 'confirmPassword', type: 'password', label: 'Confirmar Contraseña', required: true }
+  ];
+
+  // Sección personalizada para el vehículo (se inserta después del campo email - índice 4)
+  const customSections = [
+    {
+      afterFieldIndex: 4, // Después del campo email
+      component: <VehiculoFormSection />
+    }
   ];
 
   return (
@@ -119,6 +152,7 @@ const RegisterCliente = () => {
             onSubmit={handleRegister}
             submitText={loading ? "Registrando..." : "Registrarse"}
             disabled={loading}
+            customSections={customSections}
           />
           
           <div className="auth-links">

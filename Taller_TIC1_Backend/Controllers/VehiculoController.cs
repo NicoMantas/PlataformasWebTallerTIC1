@@ -83,26 +83,44 @@ namespace Taller_TIC1_Backend.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<VehiculoResponseDto>> Update(int id, VehiculoCreateDto vehiculoUpdateDto)
+        public async Task<ActionResult<VehiculoResponseDto>> Update(int id, VehiculoUpdateDto vehiculoUpdateDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var vehiculo = await _vehiculoService.UpdateAsync(id, vehiculoUpdateDto);
-            if (vehiculo == null)
-                return NotFound($"Vehículo con ID {id} no encontrado");
+            try
+            {
+                var vehiculo = await _vehiculoService.UpdateAsync(id, vehiculoUpdateDto);
+                if (vehiculo == null)
+                    return NotFound($"Vehículo con ID {id} no encontrado");
 
-            return Ok(vehiculo);
+                return Ok(vehiculo);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al actualizar el vehículo: {ex.Message}");
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
-            var deleted = await _vehiculoService.DeleteAsync(id);
-            if (!deleted)
-                return NotFound($"Vehículo con ID {id} no encontrado");
+            try
+            {
+                var deleted = await _vehiculoService.DeleteAsync(id);
+                if (!deleted)
+                    return NotFound($"Vehículo con ID {id} no encontrado");
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al eliminar el vehículo: {ex.Message}");
+            }
         }
     }
 }

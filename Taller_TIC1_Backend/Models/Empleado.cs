@@ -12,6 +12,10 @@ namespace Taller_TIC1_Backend.Models
         public double Salario { get; set; }
         public DateTime FechaContratacion { get; set; }
         public int IdTipoEmpleado { get; set; }
+        public bool Activo { get; set; } = true;
+        public string? DetallesDesactivacion { get; set; } = null;
+        public DateTime? FechaDesactivacion { get; set; } = null;
+        public DateTime? FechaActivacion { get; set; } = null;
 
         // Propiedad de navegación
         [JsonIgnore]

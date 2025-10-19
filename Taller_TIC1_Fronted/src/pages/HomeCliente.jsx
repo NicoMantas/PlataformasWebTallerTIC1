@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import VehiculosManager from '../components/VehiculosManager';
-import { createServicio, listActivosByCliente, listHistorialByCliente, cancelarServicio, descargarReservaPdf } from '../services/serviciosService';
+import ProgresoServicio from '../components/ProgresoServicio';
+import { createServicio, listActivosByCliente, listHistorialByCliente, cancelarServicio, descargarReservaPdf, getCapacidadTaller } from '../services/serviciosService';
 import '../styles/HomeCliente.css';
 import { getCurrentUser } from '../services/authService';
 
@@ -16,6 +17,9 @@ const HomeCliente = () => {
   const [activos, setActivos] = useState([]);
   const [historial, setHistorial] = useState([]);
   const [tab, setTab] = useState('servicios'); // servicios | activos | historial
+  const [showProgreso, setShowProgreso] = useState(false);
+  const [servicioProgreso, setServicioProgreso] = useState(null);
+  const [capacidadTaller, setCapacidadTaller] = useState(null);
 
   useEffect(() => {
     // Get current user information
@@ -26,6 +30,7 @@ const HomeCliente = () => {
   useEffect(() => {
     if (user?.infoEspecifica?.id) {
       refreshPedidos();
+      loadCapacidadTaller();
     }
   }, [user]);
 
@@ -46,6 +51,20 @@ const HomeCliente = () => {
     }
   };
 
+  const loadCapacidadTaller = async () => {
+    try {
+      const capacidad = await getCapacidadTaller();
+      setCapacidadTaller(capacidad);
+    } catch (e) {
+      console.error('Error al cargar capacidad del taller:', e);
+    }
+  };
+
+  const handleVerProgreso = (servicioId) => {
+    setServicioProgreso(servicioId);
+    setShowProgreso(true);
+  };
+
   const handleReservar = async (servicioId) => {
     if (!selectedVehiculo) {
       alert('Debes seleccionar un vehículo antes de reservar');
@@ -55,6 +74,12 @@ const HomeCliente = () => {
     
     const servicio = serviciosBasicos.find(s => s.id === servicioId);
     if (!servicio) return;
+    
+    // Validar capacidad del taller
+    if (capacidadTaller && !capacidadTaller.capacidadDisponible) {
+      alert(`La capacidad del taller está al límite. Actualmente hay ${capacidadTaller.serviciosPendientes} servicios pendientes. La capacidad máxima es de ${capacidadTaller.capacidadMaxima} servicios. Por favor, intente más tarde cuando se liberen espacios.`);
+      return;
+    }
     
     const clienteId = user?.infoEspecifica?.id || user?.idCliente;
     
@@ -67,7 +92,8 @@ const HomeCliente = () => {
         tipoServicio: tipoServicio,
         idCliente: clienteId,
         idVehiculo: selectedVehiculo.id,
-        detallesRevision: esRevision ? `${servicio.nombre}: ${servicio.descripcion}` : undefined
+        detallesRevision: esRevision ? `${servicio.nombre}: ${servicio.descripcion}` : undefined,
+        costo: servicio.costo
       });
       
       const blob = await descargarReservaPdf(servicioData);
@@ -80,6 +106,7 @@ const HomeCliente = () => {
       a.remove();
       URL.revokeObjectURL(url);
       await refreshPedidos();
+      await loadCapacidadTaller(); // Recargar capacidad después de crear servicio
       alert(`Reserva para ${servicio.nombre} creada con éxito`);
     } catch (e) {
       alert(e?.message || 'Error al reservar');
@@ -166,7 +193,7 @@ const HomeCliente = () => {
         'Verificación de correas y tensores',
         'Limpieza de sistemas de escape'
       ],
-      notas: 'Costo base sin incluir repuestos necesarios'
+      notas: 'Costo base sin incluir repuestos necesarios. Repuestos adicionales se cobrarán por separado.'
     },
     {
       id: 'reparacion-frenos',
@@ -182,7 +209,7 @@ const HomeCliente = () => {
         'Verificación de sistema ABS',
         'Prueba de funcionamiento'
       ],
-      notas: 'Incluye mano de obra, repuestos por separado'
+      notas: 'Incluye mano de obra. Repuestos adicionales se cobrarán por separado.'
     },
     {
       id: 'reparacion-suspension',
@@ -198,7 +225,7 @@ const HomeCliente = () => {
         'Verificación de geometría',
         'Alineación básica incluida'
       ],
-      notas: 'Incluye alineación si no requiere repuestos mayores'
+      notas: 'Incluye alineación si no requiere repuestos mayores. Repuestos adicionales se cobrarán por separado.'
     },
     {
       id: 'reparacion-electrica',
@@ -214,7 +241,7 @@ const HomeCliente = () => {
         'Verificación de fusibles y relés',
         'Prueba de sistemas computarizados'
       ],
-      notas: 'Diagnóstico completo incluido'
+      notas: 'Diagnóstico completo incluido. Repuestos adicionales se cobrarán por separado.'
     },
     {
       id: 'reparacion-climatizacion',
@@ -230,7 +257,7 @@ const HomeCliente = () => {
         'Verificación de controles y sensores',
         'Limpieza del sistema'
       ],
-      notas: 'Incluye recarga de gas estándar'
+      notas: 'Incluye recarga de gas estándar. Repuestos adicionales se cobrarán por separado.'
     }
   ];
 
@@ -387,19 +414,28 @@ const HomeCliente = () => {
               {activos.map((s) => {
                 const tipoRaw = s.tipoServicio || (s.detallesRevision ? 'Revision' : 'Reparacion');
                 const tipoPretty = tipoRaw === 'Revision' ? 'Revisión' : 'Reparación';
+                const fechaCreacion = s.fechaCreacion ? new Date(s.fechaCreacion).toLocaleDateString() : 'N/D';
+                const vehiculoInfo = s.vehiculoInfo || 'N/D';
+                
                 return (
                 <div key={s.id} className="card">
                   <div className="card-header">
-                    <div className="card-title">{tipoPretty}</div>
+                    <div className="card-title">Servicio #{s.id} · {tipoPretty}</div>
                     <div className="card-subtitle">Estado: {s.estadoDescripcion}</div>
                   </div>
                   <div className="servicio-info">
                     <p><strong>Cliente:</strong> {s.clienteNombre || 'N/D'}</p>
+                    <p><strong>Vehículo:</strong> {vehiculoInfo}</p>
                     {(tipoRaw === 'Revision') && s.detallesRevision && (
                       <p><strong>Detalles:</strong> {s.detallesRevision}</p>
                     )}
+                    <p><strong>Fecha Creación:</strong> {fechaCreacion}</p>
+                    {s.empleadoNombre && (
+                      <p><strong>Mecánico Asignado:</strong> {s.empleadoNombre}</p>
+                    )}
                   </div>
                   <div style={{ display: 'flex', gap: '0.75rem', marginTop: '8px' }}>
+                    <button className="btn-secondary" onClick={() => handleVerProgreso(s.id)}>Ver Progreso</button>
                     <button className="btn-secondary" onClick={async () => {
                       const blob = await descargarReservaPdf(s);
                       const url = URL.createObjectURL(blob);
@@ -419,11 +455,26 @@ const HomeCliente = () => {
           ) : tab === 'historial' ? (
             <div className="servicios-section">
               <h2>Historial</h2>
-              {historial.map((s) => (
+              {historial.map((s) => {
+                const tipoPretty = s.tipoServicio === 'Revision' ? 'Revisión' : 'Reparación';
+                const fechaCreacion = s.fechaCreacion ? new Date(s.fechaCreacion).toLocaleDateString() : 'N/D';
+                const vehiculoInfo = s.vehiculoInfo || 'N/D';
+                
+                return (
                 <div key={s.id} className="card">
                   <div className="card-header">
-                    <div className="card-title">{s.tipoServicio}</div>
+                    <div className="card-title">Servicio #{s.id} · {tipoPretty}</div>
                     <div className="card-subtitle">Estado: {s.estadoDescripcion}</div>
+                  </div>
+                  <div className="servicio-info">
+                    <p><strong>Vehículo:</strong> {vehiculoInfo}</p>
+                    {s.detallesRevision && (
+                      <p><strong>Detalles:</strong> {s.detallesRevision}</p>
+                    )}
+                    <p><strong>Fecha Creación:</strong> {fechaCreacion}</p>
+                    {s.empleadoNombre && (
+                      <p><strong>Mecánico:</strong> {s.empleadoNombre}</p>
+                    )}
                   </div>
                   <div style={{ display: 'flex', gap: '0.75rem' }}>
                     <button className="btn-secondary" onClick={async () => {
@@ -439,13 +490,46 @@ const HomeCliente = () => {
                     }}>Descargar PDF</button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <VehiculosManager 
               onVehiculoSelect={(vehiculo) => {
                 setSelectedVehiculo(vehiculo);
                 setShowVehiculos(false);
+              }}
+            />
+          )}
+
+          {/* Indicador de capacidad del taller */}
+          {capacidadTaller && (
+            <div className="capacidad-indicator">
+              <div className="capacidad-info">
+                <span className="capacidad-label">Capacidad del Taller:</span>
+                <span className={`capacidad-status ${capacidadTaller.capacidadDisponible ? 'disponible' : 'lleno'}`}>
+                  {capacidadTaller.serviciosPendientes}/{capacidadTaller.capacidadMaxima} servicios
+                </span>
+              </div>
+              <div className="capacidad-bar">
+                <div 
+                  className="capacidad-fill" 
+                  style={{ 
+                    width: `${capacidadTaller.porcentajeOcupacion}%`,
+                    backgroundColor: capacidadTaller.porcentajeOcupacion > 80 ? '#ef4444' : capacidadTaller.porcentajeOcupacion > 60 ? '#f59e0b' : '#10b981'
+                  }}
+                ></div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal de progreso del servicio */}
+          {showProgreso && (
+            <ProgresoServicio
+              servicioId={servicioProgreso}
+              onClose={() => {
+                setShowProgreso(false);
+                setServicioProgreso(null);
               }}
             />
           )}

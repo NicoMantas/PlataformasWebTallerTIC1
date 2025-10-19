@@ -21,16 +21,30 @@ export async function login({ email, password }) {
 }
 
 export async function registerCliente({ email, password, idCliente, idTaller }) {
-  const { data } = await api.post('/Auth/register/cliente', {
+  const authData = {
     email,
     password,
     idTaller,
     idCliente
-  });
-  if (!data?.success) {
-    throw new Error(data?.message || 'Error al registrar cliente');
+  };
+  
+  console.log('📤 [authService] Enviando petición POST a /api/Auth/register/cliente con datos:', authData);
+  try {
+    const { data } = await api.post('/Auth/register/cliente', authData);
+    console.log('📥 [authService] Respuesta exitosa del servidor:', data);
+    
+    if (!data?.success) {
+      console.error('❌ [authService] Error en la respuesta del servidor:', data?.message);
+      throw new Error(data?.message || 'Error al registrar cliente');
+    }
+    return data;
+  } catch (error) {
+    console.error('❌ [authService] Error en la petición:', error);
+    console.error('❌ [authService] Error response:', error.response);
+    console.error('❌ [authService] Error status:', error.response?.status);
+    console.error('❌ [authService] Error data:', error.response?.data);
+    throw error;
   }
-  return data;
 }
 
 export async function registerEmpleado({ email, password, idEmpleado, idTaller }) {

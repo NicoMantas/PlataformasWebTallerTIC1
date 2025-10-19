@@ -58,6 +58,20 @@ namespace Taller_TIC1_Backend.Repositories
             if (vehiculo == null)
                 return false;
 
+            // Check if the vehicle is still referenced by any client
+            var isReferencedByCliente = await _context.Clientes.AnyAsync(c => c.IdVehiculo == id);
+            if (isReferencedByCliente)
+            {
+                throw new InvalidOperationException($"No se puede eliminar el vehículo con ID {id} porque está siendo utilizado por uno o más clientes.");
+            }
+
+            // Check if the vehicle is still referenced by any service
+            var isReferencedByServicio = await _context.Servicios.AnyAsync(s => s.IdVehiculo == id);
+            if (isReferencedByServicio)
+            {
+                throw new InvalidOperationException($"No se puede eliminar el vehículo con ID {id} porque está siendo utilizado por uno o más servicios.");
+            }
+
             _context.Vehiculos.Remove(vehiculo);
             await _context.SaveChangesAsync();
             return true;

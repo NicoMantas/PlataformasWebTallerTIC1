@@ -138,6 +138,19 @@
   background: #b91c1c; /* darker shade of red-700 to match tailwind scale */
 }
 
+.btn-info {
+  background: #17a2b8;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-info:hover {
+  background: #138496;
+}
+
 .loading {
   text-align: center;
   padding: 20px;

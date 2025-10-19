@@ -10,5 +10,6 @@ namespace Taller_TIC1_Backend.Services.Interfaces
         Task<FacturaDTO> UpdateFacturaAsync(int id, FacturaDTO facturaDto);
         Task<bool> DeleteFacturaAsync(int id);
         Task<FacturaDTO?> GetFacturaByOrdenIdAsync(int ordenId);
+        Task<FacturaDTO?> GetFacturaByServicioIdAsync(int servicioId);
     }
 }

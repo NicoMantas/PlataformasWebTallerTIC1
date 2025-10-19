@@ -47,11 +47,13 @@ const HomeEmpresa = () => {
       return;
     }
     const clienteId = user?.infoEspecifica?.id || user?.idCliente;
+    const servicioBasico = serviciosBasicos.find(s => s.id === tipo);
     const servicio = await createServicio({
       tipoServicio: tipo,
       idCliente: clienteId,
       idVehiculo: selectedVehiculo.id,
-      detallesRevision: tipo === 'revision' ? 'Revisión corporativa' : undefined
+      detallesRevision: tipo === 'revision' ? 'Revisión corporativa' : undefined,
+      costo: servicioBasico?.costo || 0
     });
     const blob = await descargarReservaPdf(servicio);
     const url = URL.createObjectURL(blob);
@@ -72,8 +74,8 @@ const HomeEmpresa = () => {
   };
 
   const serviciosBasicos = [
-    { id: 'revision', nombre: 'Revisión', costo: 0, descripcion: 'Inspección general del vehículo para evaluar su estado.' },
-    { id: 'reparacion', nombre: 'Reparación', costo: 0, descripcion: 'Reparación de componentes y sistemas del vehículo.' }
+    { id: 'revision', nombre: 'Revisión', costo: 80000, descripcion: 'Inspección general del vehículo para evaluar su estado.' },
+    { id: 'reparacion', nombre: 'Reparación', costo: 120000, descripcion: 'Reparación de componentes y sistemas del vehículo. Incluye mano de obra, repuestos por separado.' }
   ];
 
   return (
@@ -140,7 +142,11 @@ const HomeEmpresa = () => {
                       <div className="mb-2">
                         <p className="mb-1"><strong>Duración estimada:</strong> 1-3 horas</p>
                         <p className="mb-1"><strong>Incluye:</strong> Mano de obra básica, diagnóstico inicial</p>
-                        <p className="mb-0"><strong>Notas:</strong> Puede requerir repuestos adicionales según evaluación</p>
+                        {s.id === 'reparacion' ? (
+                          <p className="mb-0"><strong>Notas:</strong> Costo base ${s.costo.toLocaleString()}. Repuestos adicionales se cobrarán por separado según necesidad.</p>
+                        ) : (
+                          <p className="mb-0"><strong>Notas:</strong> Costo fijo ${s.costo.toLocaleString()}. No requiere repuestos adicionales.</p>
+                        )}
                       </div>
                     )}
                     <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -161,16 +167,24 @@ const HomeEmpresa = () => {
               {activos.map((s) => {
                 const tipoRaw = s.tipoServicio || (s.detallesRevision ? 'Revision' : 'Reparacion');
                 const tipoPretty = tipoRaw === 'Revision' ? 'Revisión' : 'Reparación';
+                const fechaCreacion = s.fechaCreacion ? new Date(s.fechaCreacion).toLocaleDateString() : 'N/D';
+                const vehiculoInfo = s.vehiculoInfo || 'N/D';
+                
                 return (
                 <div key={s.id} className="card">
                   <div className="card-header">
-                    <div className="card-title">{tipoPretty}</div>
+                    <div className="card-title">Servicio #{s.id} · {tipoPretty}</div>
                     <div className="card-subtitle">Estado: {s.estadoDescripcion}</div>
                   </div>
                   <div className="servicio-info">
                     <p><strong>Empresa:</strong> {user?.infoEspecifica?.nombre || 'N/D'}</p>
+                    <p><strong>Vehículo:</strong> {vehiculoInfo}</p>
                     {(tipoRaw === 'Revision') && s.detallesRevision && (
                       <p><strong>Detalles:</strong> {s.detallesRevision}</p>
+                    )}
+                    <p><strong>Fecha Creación:</strong> {fechaCreacion}</p>
+                    {s.empleadoNombre && (
+                      <p><strong>Mecánico Asignado:</strong> {s.empleadoNombre}</p>
                     )}
                   </div>
                   <div style={{ display: 'flex', gap: '0.75rem', marginTop: '8px' }}>
@@ -193,11 +207,26 @@ const HomeEmpresa = () => {
           ) : tab === 'historial' ? (
             <div className="servicios-section">
               <h2>Historial</h2>
-              {historial.map((s) => (
+              {historial.map((s) => {
+                const tipoPretty = s.tipoServicio === 'Revision' ? 'Revisión' : 'Reparación';
+                const fechaCreacion = s.fechaCreacion ? new Date(s.fechaCreacion).toLocaleDateString() : 'N/D';
+                const vehiculoInfo = s.vehiculoInfo || 'N/D';
+                
+                return (
                 <div key={s.id} className="card">
                   <div className="card-header">
-                    <div className="card-title">{s.tipoServicio}</div>
+                    <div className="card-title">Servicio #{s.id} · {tipoPretty}</div>
                     <div className="card-subtitle">Estado: {s.estadoDescripcion}</div>
+                  </div>
+                  <div className="servicio-info">
+                    <p><strong>Vehículo:</strong> {vehiculoInfo}</p>
+                    {s.detallesRevision && (
+                      <p><strong>Detalles:</strong> {s.detallesRevision}</p>
+                    )}
+                    <p><strong>Fecha Creación:</strong> {fechaCreacion}</p>
+                    {s.empleadoNombre && (
+                      <p><strong>Mecánico:</strong> {s.empleadoNombre}</p>
+                    )}
                   </div>
                   <div style={{ display: 'flex', gap: '0.75rem' }}>
                     <button className="btn-secondary" onClick={async () => {
@@ -213,7 +242,8 @@ const HomeEmpresa = () => {
                     }}>Descargar PDF</button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <VehiculosManager 

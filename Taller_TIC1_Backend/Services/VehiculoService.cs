@@ -74,40 +74,34 @@ namespace Taller_TIC1_Backend.Services
                     switch (vehiculoCreateDto.Tipo.ToLower())
                     {
                         case "gasolina":
-                            if (vehiculoCreateDto.Cilindraje.HasValue)
+                            // Crear VGasolina incluso si Cilindraje es null, usar valor por defecto
+                            var vGasolina = new VGasolina
                             {
-                                var vGasolina = new VGasolina
-                                {
-                                    IdVehiculo = vehiculo.Id, // Usar el ID generado manualmente
-                                    Cilindraje = vehiculoCreateDto.Cilindraje.Value
-                                };
-                                _context.VehiculosGasolina.Add(vGasolina);
-                            }
+                                IdVehiculo = vehiculo.Id, // Usar el ID generado manualmente
+                                Cilindraje = vehiculoCreateDto.Cilindraje ?? 0 // Valor por defecto si es null
+                            };
+                            _context.VehiculosGasolina.Add(vGasolina);
                             break;
 
                         case "electrico":
-                            if (vehiculoCreateDto.CapacidadBateria.HasValue)
+                            // Crear VElectrico incluso si CapacidadBateria es null, usar valor por defecto
+                            var vElectrico = new VElectrico
                             {
-                                var vElectrico = new VElectrico
-                                {
-                                    IdVehiculo = vehiculo.Id, // Usar el ID generado manualmente
-                                    CapacidadBateria = vehiculoCreateDto.CapacidadBateria.Value
-                                };
-                                _context.VehiculosElectricos.Add(vElectrico);
-                            }
+                                IdVehiculo = vehiculo.Id, // Usar el ID generado manualmente
+                                CapacidadBateria = vehiculoCreateDto.CapacidadBateria ?? 0 // Valor por defecto si es null
+                            };
+                            _context.VehiculosElectricos.Add(vElectrico);
                             break;
 
                         case "hibrido":
-                            if (vehiculoCreateDto.Cilindraje.HasValue && vehiculoCreateDto.CapacidadBateria.HasValue)
+                            // Crear VHibrido incluso si los valores son null, usar valores por defecto
+                            var vHibrido = new VHibrido
                             {
-                                var vHibrido = new VHibrido
-                                {
-                                    IdVehiculo = vehiculo.Id, // Usar el ID generado manualmente
-                                    Cilindraje = vehiculoCreateDto.Cilindraje.Value,
-                                    CapacidadBateria = vehiculoCreateDto.CapacidadBateria.Value
-                                };
-                                _context.VehiculosHibridos.Add(vHibrido);
-                            }
+                                IdVehiculo = vehiculo.Id, // Usar el ID generado manualmente
+                                Cilindraje = vehiculoCreateDto.Cilindraje ?? 0, // Valor por defecto si es null
+                                CapacidadBateria = vehiculoCreateDto.CapacidadBateria ?? 0 // Valor por defecto si es null
+                            };
+                            _context.VehiculosHibridos.Add(vHibrido);
                             break;
                     }
 
@@ -131,27 +125,109 @@ namespace Taller_TIC1_Backend.Services
 
 
 
-        public async Task<VehiculoResponseDto?> UpdateAsync(int id, VehiculoCreateDto vehiculoUpdateDto)
+        public async Task<VehiculoResponseDto?> UpdateAsync(int id, VehiculoUpdateDto vehiculoUpdateDto)
         {
-            var vehiculo = new Vehiculo
+            try
             {
-                Id = id,
-                Placa = vehiculoUpdateDto.Placa,
-                Marca = vehiculoUpdateDto.Marca,
-                Modelo = vehiculoUpdateDto.Modelo,
-                Anio = vehiculoUpdateDto.Anio,
-                IdCliente = vehiculoUpdateDto.IdCliente
-            };
+                // Obtener el vehículo existente
+                var vehiculoExistente = await _context.Vehiculos.FindAsync(id);
+                if (vehiculoExistente == null)
+                    return null;
 
-            var updatedVehiculo = await _vehiculoRepository.UpdateAsync(id, vehiculo);
-            return updatedVehiculo != null ? MapToResponseDto(updatedVehiculo) : null;
+                // Actualizar los campos básicos
+                vehiculoExistente.Placa = vehiculoUpdateDto.Placa;
+                vehiculoExistente.Marca = vehiculoUpdateDto.Marca;
+                vehiculoExistente.Modelo = vehiculoUpdateDto.Modelo;
+                vehiculoExistente.Anio = vehiculoUpdateDto.Anio;
+                vehiculoExistente.IdCliente = vehiculoUpdateDto.IdCliente;
 
+                // Actualizar subtipos si se especifica el tipo
+                if (!string.IsNullOrEmpty(vehiculoUpdateDto.Tipo))
+                {
+                    // Eliminar subtipos existentes
+                    var vGasolina = await _context.VehiculosGasolina.FindAsync(id);
+                    if (vGasolina != null) _context.VehiculosGasolina.Remove(vGasolina);
 
+                    var vElectrico = await _context.VehiculosElectricos.FindAsync(id);
+                    if (vElectrico != null) _context.VehiculosElectricos.Remove(vElectrico);
+
+                    var vHibrido = await _context.VehiculosHibridos.FindAsync(id);
+                    if (vHibrido != null) _context.VehiculosHibridos.Remove(vHibrido);
+
+                    // Crear nuevo subtipo
+                    switch (vehiculoUpdateDto.Tipo.ToLower())
+                    {
+                        case "gasolina":
+                            if (vehiculoUpdateDto.Cilindraje.HasValue)
+                            {
+                                var vGasolinaNew = new VGasolina
+                                {
+                                    IdVehiculo = id,
+                                    Cilindraje = vehiculoUpdateDto.Cilindraje.Value
+                                };
+                                _context.VehiculosGasolina.Add(vGasolinaNew);
+                            }
+                            break;
+
+                        case "electrico":
+                            if (vehiculoUpdateDto.CapacidadBateria.HasValue)
+                            {
+                                var vElectricoNew = new VElectrico
+                                {
+                                    IdVehiculo = id,
+                                    CapacidadBateria = vehiculoUpdateDto.CapacidadBateria.Value
+                                };
+                                _context.VehiculosElectricos.Add(vElectricoNew);
+                            }
+                            break;
+
+                        case "hibrido":
+                            if (vehiculoUpdateDto.Cilindraje.HasValue && vehiculoUpdateDto.CapacidadBateria.HasValue)
+                            {
+                                var vHibridoNew = new VHibrido
+                                {
+                                    IdVehiculo = id,
+                                    Cilindraje = vehiculoUpdateDto.Cilindraje.Value,
+                                    CapacidadBateria = vehiculoUpdateDto.CapacidadBateria.Value
+                                };
+                                _context.VehiculosHibridos.Add(vHibridoNew);
+                            }
+                            break;
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Recargar el vehículo con las relaciones
+                var vehiculoCompleto = await _context.Vehiculos
+                    .Include(v => v.VGasolina)
+                    .Include(v => v.VElectrico)
+                    .Include(v => v.VHibrido)
+                    .FirstOrDefaultAsync(v => v.Id == id);
+
+                return vehiculoCompleto != null ? MapToResponseDto(vehiculoCompleto) : null;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al actualizar el vehículo: {ex.Message}", ex);
+            }
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            return await _vehiculoRepository.DeleteAsync(id);
+            try
+            {
+                return await _vehiculoRepository.DeleteAsync(id);
+            }
+            catch (InvalidOperationException)
+            {
+                // Re-throw the business logic exception
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al eliminar el vehículo: {ex.Message}", ex);
+            }
         }
 
         public async Task<bool> ExistsAsync(int id)

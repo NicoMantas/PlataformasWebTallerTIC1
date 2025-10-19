@@ -9,6 +9,7 @@ namespace Taller_TIC1_Backend.Models
         public string Email { get; set; } = string.Empty;
         public long Telefono { get; set; }
         public int IdVehiculo { get; set; }
+        public bool Activo { get; set; } = true;
 
         // Propiedades de navegación
         [JsonIgnore]

@@ -6,10 +6,17 @@ export async function listServicios() {
   return data;
 }
 
-export async function createServicio({ tipoServicio, idCliente, idVehiculo, detallesRevision, repuestosReparacion }) {
+export async function createServicio({ tipoServicio, idCliente, idVehiculo, detallesRevision, repuestosReparacion, costo }) {
+  // Si se proporciona un costo específico, usarlo; de lo contrario, usar costos base por defecto
+  const costosBase = {
+    'revision': 80000,  // $80,000 para revisión (por defecto)
+    'reparacion': 120000 // $120,000 para reparación (por defecto)
+  };
+  
   const payload = {
-    costo: 0,
+    costo: costo || costosBase[tipoServicio] || 0,
     idCliente,
+    idVehiculo,
     idEmpleado: null,
     idEstado: 1,
     tipoServicio: tipoServicio === 'revision' ? 'Revision' : 'Reparacion',
@@ -35,6 +42,11 @@ export async function listHistorialByCliente(clienteId) {
   return data;
 }
 
+export async function listHistorialByVehiculo(vehiculoId) {
+  const { data } = await api.get(`/Servicios/by-vehiculo/${vehiculoId}/historial`);
+  return data;
+}
+
 export async function cancelarServicio(servicioId) {
   const { data } = await api.post(`/Servicios/${servicioId}/cancelar`);
   return data;
@@ -52,6 +64,16 @@ export async function secretariaListPendientes() {
 
 export async function secretariaListAsignados() {
   const { data } = await api.get('/Servicios/secretaria/asignados');
+  return data;
+}
+
+export async function secretariaListCompletados() {
+  const { data } = await api.get('/Servicios/secretaria/completados');
+  return data;
+}
+
+export async function getCostoTotalServicio(servicioId) {
+  const { data } = await api.get(`/Servicios/${servicioId}/costo-total`);
   return data;
 }
 
@@ -75,6 +97,11 @@ export async function updateServicioEstado(servicioId, estadoId) {
   return data;
 }
 
+export async function desasignarEmpleado(servicioId) {
+  const { data } = await api.put(`/Servicios/${servicioId}/desasignar`);
+  return data;
+}
+
 export async function mecanicoListAsignados(empleadoId) {
   const { data } = await api.get(`/Servicios/mecanico/${empleadoId}/asignados`);
   return data;
@@ -85,8 +112,47 @@ export async function mecanicoListCompletados(empleadoId) {
   return data;
 }
 
+export async function debugMecanicoCompletados(empleadoId) {
+  const { data } = await api.get(`/Servicios/debug/mecanico/${empleadoId}/completados`);
+  return data;
+}
+
 export async function listEmpleados() {
   const { data } = await api.get('/Empleado');
+  return data;
+}
+
+// Nuevas funcionalidades implementadas
+
+// Capacidad del taller
+export async function getCapacidadTaller() {
+  const { data } = await api.get('/Servicios/capacidad-taller');
+  return data;
+}
+
+// Búsqueda para secretaria
+export async function buscarServiciosPorPlaca(placa) {
+  const { data } = await api.get(`/Servicios/secretaria/buscar/placa/${placa}`);
+  return data;
+}
+
+export async function buscarServiciosPorFecha(fechaInicio, fechaFin) {
+  const { data } = await api.get('/Servicios/secretaria/buscar/fecha', {
+    params: { fechaInicio, fechaFin }
+  });
+  return data;
+}
+
+export async function buscarServiciosPorPlacaYFecha(placa, fechaInicio, fechaFin) {
+  const { data } = await api.get('/Servicios/secretaria/buscar/placa-fecha', {
+    params: { placa, fechaInicio, fechaFin }
+  });
+  return data;
+}
+
+// Progreso del servicio para cliente
+export async function getProgresoServicio(servicioId) {
+  const { data } = await api.get(`/Servicios/${servicioId}/progreso`);
   return data;
 }
 

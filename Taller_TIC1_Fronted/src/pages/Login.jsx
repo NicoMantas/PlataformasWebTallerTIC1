@@ -78,11 +78,6 @@ const Login = () => {
           <div className="auth-header">
             <h2>Iniciar Sesión como {getRoleTitle()}</h2>
             <p>Ingresa tus credenciales para acceder al sistema</p>
-            {role === 'empleado' && (
-              <p className="login-hint">
-                Ejemplo: mecanico@taller.com, secretaria@taller.com, admin@taller.com
-              </p>
-            )}
           </div>
           
           {error && <div className="error-message">{error}</div>}

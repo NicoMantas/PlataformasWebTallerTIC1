@@ -6,8 +6,7 @@ namespace Taller_TIC1_Backend.Models
         public int IdRepuesto { get; set; }
         public int Cantidad { get; set; }
 
-        // Propiedades de navegación
+        // Propiedades de navegaciÃ³n
         public Repuesto Repuesto { get; set; }
-
     }
 }

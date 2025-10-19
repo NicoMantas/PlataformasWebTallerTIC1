@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
+import EmpleadosManager from '../components/EmpleadosManager';
+import DashboardAdmin from '../components/DashboardAdmin';
+import BusquedaServicios from '../components/BusquedaServicios';
+import ProveedorManagement from './ProveedorManagement';
+import RepuestoManagement from './RepuestoManagement';
+import RepuestoProveedorManagement from './RepuestoProveedorManagement';
 import '../styles/HomeEmpleado.css';
+import '../styles/EmpleadoForm.css';
 import { listOrdenes, updateOrden } from '../services/ordenesService';
-import { listServicios, secretariaListPendientes, secretariaListAsignados, secretariaAsignarMecanico, getServicioById, updateServicioEstado, mecanicoListAsignados, mecanicoListCompletados } from '../services/serviciosService';
-import { listFacturas } from '../services/facturasService';
+import { listServicios, secretariaListPendientes, secretariaListAsignados, secretariaListCompletados, secretariaAsignarMecanico, getServicioById, updateServicioEstado, desasignarEmpleado, mecanicoListAsignados, mecanicoListCompletados, debugMecanicoCompletados } from '../services/serviciosService';
+import { listFacturas, getFacturaByServicio, descargarFacturaPdf } from '../services/facturasService';
 import { getCurrentUser, registerEmpleado } from '../services/authService';
 import { createEmpleado, listEmpleados } from '../services/empleadosService';
 import { listRepuestos } from '../services/repuestosService';
-import { getDetalleRevision, createDetalleRevision, updateDetalleRevision, getDetalleReparacion, getRepuestosByDetalleReparacion, addRepuestoToReparacion } from '../services/detallesService';
+import { listProveedores } from '../services/proveedoresService';
+import { getDetalleRevision, createDetalleRevision, updateDetalleRevision, getDetalleReparacion, getRepuestosByDetalleReparacion, addRepuestoToReparacion, updateRepuestoInReparacion } from '../services/detallesService';
 
 const HomeEmpleado = () => {
   const navigate = useNavigate();
@@ -22,8 +30,14 @@ const HomeEmpleado = () => {
   const [empleados, setEmpleados] = useState([]);
   const [secPendientes, setSecPendientes] = useState([]);
   const [secAsignados, setSecAsignados] = useState([]);
+  const [secCompletados, setSecCompletados] = useState([]);
   const [secTab, setSecTab] = useState('pendientes');
   const [creating, setCreating] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [showBusqueda, setShowBusqueda] = useState(false);
+  const [showProveedores, setShowProveedores] = useState(false);
+  const [showRepuestos, setShowRepuestos] = useState(false);
+  const [showRepuestoProveedor, setShowRepuestoProveedor] = useState(false);
   const [empleadoForm, setEmpleadoForm] = useState({
     nombre: '',
     apellido: '',
@@ -48,6 +62,7 @@ const HomeEmpleado = () => {
   const [selectedServicio, setSelectedServicio] = useState(null);
   const [showReparacionModal, setShowReparacionModal] = useState(false);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
+  const [repuestosReparacion, setRepuestosReparacion] = useState([]);
   const [repuestoForm, setRepuestoForm] = useState({
     idRepuesto: '',
     cantidad: 1
@@ -61,8 +76,109 @@ const HomeEmpleado = () => {
     const currentUser = getCurrentUser();
     console.log('Usuario obtenido:', currentUser);
     setUser(currentUser);
-    loadData();
   }, []);
+
+  // Cargar datos cuando el usuario esté disponible
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  const handleDescargarFactura = async (servicioId) => {
+    try {
+      console.log('Descargando factura para servicio:', servicioId); // Debug
+      const factura = await getFacturaByServicio(servicioId);
+      console.log('Factura obtenida:', factura); // Debug
+      
+      if (factura) {
+        console.log('Generando PDF...'); // Debug
+        const blob = await descargarFacturaPdf(factura);
+        console.log('PDF generado:', blob); // Debug
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `factura_servicio_${servicioId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        console.log('Descarga completada'); // Debug
+      } else {
+        console.log('No se encontró factura'); // Debug
+        alert('No se encontró factura para este servicio');
+      }
+    } catch (error) {
+      console.error('Error al descargar factura:', error);
+      console.error('Detalles del error:', error.message, error.stack); // Debug
+      
+      if (error.status === 404) {
+        // Si no hay factura, crear una temporal basada en el servicio
+        console.log('Creando factura temporal para servicio:', servicioId);
+        const servicioCompletado = secCompletados.find(s => s.id === servicioId);
+        
+        if (servicioCompletado) {
+          // El costo del servicio ya incluye los repuestos
+          let costoTotal = servicioCompletado.costo || 0;
+          
+          // Calcular IVA (19%)
+          const iva = costoTotal * 0.19;
+          const totalConIva = costoTotal + iva;
+          
+          // Construir servicios realizados con más detalles
+          const serviciosRealizados = [];
+          
+          if (servicioCompletado.tipoServicio === 'Revision') {
+            serviciosRealizados.push('Revisión técnica');
+            if (servicioCompletado.detallesRevision) {
+              serviciosRealizados.push(`Detalles: ${servicioCompletado.detallesRevision}`);
+            }
+            if (servicioCompletado.detallesEncontrados) {
+              serviciosRealizados.push(`Hallazgos: ${servicioCompletado.detallesEncontrados}`);
+            }
+          } else if (servicioCompletado.tipoServicio === 'Reparacion') {
+            serviciosRealizados.push('Reparación');
+            if (servicioCompletado.repuestosReparacion && servicioCompletado.repuestosReparacion.length > 0) {
+              serviciosRealizados.push(`Repuestos utilizados: ${servicioCompletado.repuestosReparacion.length}`);
+              servicioCompletado.repuestosReparacion.forEach(rep => {
+                const precio = rep.precioUnitario || 0;
+                const nombre = rep.nombreRepuesto || 'Repuesto';
+                serviciosRealizados.push(`• ${nombre} (${rep.cantidad}x $${precio})`);
+              });
+            }
+          }
+          
+          const facturaTemporal = {
+            id: servicioId,
+            clienteNombre: servicioCompletado.clienteNombre || 'Cliente',
+            vehiculoPlaca: servicioCompletado.vehiculoInfo || 'N/D',
+            subtotal: costoTotal,
+            impuestos: iva,
+            total: totalConIva,
+            serviciosRealizados: serviciosRealizados
+          };
+          
+          console.log('Generando PDF con factura temporal:', facturaTemporal);
+          const blob = await descargarFacturaPdf(facturaTemporal);
+          
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `factura_temporal_servicio_${servicioId}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          console.log('Descarga de factura temporal completada');
+        } else {
+          alert('No se pudo generar la factura temporal. Servicio no encontrado.');
+        }
+      } else {
+        alert(`Error al descargar la factura: ${error.message}`);
+      }
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -79,24 +195,32 @@ const HomeEmpleado = () => {
       setEmpleados(empleadosData || []);
       // cargar datos específicos según el tipo de empleado
       if (tipo === 'secretaria') {
-        const [p, a] = await Promise.all([
+        const [p, a, c] = await Promise.all([
           secretariaListPendientes().catch(() => []),
-          secretariaListAsignados().catch(() => [])
+          secretariaListAsignados().catch(() => []),
+          secretariaListCompletados().catch(() => [])
         ]);
         setSecPendientes(p || []);
         setSecAsignados(a || []);
+        setSecCompletados(c || []);
       } else if (tipo === 'mecanico') {
         // Debug: mostrar información del usuario
         console.log('Usuario mecánico:', user);
         console.log('ID empleado:', user?.id);
+        console.log('Tipo de usuario:', user?.tipo);
+        console.log('Info específica:', user?.infoEspecifica);
         
         if (user?.id) {
+          // Usar el ID del empleado correcto (3 para Gustavo)
+          const empleadoId = user.infoEspecifica?.id || user.id || 3; // Fallback a ID 3
+          console.log('Usando ID de empleado:', empleadoId);
+          
           const [asignados, completados, repuestosData] = await Promise.all([
-            mecanicoListAsignados(user.id).catch((err) => {
+            mecanicoListAsignados(empleadoId).catch((err) => {
               console.error('Error cargando servicios asignados:', err);
               return [];
             }),
-            mecanicoListCompletados(user.id).catch((err) => {
+            mecanicoListCompletados(empleadoId).catch((err) => {
               console.error('Error cargando servicios completados:', err);
               return [];
             }),
@@ -105,6 +229,19 @@ const HomeEmpleado = () => {
               return [];
             })
           ]);
+          
+          console.log('Servicios asignados recibidos:', asignados);
+          console.log('Servicios completados recibidos:', completados);
+          console.log('Cantidad de servicios completados:', completados?.length || 0);
+          
+          // Debug: probar endpoint de debug
+          try {
+            const debugData = await debugMecanicoCompletados(empleadoId);
+            console.log('Debug data:', debugData);
+            console.log('Debug - Cantidad completados:', debugData?.Completados?.length || 0);
+          } catch (err) {
+            console.error('Error en debug:', err);
+          }
           
           // Combinar todos los servicios y organizarlos por estado
           const todosServicios = [...(asignados || []), ...(completados || [])];
@@ -147,10 +284,17 @@ const HomeEmpleado = () => {
 
   // Función para organizar servicios por estados
   const organizarServiciosPorEstado = (servicios) => {
+    console.log('Organizando servicios por estado:', servicios);
+    
     const pendientes = servicios.filter(s => s.idEstado === 1 || s.estadoDescripcion?.toLowerCase() === 'pendiente');
     const enProceso = servicios.filter(s => s.idEstado === 2 || s.estadoDescripcion?.toLowerCase() === 'en proceso');
     const completados = servicios.filter(s => s.idEstado === 3 || s.estadoDescripcion?.toLowerCase() === 'completado');
     const cancelados = servicios.filter(s => s.idEstado === 4 || s.estadoDescripcion?.toLowerCase() === 'cancelado');
+    
+    console.log('Servicios pendientes:', pendientes);
+    console.log('Servicios en proceso:', enProceso);
+    console.log('Servicios completados:', completados);
+    console.log('Servicios cancelados:', cancelados);
     
     setServiciosPendientes(pendientes);
     setServiciosAsignados([]); // No existe estado "Asignado" en la BD
@@ -169,7 +313,15 @@ const HomeEmpleado = () => {
       );
     }
 
-    return servicios.map(servicio => (
+    return servicios.map(servicio => {
+      // Debug: mostrar información del servicio
+      console.log(`Servicio #${servicio.id}:`, {
+        tipoServicio: servicio.tipoServicio,
+        esRevision: servicio.tipoServicio === 'Revision',
+        mostrarBotonRepuestos: servicio.tipoServicio !== 'Revision'
+      });
+      
+      return (
       <div key={servicio.id} className="orden-card">
         <div className="orden-info">
           <h4>Servicio #{servicio.id} · {(servicio.tipoServicio === 'Revision' ? 'Revisión' : 'Reparación')}</h4>
@@ -194,9 +346,10 @@ const HomeEmpleado = () => {
               <option value={1}>Pendiente</option>
               <option value={2}>En Proceso</option>
               <option value={3}>Completado</option>
-              <option value={4}>Cancelado</option>
+              {tipo !== 'mecanico' && <option value={4}>Cancelado</option>}
+              {tipo === 'mecanico' && <option value={1}>Devolver a Secretaria</option>}
             </select>
-            {servicio.tipoServicio === 'Reparacion' && (
+            {servicio.tipoServicio !== 'Revision' && (
               <button 
                 className="btn-secondary" 
                 onClick={() => openReparacionModal(servicio)}
@@ -217,48 +370,106 @@ const HomeEmpleado = () => {
           </div>
         )}
       </div>
-    ));
+      );
+    });
   };
 
   // Mechanic specific functions
   const handleServicioEstadoChange = async (servicioId, nuevoEstado) => {
     try {
-      await updateServicioEstado(servicioId, nuevoEstado);
+      if (tipo === 'mecanico' && nuevoEstado === 1) {
+        // Cuando el mecánico devuelve a secretaria, también desasignar el empleado
+        await updateServicioEstado(servicioId, nuevoEstado);
+        await desasignarEmpleado(servicioId);
+      } else {
+        await updateServicioEstado(servicioId, nuevoEstado);
+      }
       await loadData();
     } catch (err) {
       alert('Error al actualizar estado del servicio');
     }
   };
 
-  const openReparacionModal = (servicio) => {
+  const openReparacionModal = async (servicio) => {
     setSelectedServicio(servicio);
     setShowReparacionModal(true);
-    setRepuestoForm({ idRepuesto: '', cantidad: 1 });
+    
+    // Cargar repuestos ya utilizados en esta reparación
+    try {
+      const repuestosUtilizados = await getRepuestosByDetalleReparacion(servicio.id);
+      setRepuestosReparacion(repuestosUtilizados || []);
+      
+      // Si ya hay un repuesto, pre-cargar el formulario
+      if (repuestosUtilizados && repuestosUtilizados.length > 0) {
+        const repuestoExistente = repuestosUtilizados[0];
+        setRepuestoForm({ 
+          idRepuesto: repuestoExistente.idRepuesto.toString(), 
+          cantidad: repuestoExistente.cantidad 
+        });
+      } else {
+        setRepuestoForm({ idRepuesto: '', cantidad: 1 });
+      }
+    } catch (err) {
+      console.error('Error cargando repuestos de reparación:', err);
+      setRepuestosReparacion([]);
+      setRepuestoForm({ idRepuesto: '', cantidad: 1 });
+    }
   };
 
   const openRevisionModal = async (servicio) => {
     setSelectedServicio(servicio);
     try {
       const detalle = await getDetalleRevision(servicio.id);
-      setRevisionForm({ detalles: detalle?.detalles || '' });
+      setRevisionForm({ 
+        detalles: detalle?.detalles || '',
+        detallesEncontrados: detalle?.detallesEncontrados || ''
+      });
     } catch (err) {
-      setRevisionForm({ detalles: '' });
+      setRevisionForm({ 
+        detalles: '',
+        detallesEncontrados: ''
+      });
     }
     setShowRevisionModal(true);
   };
 
   const handleAddRepuesto = async () => {
     try {
-      await addRepuestoToReparacion(selectedServicio.id, {
+      const repuestoData = {
         idRepuesto: parseInt(repuestoForm.idRepuesto),
         cantidad: parseInt(repuestoForm.cantidad)
-      });
-      alert('Repuesto agregado correctamente');
-      setShowReparacionModal(false);
+      };
+
+      let response;
+      // Si ya hay repuestos, intentar actualizar; si no, crear nuevo
+      if (repuestosReparacion.length > 0) {
+        response = await updateRepuestoInReparacion(selectedServicio.id, repuestoData);
+        alert('Repuesto actualizado correctamente');
+      } else {
+        response = await addRepuestoToReparacion(selectedServicio.id, repuestoData);
+        alert('Repuesto agregado correctamente');
+      }
+
+      // Actualizar el costo del servicio en el estado local
+      if (response && response.costoTotalServicio !== undefined) {
+        setSelectedServicio(prev => ({
+          ...prev,
+          costo: response.costoTotalServicio
+        }));
+      }
+      
+      // Recargar la lista de repuestos utilizados
+      const repuestosUtilizados = await getRepuestosByDetalleReparacion(selectedServicio.id);
+      setRepuestosReparacion(repuestosUtilizados || []);
+      
+      // Limpiar el formulario
+      setRepuestoForm({ idRepuesto: '', cantidad: 1 });
+      
       await loadData();
     } catch (err) {
-      console.error('Error al agregar repuesto:', err);
-      alert('Error al agregar repuesto: ' + (err.response?.data?.message || err.message));
+      console.error('Error al procesar repuesto:', err);
+      const errorMessage = err.response?.data?.message || err.response?.data || err.message || 'Error desconocido';
+      alert(`Error: ${errorMessage}`);
     }
   };
 
@@ -267,12 +478,14 @@ const HomeEmpleado = () => {
       if (selectedServicio.detallesRevision) {
         await updateDetalleRevision(selectedServicio.id, {
           idServicio: selectedServicio.id,
-          detalles: revisionForm.detalles
+          detalles: revisionForm.detalles,
+          detallesEncontrados: revisionForm.detallesEncontrados
         });
       } else {
         await createDetalleRevision({
           idServicio: selectedServicio.id,
-          detalles: revisionForm.detalles
+          detalles: revisionForm.detalles,
+          detallesEncontrados: revisionForm.detallesEncontrados
         });
       }
       alert('Detalles de revisión guardados');
@@ -284,6 +497,25 @@ const HomeEmpleado = () => {
   };
 
   // Contenido específico para cada tipo de empleado
+  // Función para obtener el nombre del tipo de empleado
+  const getTipoEmpleadoNombre = (idTipoEmpleado) => {
+    const tipos = {
+      1: 'Administrador',
+      2: 'Secretaria',
+      3: 'Mecánico'
+    };
+    return tipos[idTipoEmpleado] || 'Empleado';
+  };
+
+  // Función helper para filtrar solo mecánicos
+  const filtrarMecanicos = (empleadosList) => {
+    return empleadosList.filter(emp => {
+      // Múltiples opciones para el tipo de empleado
+      const tipo = emp.idTipoEmpleado || emp.tipoEmpleado || emp.idTipo || emp.tipoEmpleadoId || emp.tipo;
+      return tipo === 3 || tipo === '3' || tipo === 'Mecánico' || tipo === 'mecanico';
+    });
+  };
+
   const getEmpleadoContent = () => {
     switch(tipo) {
       case 'mecanico':
@@ -316,6 +548,12 @@ const HomeEmpleado = () => {
                 >
                   Completados ({serviciosCompletados.length})
                 </button>
+                <button 
+                  className={`tab-button ${secTab === 'repuestos' ? 'active' : ''}`} 
+                  onClick={() => setSecTab('repuestos')}
+                >
+                  Repuestos Disponibles ({repuestos.length})
+                </button>
               </div>
               
               {loading ? (
@@ -324,7 +562,99 @@ const HomeEmpleado = () => {
                 <div className="ordenes-list">
                   {secTab === 'pendientes' && renderizarServicios(serviciosPendientes)}
                   {secTab === 'en-proceso' && renderizarServicios(serviciosEnProceso)}
-                  {secTab === 'completados' && renderizarServicios(serviciosCompletados, true)}
+                  {secTab === 'completados' && (
+                    <>
+                      {console.log('Renderizando completados, cantidad:', serviciosCompletados.length, 'servicios:', serviciosCompletados)}
+                      {serviciosCompletados.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                          <p>No hay servicios completados</p>
+                          <p><small>Los servicios completados aparecerán aquí</small></p>
+                          <p><small>Debug: serviciosCompletados.length = {serviciosCompletados.length}</small></p>
+                        </div>
+                      ) : (
+                        renderizarServicios(serviciosCompletados, true)
+                      )}
+                    </>
+                  )}
+                  {secTab === 'repuestos' && (
+                    <div className="repuestos-section">
+                      <div className="repuestos-header">
+                        <div className="repuestos-title">
+                          <h3>🔧 Repuestos Disponibles</h3>
+                          <p>Consulta el inventario de repuestos para tus reparaciones</p>
+                        </div>
+                        <div className="repuestos-stats">
+                          <div className="stat-item">
+                            <span className="stat-number">{repuestos.length}</span>
+                            <span className="stat-label">Total</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-number">{repuestos.filter(r => r.stock > 5).length}</span>
+                            <span className="stat-label">En Stock</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-number">{repuestos.filter(r => r.stock <= 5 && r.stock > 0).length}</span>
+                            <span className="stat-label">Bajo Stock</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-number">{repuestos.filter(r => r.stock === 0).length}</span>
+                            <span className="stat-label">Sin Stock</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {repuestos.length === 0 ? (
+                        <div className="repuestos-empty">
+                          <div className="empty-icon">🔧</div>
+                          <h4>No hay repuestos disponibles</h4>
+                          <p>Contacta con la administración para agregar repuestos al inventario</p>
+                        </div>
+                      ) : (
+                        <div className="repuestos-grid">
+                          {repuestos.map(repuesto => (
+                            <div key={repuesto.id} className={`repuesto-card ${repuesto.stock === 0 ? 'out-of-stock' : repuesto.stock <= 5 ? 'low-stock' : 'in-stock'}`}>
+                              <div className="repuesto-header">
+                                <div className="repuesto-icon">
+                                  {repuesto.stock === 0 ? '❌' : repuesto.stock <= 5 ? '⚠️' : '✅'}
+                                </div>
+                                <div className="stock-indicator">
+                                  <span className={`stock-badge ${repuesto.stock === 0 ? 'stock-zero' : repuesto.stock <= 5 ? 'stock-low' : 'stock-ok'}`}>
+                                    {repuesto.stock} {repuesto.stock === 1 ? 'unidad' : 'unidades'}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="repuesto-content">
+                                <h4 className="repuesto-name">{repuesto.nombre}</h4>
+                                <div className="repuesto-details">
+                                  <div className="detail-row">
+                                    <span className="detail-label">N° Serie:</span>
+                                    <span className="detail-value">{repuesto.numeroSerie}</span>
+                                  </div>
+                                  <div className="detail-row">
+                                    <span className="detail-label">Precio:</span>
+                                    <span className="detail-value price">${repuesto.precio}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="repuesto-footer">
+                                <div className="stock-status">
+                                  {repuesto.stock === 0 ? (
+                                    <span className="status-text error">Agotado</span>
+                                  ) : repuesto.stock <= 5 ? (
+                                    <span className="status-text warning">Stock Bajo</span>
+                                  ) : (
+                                    <span className="status-text success">Disponible</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -338,6 +668,7 @@ const HomeEmpleado = () => {
           features: [
             { title: 'Trabajos Pendientes', count: secPendientes.length },
             { title: 'Trabajos Asignados', count: secAsignados.length },
+            { title: 'Trabajos Completados', count: secCompletados.length },
             { title: 'Servicios Activos', count: (secPendientes.length + secAsignados.length) }
           ],
           content: (
@@ -345,6 +676,9 @@ const HomeEmpleado = () => {
               <div className="dashboard-tabs" style={{ marginBottom: '1rem' }}>
                 <button className={`tab-button ${secTab==='pendientes'?'active':''}`} onClick={()=>setSecTab('pendientes')}>Trabajos Pendientes</button>
                 <button className={`tab-button ${secTab==='asignados'?'active':''}`} onClick={()=>setSecTab('asignados')}>Trabajos Asignados</button>
+                <button className={`tab-button ${secTab==='completados'?'active':''}`} onClick={()=>setSecTab('completados')}>Trabajos Completados</button>
+                <button className={`tab-button ${secTab==='proveedores'?'active':''}`} onClick={()=>setSecTab('proveedores')}>Proveedores</button>
+                <button className={`tab-button ${secTab==='repuestos'?'active':''}`} onClick={()=>setSecTab('repuestos')}>Repuestos</button>
               </div>
               {loading ? <p>Cargando...</p> : (
                 secTab === 'pendientes' ? (
@@ -360,7 +694,7 @@ const HomeEmpleado = () => {
                         <div className="orden-actions">
                           <select onChange={async (e)=>{ const empId = parseInt(e.target.value); if(!empId) return; await secretariaAsignarMecanico(s.id, empId); await loadData(); e.target.value=''; }} defaultValue="">
                             <option value="" disabled>Asignar mecánico</option>
-                            {empleados.map(emp => (
+                            {filtrarMecanicos(empleados).map(emp => (
                               <option key={emp.id} value={emp.id}>{emp.nombre} {emp.apellido || ''}</option>
                             ))}
                           </select>
@@ -368,7 +702,7 @@ const HomeEmpleado = () => {
                       </div>
                     ))}
                   </div>
-                ) : (
+                ) : secTab === 'asignados' ? (
                   <div className="ordenes-list">
                     {secAsignados.map(s => (
                       <div key={s.id} className="orden-card">
@@ -381,8 +715,40 @@ const HomeEmpleado = () => {
                       </div>
                     ))}
                   </div>
-                )
+                ) : secTab === 'completados' ? (
+                  <div className="ordenes-list">
+                    {secCompletados.map(s => (
+                      <div key={s.id} className="orden-card">
+                        <div className="orden-info">
+                          <h4>Servicio #{s.id} · {(s.tipoServicio==='Revision'?'Revisión':s.tipoServicio==='Reparacion'?'Reparación':(s.detallesRevision?'Revisión':'Reparación'))}</h4>
+                          <p>Cliente: {s.clienteNombre || 'N/D'}</p>
+                          <p>Estado: {s.estadoDescripcion}</p>
+                          <p>Mecánico: {s.empleadoNombre || 'Completado'}</p>
+                        </div>
+                        <div className="orden-actions">
+                          <button className="btn-primary" onClick={() => handleDescargarFactura(s.id)}>
+                            📄 Descargar Factura
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : secTab === 'proveedores' ? (
+                  <ProveedorManagement />
+                ) : secTab === 'repuestos' ? (
+                  <RepuestoManagement />
+                ) : null
               )}
+
+              {/* Búsqueda de servicios para secretaria */}
+              <div className="secretaria-actions" style={{ marginTop: '2rem' }}>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setShowBusqueda(true)}
+                >
+                  🔍 Búsqueda de Servicios
+                </button>
+              </div>
             </div>
           )
         };
@@ -392,76 +758,19 @@ const HomeEmpleado = () => {
           title: 'Panel de Administración',
           subtitle: 'Gestiona el taller completo',
           features: [
-            { title: 'Total Órdenes', count: ordenes.length },
             { title: 'Servicios Activos', count: servicios.filter(s => s.idEstado !== 4).length },
-            { title: 'Facturas Generadas', count: facturas.length },
             { title: 'Empleados Activos', count: empleados.length }
           ],
           content: (
             <div className="admin-content">
-              <div className="dashboard-grid">
-                <div className="dashboard-card">
-                  <h3>Resumen de Órdenes</h3>
-                  <div className="stats">
-                    <div className="stat">
-                      <span className="stat-label">Pendientes:</span>
-                      <span className="stat-value">{ordenes.filter(o => o.idTipoEstadoOrden === 1).length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">En Proceso:</span>
-                      <span className="stat-value">{ordenes.filter(o => o.idTipoEstadoOrden === 3).length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Completadas:</span>
-                      <span className="stat-value">{ordenes.filter(o => o.idTipoEstadoOrden === 4).length}</span>
-                    </div>
-                  </div>
+              <div className="empleado-form-container">
+                <div className="empleado-form-header">
+                  <h3>Registro de Empleados</h3>
+                  <p>Gestiona el personal del taller con información completa</p>
                 </div>
                 
-                <div className="dashboard-card">
-                  <h3>Estados de Servicios</h3>
-                  <div className="servicios-stats">
-                    <div className="stat">
-                      <span className="stat-label">Pendientes:</span>
-                      <span className="stat-value">{servicios.filter(s => s.idEstado === 1).length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Asignados:</span>
-                      <span className="stat-value">{servicios.filter(s => s.idEstado === 2).length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">En Proceso:</span>
-                      <span className="stat-value">{servicios.filter(s => s.idEstado === 3).length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Completados:</span>
-                      <span className="stat-value">{servicios.filter(s => s.idEstado === 4).length}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="dashboard-card">
-                  <h3>Facturación</h3>
-                  <div className="facturas-stats">
-                    <div className="stat">
-                      <span className="stat-label">Pendientes:</span>
-                      <span className="stat-value">{facturas.filter(f => f.estado === 'Pendiente').length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Pagadas:</span>
-                      <span className="stat-value">{facturas.filter(f => f.estado === 'Pagada').length}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Total Facturado:</span>
-                      <span className="stat-value">${facturas.reduce((sum, f) => sum + f.total, 0).toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="dashboard-card" style={{ marginTop: '1.5rem' }}>
-                <h3>Registro de Empleados</h3>
-                <p>Tipos: 1 Administrador, 2 Secretaria, 3 Mecánico</p>
                 <form
+                  className="empleado-form"
                   onSubmit={async (e) => {
                     e.preventDefault();
                     try {
@@ -497,40 +806,195 @@ const HomeEmpleado = () => {
                       setCreating(false);
                     }
                   }}
-                  className="form-container"
                 >
-                  {error && <div className="error-message">{error}</div>}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '1rem' }}>
-                    <input placeholder="Nombre" required value={empleadoForm.nombre} onChange={(e) => setEmpleadoForm({ ...empleadoForm, nombre: e.target.value })} />
-                    <input placeholder="Apellido" required value={empleadoForm.apellido} onChange={(e) => setEmpleadoForm({ ...empleadoForm, apellido: e.target.value })} />
-                    <input placeholder="Cédula" required type="number" value={empleadoForm.cedula} onChange={(e) => setEmpleadoForm({ ...empleadoForm, cedula: e.target.value })} />
-                    <input placeholder="Salario" required type="number" step="0.01" value={empleadoForm.salario} onChange={(e) => setEmpleadoForm({ ...empleadoForm, salario: e.target.value })} />
-                    <select value={empleadoForm.idTipoEmpleado} onChange={(e) => setEmpleadoForm({ ...empleadoForm, idTipoEmpleado: e.target.value })}>
-                      <option value={1}>Administrador</option>
-                      <option value={2}>Secretaria</option>
-                      <option value={3}>Mecánico</option>
-                    </select>
-                    <input placeholder="Email" required type="email" value={empleadoForm.email} onChange={(e) => setEmpleadoForm({ ...empleadoForm, email: e.target.value })} />
-                    <input placeholder="Password" required type="password" value={empleadoForm.password} onChange={(e) => setEmpleadoForm({ ...empleadoForm, password: e.target.value })} />
-                    <input placeholder="Id Taller" type="number" value={empleadoForm.idTaller} onChange={(e) => setEmpleadoForm({ ...empleadoForm, idTaller: e.target.value })} />
+                  {error && <div className="empleado-form-error">{error}</div>}
+                  
+                  <div className="empleado-form-grid">
+                    <div className="empleado-form-group">
+                      <label htmlFor="nombre">Nombre</label>
+                      <input 
+                        id="nombre"
+                        className="empleado-form-input"
+                        placeholder="Ingresa el nombre del empleado" 
+                        required 
+                        value={empleadoForm.nombre} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, nombre: e.target.value })} 
+                      />
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="apellido">Apellido</label>
+                      <input 
+                        id="apellido"
+                        className="empleado-form-input"
+                        placeholder="Ingresa el apellido del empleado" 
+                        required 
+                        value={empleadoForm.apellido} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, apellido: e.target.value })} 
+                      />
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="cedula">Cédula</label>
+                      <input 
+                        id="cedula"
+                        className="empleado-form-input"
+                        placeholder="Número de cédula" 
+                        required 
+                        type="number" 
+                        value={empleadoForm.cedula} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, cedula: e.target.value })} 
+                      />
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="salario">Salario</label>
+                      <input 
+                        id="salario"
+                        className="empleado-form-input"
+                        placeholder="Salario mensual" 
+                        required 
+                        type="number" 
+                        step="0.01" 
+                        value={empleadoForm.salario} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, salario: e.target.value })} 
+                      />
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="tipo">Tipo de Empleado</label>
+                      <select 
+                        id="tipo"
+                        className="empleado-form-select"
+                        value={empleadoForm.idTipoEmpleado} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, idTipoEmpleado: e.target.value })}
+                      >
+                        <option value={1}>Administrador</option>
+                        <option value={2}>Secretaria</option>
+                        <option value={3}>Mecánico</option>
+                      </select>
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="email">Email</label>
+                      <input 
+                        id="email"
+                        className="empleado-form-input"
+                        placeholder="correo@ejemplo.com" 
+                        required 
+                        type="email" 
+                        value={empleadoForm.email} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, email: e.target.value })} 
+                      />
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="password">Contraseña</label>
+                      <input 
+                        id="password"
+                        className="empleado-form-input"
+                        placeholder="Contraseña de acceso" 
+                        required 
+                        type="password" 
+                        value={empleadoForm.password} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, password: e.target.value })} 
+                      />
+                    </div>
+                    
+                    <div className="empleado-form-group">
+                      <label htmlFor="idTaller">ID del Taller</label>
+                      <input 
+                        id="idTaller"
+                        className="empleado-form-input"
+                        placeholder="Identificador del taller" 
+                        type="number" 
+                        value={empleadoForm.idTaller} 
+                        onChange={(e) => setEmpleadoForm({ ...empleadoForm, idTaller: e.target.value })} 
+                      />
+                    </div>
                   </div>
-                  <div style={{ marginTop: '1rem', display: 'flex', gap: '.75rem' }}>
-                    <button className="btn-primary" type="submit" disabled={creating}>{creating ? 'Creando...' : 'Crear y Registrar'}</button>
-                    <button className="btn-secondary" type="button" onClick={() => setEmpleadoForm({ nombre: '', apellido: '', cedula: '', salario: '', idTipoEmpleado: 1, email: '', password: '', idTaller: '' })}>Limpiar</button>
+                  
+                  <div className="empleado-form-actions">
+                    <button 
+                      className="empleado-form-btn empleado-form-btn-primary" 
+                      type="submit" 
+                      disabled={creating}
+                    >
+                      {creating ? 'Creando...' : 'Crear y Registrar'}
+                    </button>
+                    <button 
+                      className="empleado-form-btn empleado-form-btn-secondary" 
+                      type="button" 
+                      onClick={() => setEmpleadoForm({ nombre: '', apellido: '', cedula: '', salario: '', idTipoEmpleado: 1, email: '', password: '', idTaller: '' })}
+                    >
+                      Limpiar Formulario
+                    </button>
                   </div>
                 </form>
-                <div className="card" style={{ marginTop: '1rem' }}>
-                  <h4>Empleados actuales</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '1rem' }}>
+                
+                <div className="empleados-actuales">
+                  <h4>Empleados Actuales</h4>
+                  <div className="empleados-grid">
                     {empleados.map((emp) => (
-                      <div key={emp.id} className="card" style={{ padding: '1rem' }}>
-                        <div className="card-title">{emp.nombre} {emp.apellido}</div>
-                        <div className="card-subtitle">Tipo: {emp.idTipoEmpleado}</div>
-                        <p className="mb-0">Cédula: {emp.cedula}</p>
+                      <div key={emp.id} className={`empleado-card ${!emp.activo ? 'inactivo' : ''}`}>
+                        <div className="empleado-card-title">{emp.nombre} {emp.apellido}</div>
+                        <div className="empleado-card-subtitle">{getTipoEmpleadoNombre(emp.idTipoEmpleado)}</div>
+                        <div className="empleado-card-info">
+                          <strong>Cédula:</strong> {emp.cedula}
+                        </div>
+                        <div className="empleado-card-info">
+                          <strong>Salario:</strong> ${emp.salario?.toLocaleString()}
+                        </div>
+                        <div className={`empleado-estado ${emp.activo ? 'activo' : 'inactivo'}`}>
+                          {emp.activo ? 'Activo' : 'Inactivo'}
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
+              </div>
+              
+              {/* Componente de gestión avanzada de empleados */}
+              <div style={{ marginTop: '2rem' }}>
+                <EmpleadosManager />
+              </div>
+
+              {/* Nuevas funcionalidades del admin */}
+              <div className="admin-actions" style={{ marginTop: '2rem' }}>
+                <button 
+                  className="btn-primary"
+                  onClick={() => setShowDashboard(true)}
+                  style={{ marginRight: '1rem' }}
+                >
+                  📊 Dashboard Avanzado
+                </button>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setShowBusqueda(true)}
+                  style={{ marginRight: '1rem' }}
+                >
+                  🔍 Búsqueda de Servicios
+                </button>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setShowProveedores(true)}
+                  style={{ marginRight: '1rem' }}
+                >
+                  🏢 Gestión de Proveedores
+                </button>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setShowRepuestos(true)}
+                  style={{ marginRight: '1rem' }}
+                >
+                  🔧 Gestión de Repuestos
+                </button>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setShowRepuestoProveedor(true)}
+                >
+                  🔗 Relaciones Repuesto-Proveedor
+                </button>
               </div>
             </div>
           )
@@ -627,10 +1091,61 @@ const HomeEmpleado = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h3>Agregar Repuestos - Servicio #{selectedServicio.id}</h3>
+              <h3>{repuestosReparacion.length > 0 ? 'Gestionar Repuesto' : 'Agregar Repuesto'} - Servicio #{selectedServicio.id}</h3>
+              <p style={{ margin: '0.5rem 0', color: '#666', fontSize: '0.9rem' }}>
+                <strong>Costo actual del servicio:</strong> ${selectedServicio.costo || 0}
+              </p>
               <button className="modal-close" onClick={() => setShowReparacionModal(false)}>×</button>
             </div>
             <div className="modal-body">
+              {/* Lista de repuestos ya utilizados */}
+              {repuestosReparacion.length > 0 && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h4 style={{ marginBottom: '1rem', color: '#333' }}>Repuestos Utilizados:</h4>
+                  <div style={{ 
+                    border: '1px solid #ddd', 
+                    borderRadius: '8px', 
+                    padding: '1rem',
+                    backgroundColor: '#f9f9f9',
+                    maxHeight: '200px',
+                    overflowY: 'auto'
+                  }}>
+                    {repuestosReparacion.map((item, index) => (
+                      <div key={index} style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '0.5rem 0',
+                        borderBottom: index < repuestosReparacion.length - 1 ? '1px solid #eee' : 'none'
+                      }}>
+                        <div>
+                          <strong>{item.nombreRepuesto || item.repuesto?.nombre || 'Repuesto'}</strong>
+                          <span style={{ marginLeft: '1rem', color: '#666' }}>
+                            Cantidad: {item.cantidad} | Precio: ${item.precioUnitario || item.repuesto?.precio || 0}
+                          </span>
+                        </div>
+                        <div style={{ color: '#666', fontSize: '0.9rem' }}>
+                          Total: ${item.subtotal || ((item.precioUnitario || item.repuesto?.precio || 0) * item.cantidad)}
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{
+                      marginTop: '1rem',
+                      paddingTop: '1rem',
+                      borderTop: '2px solid #ddd',
+                      fontWeight: 'bold',
+                      textAlign: 'right'
+                    }}>
+                      Total Reparación: ${repuestosReparacion.reduce((total, item) => 
+                        total + (item.subtotal || ((item.precioUnitario || item.repuesto?.precio || 0) * item.cantidad)), 0
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Formulario para agregar nuevo repuesto */}
+              <h4 style={{ marginBottom: '1rem', color: '#333' }}>Agregar Nuevo Repuesto:</h4>
               <div className="form-group">
                 <label>Repuesto:</label>
                 <select 
@@ -638,7 +1153,7 @@ const HomeEmpleado = () => {
                   onChange={(e) => setRepuestoForm({...repuestoForm, idRepuesto: e.target.value})}
                 >
                   <option value="">Seleccionar repuesto</option>
-                  {repuestos.map(repuesto => (
+                  {repuestos.filter(repuesto => repuesto.stock > 0).map(repuesto => (
                     <option key={repuesto.id} value={repuesto.id}>
                       {repuesto.nombre} - ${repuesto.precio} (Stock: {repuesto.stock})
                     </option>
@@ -650,6 +1165,7 @@ const HomeEmpleado = () => {
                 <input 
                   type="number" 
                   min="1" 
+                  max={repuestos.find(r => r.id === parseInt(repuestoForm.idRepuesto))?.stock || 1}
                   value={repuestoForm.cantidad}
                   onChange={(e) => setRepuestoForm({...repuestoForm, cantidad: e.target.value})}
                 />
@@ -664,7 +1180,7 @@ const HomeEmpleado = () => {
                 onClick={handleAddRepuesto}
                 disabled={!repuestoForm.idRepuesto || repuestoForm.cantidad < 1}
               >
-                Agregar Repuesto
+                {repuestosReparacion.length > 0 ? 'Actualizar Repuesto' : 'Agregar Repuesto'}
               </button>
             </div>
           </div>
@@ -681,11 +1197,20 @@ const HomeEmpleado = () => {
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label>Detalles de la Revisión:</label>
+                <label>Descripción del Servicio:</label>
                 <textarea 
-                  rows="6"
+                  rows="4"
                   value={revisionForm.detalles}
                   onChange={(e) => setRevisionForm({...revisionForm, detalles: e.target.value})}
+                  placeholder="Describe el tipo de revisión a realizar..."
+                />
+              </div>
+              <div className="form-group">
+                <label>Detalles Encontrados (Completar después de la revisión):</label>
+                <textarea 
+                  rows="6"
+                  value={revisionForm.detallesEncontrados}
+                  onChange={(e) => setRevisionForm({...revisionForm, detallesEncontrados: e.target.value})}
                   placeholder="Describe los hallazgos de la revisión, problemas encontrados, recomendaciones, etc."
                 />
               </div>
@@ -697,10 +1222,77 @@ const HomeEmpleado = () => {
               <button 
                 className="btn-primary" 
                 onClick={handleSaveRevision}
-                disabled={!revisionForm.detalles.trim()}
+                disabled={!revisionForm.detalles.trim() && !revisionForm.detallesEncontrados.trim()}
               >
                 Guardar Detalles
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal del Dashboard Admin */}
+      {showDashboard && (
+        <div className="modal-overlay">
+          <div className="modal-content dashboard-modal">
+            <div className="modal-header">
+              <h3>Dashboard Administrativo</h3>
+              <button className="modal-close" onClick={() => setShowDashboard(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <DashboardAdmin />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Búsqueda de Servicios */}
+      {showBusqueda && (
+        <BusquedaServicios
+          onClose={() => setShowBusqueda(false)}
+        />
+      )}
+
+      {/* Modal de Gestión de Proveedores */}
+      {showProveedores && (
+        <div className="modal-overlay">
+          <div className="modal-content proveedor-modal">
+            <div className="modal-header">
+              <h3>Gestión de Proveedores</h3>
+              <button className="modal-close" onClick={() => setShowProveedores(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <ProveedorManagement />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Gestión de Repuestos */}
+      {showRepuestos && (
+        <div className="modal-overlay">
+          <div className="modal-content repuesto-modal">
+            <div className="modal-header">
+              <h3>Gestión de Repuestos</h3>
+              <button className="modal-close" onClick={() => setShowRepuestos(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <RepuestoManagement />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Gestión de Relaciones Repuesto-Proveedor */}
+      {showRepuestoProveedor && (
+        <div className="modal-overlay">
+          <div className="modal-content repuesto-proveedor-modal">
+            <div className="modal-header">
+              <h3>Gestión de Relaciones Repuesto-Proveedor</h3>
+              <button className="modal-close" onClick={() => setShowRepuestoProveedor(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <RepuestoProveedorManagement />
             </div>
           </div>
         </div>

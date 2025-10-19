@@ -54,7 +54,8 @@ namespace Taller_TIC1_Backend.Services
                 Cedula = empleadoCreateDto.Cedula,
                 Salario = empleadoCreateDto.Salario,
                 FechaContratacion = DateTime.Now,
-                IdTipoEmpleado = empleadoCreateDto.IdTipoEmpleado
+                IdTipoEmpleado = empleadoCreateDto.IdTipoEmpleado,
+                Activo = true // Por defecto, los empleados nuevos están activos
             };
             _context.Empleados.Add(empleado);
             await _context.SaveChangesAsync();
@@ -80,7 +81,98 @@ namespace Taller_TIC1_Backend.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
-            return await _empleadoRepository.DeleteAsync(id);
+            // En lugar de eliminar físicamente, marcar como inactivo
+            var empleado = await _context.Empleados.FindAsync(id);
+            if (empleado == null)
+                return false;
+
+            empleado.Activo = false;
+            empleado.FechaDesactivacion = DateTime.Now;
+            // Los detalles se establecerán desde el controlador con el DTO
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DesactivarConDetallesAsync(int id, string detallesDesactivacion, DateTime? fechaDesactivacionPersonalizada = null, DateTime? fechaActivacionPersonalizada = null)
+        {
+            var empleado = await _context.Empleados.FindAsync(id);
+            if (empleado == null)
+                return false;
+
+            // Convertir fechas UTC a fechas locales para PostgreSQL
+            var fechaDesactivacion = fechaDesactivacionPersonalizada?.Kind == DateTimeKind.Utc 
+                ? DateTime.SpecifyKind(fechaDesactivacionPersonalizada.Value.ToLocalTime(), DateTimeKind.Unspecified)
+                : fechaDesactivacionPersonalizada ?? DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+
+            // Validar que la fecha de desactivación sea posterior a la fecha de contratación
+            if (fechaDesactivacion < empleado.FechaContratacion)
+            {
+                throw new ArgumentException("La fecha de desactivación no puede ser anterior a la fecha de contratación.");
+            }
+
+            // Si hay una fecha de activación previa, validar que la desactivación sea posterior
+            if (empleado.FechaActivacion.HasValue && fechaDesactivacion <= empleado.FechaActivacion.Value)
+            {
+                throw new ArgumentException("La fecha de desactivación debe ser posterior a la fecha de activación más reciente.");
+            }
+
+            empleado.Activo = false;
+            empleado.DetallesDesactivacion = detallesDesactivacion;
+            empleado.FechaDesactivacion = fechaDesactivacion;
+            
+            // Si se proporciona una fecha de activación futura, guardarla
+            if (fechaActivacionPersonalizada.HasValue)
+            {
+                // Convertir fecha de activación UTC a local
+                var fechaActivacion = fechaActivacionPersonalizada.Value.Kind == DateTimeKind.Utc 
+                    ? DateTime.SpecifyKind(fechaActivacionPersonalizada.Value.ToLocalTime(), DateTimeKind.Unspecified)
+                    : fechaActivacionPersonalizada.Value;
+                
+                // Validar que la fecha de activación sea posterior a la fecha de desactivación
+                if (fechaActivacion <= fechaDesactivacion)
+                {
+                    throw new ArgumentException("La fecha de activación debe ser posterior a la fecha de desactivación.");
+                }
+                empleado.FechaActivacion = fechaActivacion;
+            }
+            else
+            {
+                empleado.FechaActivacion = null; // Limpiar fecha de activación si no se especifica
+            }
+            
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ActivateAsync(int id, DateTime? fechaActivacionPersonalizada = null)
+        {
+            var empleado = await _context.Empleados.FindAsync(id);
+            if (empleado == null)
+                return false;
+
+            // Convertir fecha UTC a local para PostgreSQL
+            var fechaActivacion = fechaActivacionPersonalizada?.Kind == DateTimeKind.Utc 
+                ? DateTime.SpecifyKind(fechaActivacionPersonalizada.Value.ToLocalTime(), DateTimeKind.Unspecified)
+                : fechaActivacionPersonalizada ?? DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+
+            // Validar que la fecha de activación sea posterior a la fecha de contratación
+            if (fechaActivacion < empleado.FechaContratacion)
+            {
+                throw new ArgumentException("La fecha de activación no puede ser anterior a la fecha de contratación.");
+            }
+
+            // Si hay una fecha de desactivación previa, validar que la activación sea posterior
+            if (empleado.FechaDesactivacion.HasValue && fechaActivacion <= empleado.FechaDesactivacion.Value)
+            {
+                throw new ArgumentException("La fecha de activación debe ser posterior a la fecha de desactivación más reciente.");
+            }
+
+            empleado.Activo = true;
+            empleado.DetallesDesactivacion = null; // Limpiar detalles al reactivar
+            empleado.FechaDesactivacion = null; // Limpiar fecha de desactivación al activar
+            empleado.FechaActivacion = fechaActivacion; // Registrar fecha de activación
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<bool> ExistsAsync(int id)
@@ -105,6 +197,10 @@ namespace Taller_TIC1_Backend.Services
                 Salario = empleado.Salario,
                 FechaContratacion = empleado.FechaContratacion,
                 IdTipoEmpleado = empleado.IdTipoEmpleado,
+                Activo = empleado.Activo,
+                DetallesDesactivacion = empleado.DetallesDesactivacion,
+                FechaDesactivacion = empleado.FechaDesactivacion,
+                FechaActivacion = empleado.FechaActivacion,
                 TipoEmpleadoDescripcion = empleado.TipoEmpleado?.Descripcion
             };
         }
