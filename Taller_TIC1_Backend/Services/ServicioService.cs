@@ -316,24 +316,26 @@ namespace Taller_TIC1_Backend.Services
         {
             const int CAPACIDAD_MAXIMA_TALLER = 15;
             
-            // Obtener servicios pendientes (sin mecánico asignado)
-            var serviciosPendientes = await _servicioRepository.GetActivosPendientesAsync(new[] { 1 }); // Estado "Pendiente"
-            var serviciosAsignados = await _servicioRepository.GetActivosAsignadosAsync(new[] { 2 }); // Estado "En proceso"
+            // Obtener solo los servicios activos (estados: Pendiente, En proceso)
+            // NO contar completados (3) ni cancelados (5)
+            var serviciosActivos = await _servicioRepository.GetServiciosByEstadosAsync(new[] { 1, 2 });
             
-            var totalPendientes = serviciosPendientes.Count();
-            var totalAsignados = serviciosAsignados.Count();
-            var totalActivos = totalPendientes + totalAsignados;
-            var espaciosDisponibles = CAPACIDAD_MAXIMA_TALLER - totalPendientes;
+            // Separar por tipo para estadísticas detalladas
+            var serviciosPendientes = serviciosActivos.Where(s => s.IdEstado == 1).Count();
+            var serviciosAsignados = serviciosActivos.Where(s => s.IdEstado == 2).Count();
+            
+            var totalActivos = serviciosActivos.Count();
+            var espaciosDisponibles = CAPACIDAD_MAXIMA_TALLER - totalActivos;
             
             return new
             {
                 capacidadMaxima = CAPACIDAD_MAXIMA_TALLER,
-                serviciosPendientes = totalPendientes,
-                serviciosAsignados = totalAsignados,
+                serviciosPendientes = serviciosPendientes,
+                serviciosAsignados = serviciosAsignados,
                 totalActivos = totalActivos,
                 espaciosDisponibles = espaciosDisponibles,
                 capacidadDisponible = espaciosDisponibles > 0,
-                porcentajeOcupacion = Math.Round((double)totalPendientes / CAPACIDAD_MAXIMA_TALLER * 100, 2)
+                porcentajeOcupacion = Math.Round((double)totalActivos / CAPACIDAD_MAXIMA_TALLER * 100, 2)
             };
         }
 
@@ -462,12 +464,13 @@ namespace Taller_TIC1_Backend.Services
         {
             const int CAPACIDAD_MAXIMA_TALLER = 15;
             
-            // Obtener servicios pendientes (sin mecánico asignado)
-            var serviciosPendientes = await _servicioRepository.GetActivosPendientesAsync(new[] { 1 }); // Estado "Pendiente"
+            // Obtener solo los servicios activos (estados: Pendiente, En proceso)
+            // NO contar completados (3) ni cancelados (5)
+            var serviciosActivos = await _servicioRepository.GetServiciosByEstadosAsync(new[] { 1, 2 });
             
-            if (serviciosPendientes.Count() >= CAPACIDAD_MAXIMA_TALLER)
+            if (serviciosActivos.Count() >= CAPACIDAD_MAXIMA_TALLER)
             {
-                throw new InvalidOperationException($"La capacidad del taller está al límite. Actualmente hay {serviciosPendientes.Count()} servicios pendientes. La capacidad máxima es de {CAPACIDAD_MAXIMA_TALLER} servicios. Por favor, intente más tarde cuando se liberen espacios.");
+                throw new InvalidOperationException($"La capacidad del taller está al límite. Actualmente hay {serviciosActivos.Count()} servicios activos (pendientes, en proceso). La capacidad máxima es de {CAPACIDAD_MAXIMA_TALLER} servicios. Por favor, intente más tarde cuando se liberen espacios.");
             }
         }
     }

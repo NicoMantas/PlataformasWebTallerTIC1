@@ -189,5 +189,19 @@ namespace Taller_TIC1_Backend.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet("debug-capacidad-taller")]
+        public async Task<ActionResult<object>> GetDebugCapacidadTaller()
+        {
+            try
+            {
+                var debug = await _estadisticasService.GetDebugCapacidadTallerAsync();
+                return Ok(debug);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

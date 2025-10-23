@@ -14,5 +14,6 @@ namespace Taller_TIC1_Backend.Services.Interfaces
         Task<object> GetDebugServiciosCompletadosAsync();
         Task<object> GetDebugTodosServiciosAsync();
         Task<object> GetDebugEstadosServiciosAsync();
+        Task<object> GetDebugCapacidadTallerAsync();
     }
 }
