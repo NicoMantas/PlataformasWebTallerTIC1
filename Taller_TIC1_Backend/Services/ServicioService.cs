@@ -150,6 +150,7 @@ namespace Taller_TIC1_Backend.Services
                 throw new ArgumentException("Servicio no encontrado");
 
             _mapper.Map(servicioDto, servicioExistente);
+            servicioExistente.FechaActualizacion = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
             var servicioActualizado = await _servicioRepository.UpdateAsync(servicioExistente);
             return _mapper.Map<ServicioDTO>(servicioActualizado);
         }
@@ -185,8 +186,10 @@ namespace Taller_TIC1_Backend.Services
         {
             var servicio = await _servicioRepository.GetByIdAsync(id);
             if (servicio == null) return false;
+            
             // IdEstado == 4: Cancelado
             servicio.IdEstado = 4;
+            servicio.FechaActualizacion = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
             await _servicioRepository.UpdateAsync(servicio);
             return true;
         }

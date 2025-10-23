@@ -72,6 +72,7 @@ namespace Taller_TIC1_Backend.Services
                 throw new ArgumentException("Orden no encontrada");
 
             _mapper.Map(ordenDto, ordenExistente);
+            // ordenExistente.FechaActualizacion = DateTime.UtcNow; // Temporalmente comentado hasta crear migración
             var ordenActualizada = await _ordenRepository.UpdateAsync(ordenExistente);
 
             // Actualizar servicios (lógica simplificada)

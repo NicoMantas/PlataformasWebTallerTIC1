@@ -64,6 +64,7 @@ namespace Taller_TIC1_Backend.Services
                     throw new ArgumentException("Factura no encontrada");
 
                 _mapper.Map(facturaDto, facturaExistente);
+                // facturaExistente.FechaActualizacion = DateTime.UtcNow; // Temporalmente comentado hasta crear migración
                 var facturaActualizada = await _facturaRepository.UpdateAsync(facturaExistente);
                 var dto = _mapper.Map<FacturaDTO>(facturaActualizada);
                 await EnrichFacturaDtoAsync(dto); 
