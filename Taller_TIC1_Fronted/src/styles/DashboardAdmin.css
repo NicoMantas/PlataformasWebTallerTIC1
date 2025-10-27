@@ -851,6 +851,10 @@
   border-left: 4px solid var(--info-color);
 }
 
+.metric-card.en-revision {
+  border-left: 4px solid #6F42C1;
+}
+
 .metric-card.disponibles {
   border-left: 4px solid var(--primary-color);
 }
@@ -972,6 +976,12 @@
 }
 
 /* Responsive para capacidad */
+@media (max-width: 1024px) {
+  .capacidad-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .capacidad-metrics {
     grid-template-columns: 1fr;

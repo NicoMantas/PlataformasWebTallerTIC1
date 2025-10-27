@@ -508,7 +508,7 @@ const HomeCliente = () => {
               <div className="capacidad-info">
                 <span className="capacidad-label">Capacidad del Taller:</span>
                 <span className={`capacidad-status ${capacidadTaller.capacidadDisponible ? 'disponible' : 'lleno'}`}>
-                  {capacidadTaller.serviciosPendientes}/{capacidadTaller.capacidadMaxima} servicios
+                  {capacidadTaller.totalActivos}/{capacidadTaller.capacidadMaxima} servicios
                 </span>
               </div>
               <div className="capacidad-bar">

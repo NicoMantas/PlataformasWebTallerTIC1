@@ -2,7 +2,7 @@
 {
     public class OrdenTrabajoCreateDTO
     {
-        public DateTime FechaCreacion { get; set; } = DateTime.Now;
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
         public int IdTipoEstadoOrden { get; set; } = 1; // Pendiente por defecto
         public int IdCliente { get; set; }
         public int IdVehiculo { get; set; }

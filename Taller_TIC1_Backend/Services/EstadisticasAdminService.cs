@@ -440,25 +440,105 @@ namespace Taller_TIC1_Backend.Services
         {
             const int CAPACIDAD_MAXIMA = 15;
             
-            var serviciosPendientes = await _context.Servicios
-                .CountAsync(s => s.IdEstado == 1 && s.IdEmpleado == null);
+            // Obtener solo los servicios activos (estados: Pendiente, En proceso)
+            // NO contar completados (3) ni cancelados (5)
+            var serviciosActivos = await _context.Servicios
+                .Where(s => s.IdEstado == 1 || s.IdEstado == 2)
+                .ToListAsync();
             
-            var serviciosEnProceso = await _context.Servicios
-                .CountAsync(s => s.IdEstado == 2);
-
-            var totalActivos = serviciosPendientes + serviciosEnProceso;
-            var espaciosDisponibles = CAPACIDAD_MAXIMA - serviciosPendientes;
+            // Separar por tipo para estadísticas detalladas
+            var serviciosPendientes = serviciosActivos.Count(s => s.IdEstado == 1);
+            var serviciosAsignados = serviciosActivos.Count(s => s.IdEstado == 2);
+            
+            var totalActivos = serviciosActivos.Count;
+            var espaciosDisponibles = CAPACIDAD_MAXIMA - totalActivos;
 
             return new
             {
                 capacidadMaxima = CAPACIDAD_MAXIMA,
                 serviciosPendientes,
-                serviciosEnProceso,
+                serviciosAsignados,
                 totalActivos,
                 espaciosDisponibles,
                 capacidadDisponible = espaciosDisponibles > 0,
-                porcentajeOcupacion = Math.Round((double)serviciosPendientes / CAPACIDAD_MAXIMA * 100, 2),
-                alerta = serviciosPendientes >= CAPACIDAD_MAXIMA ? "Capacidad al límite" : espaciosDisponibles <= 3 ? "Capacidad casi llena" : "Capacidad normal"
+                porcentajeOcupacion = Math.Round((double)totalActivos / CAPACIDAD_MAXIMA * 100, 2),
+                alerta = totalActivos >= CAPACIDAD_MAXIMA ? "Capacidad al límite" : espaciosDisponibles <= 3 ? "Capacidad casi llena" : "Capacidad normal"
+            };
+        }
+
+        public async Task<object> GetDebugCapacidadTallerAsync()
+        {
+            const int CAPACIDAD_MAXIMA = 15;
+            
+            // Obtener todos los servicios con sus detalles
+            var todosServicios = await _context.Servicios
+                .Include(s => s.Estado)
+                .Include(s => s.Empleado)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.IdEstado,
+                    EstadoDescripcion = s.Estado != null ? s.Estado.Descripcion : "Sin Estado",
+                    s.IdEmpleado,
+                    EmpleadoNombre = s.Empleado != null ? s.Empleado.Nombre : null,
+                    s.FechaCreacion,
+                    s.FechaActualizacion
+                })
+                .ToListAsync();
+
+            // Filtrar servicios activos (solo estados 1 y 2)
+            var serviciosActivos = todosServicios.Where(s => s.IdEstado == 1 || s.IdEstado == 2).ToList();
+            
+            // Separar por tipo
+            var serviciosPendientes = serviciosActivos.Where(s => s.IdEstado == 1).ToList();
+            var serviciosAsignados = serviciosActivos.Where(s => s.IdEstado == 2).ToList();
+            
+            var totalActivos = serviciosActivos.Count;
+            var espaciosDisponibles = CAPACIDAD_MAXIMA - totalActivos;
+
+            return new
+            {
+                capacidadMaxima = CAPACIDAD_MAXIMA,
+                totalServicios = todosServicios.Count,
+                serviciosActivos = serviciosActivos.Count,
+                serviciosPendientes = serviciosPendientes.Count,
+                serviciosAsignados = serviciosAsignados.Count,
+                totalActivos,
+                espaciosDisponibles,
+                porcentajeOcupacion = Math.Round((double)totalActivos / CAPACIDAD_MAXIMA * 100, 2),
+                
+                // Detalles para debug
+                detalleServicios = new
+                {
+                    todosServicios = todosServicios.Select(s => new
+                    {
+                        s.Id,
+                        s.IdEstado,
+                        s.EstadoDescripcion,
+                        s.IdEmpleado,
+                        s.EmpleadoNombre,
+                        s.FechaCreacion
+                    }).ToList(),
+                    
+                    serviciosPendientes = serviciosPendientes.Select(s => new
+                    {
+                        s.Id,
+                        s.IdEstado,
+                        s.EstadoDescripcion,
+                        s.IdEmpleado,
+                        s.EmpleadoNombre
+                    }).ToList(),
+                    
+                    serviciosAsignados = serviciosAsignados.Select(s => new
+                    {
+                        s.Id,
+                        s.IdEstado,
+                        s.EstadoDescripcion,
+                        s.IdEmpleado,
+                        s.EmpleadoNombre
+                    }).ToList(),
+                    
+                }
             };
         }
 

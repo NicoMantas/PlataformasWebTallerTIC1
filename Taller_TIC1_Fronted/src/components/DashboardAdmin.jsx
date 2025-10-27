@@ -74,7 +74,7 @@ const DashboardAdmin = () => {
           value={resumen.totalServicios || 0}
           icon="🔧"
           color="#3b82f6"
-          subtitle={`${resumen.serviciosActivos || 0} activos`}
+          subtitle={`${resumen.serviciosActivos - 1 || 0} activos`}
         />
         <StatCard
           title="Servicios Completados"
